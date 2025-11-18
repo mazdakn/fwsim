@@ -1,0 +1,96 @@
+package policy
+
+import (
+	"fmt"
+	"net"
+	"strconv"
+
+	"github.com/mazdakn/fwsim/pkg/traffic"
+)
+
+type Action int
+
+const (
+	Accept Action = iota
+	Drop
+	Reject
+	Log
+)
+
+func (a Action) String() string {
+	switch a {
+	case Accept:
+		return "Accept"
+	case Drop:
+		return "Drop"
+	case Reject:
+		return "Reject"
+	case Log:
+		return "Log"
+	default:
+		return fmt.Sprintf("Undefined(%d)", a)
+	}
+}
+
+func (a Action) Validate() error {
+	switch a {
+	case Accept, Drop, Reject, Log:
+		return nil
+	default:
+		return fmt.Errorf("Undefined action %v", a)
+	}
+}
+
+type Rule struct {
+	SrcNet   *net.IPNet
+	DstNet   *net.IPNet
+	Protocol *uint8
+
+	SrcPort *uint16
+	DstPort *uint16
+
+	Action Action
+}
+
+func (r *Rule) match(pkt *traffic.Packet) bool {
+	if r.Protocol != nil && *r.Protocol != pkt.Protocol {
+		return false
+	}
+	if r.SrcPort != nil && *r.SrcPort != pkt.SrcPort {
+		return false
+	}
+	if r.DstPort != nil && *r.DstPort != pkt.DstPort {
+		return false
+	}
+	if r.SrcNet != nil && !r.SrcNet.Contains(pkt.SrcAddr) {
+		return false
+	}
+	if r.DstNet != nil && !r.DstNet.Contains(pkt.DstAddr) {
+		return false
+	}
+	return true
+}
+
+func (r *Rule) String() string {
+	proto := "*"
+	if r.Protocol != nil {
+		proto = strconv.Itoa(int(*r.Protocol))
+	}
+	srcPort := "*"
+	if r.SrcPort != nil {
+		srcPort = strconv.Itoa(int(*r.SrcPort))
+	}
+	dstPort := "*"
+	if r.DstPort != nil {
+		dstPort = strconv.Itoa(int(*r.DstPort))
+	}
+	srcNet := "*"
+	if r.SrcNet != nil {
+		srcNet = r.SrcNet.String()
+	}
+	dstNet := "*"
+	if r.DstNet != nil {
+		dstNet = r.DstNet.String()
+	}
+	return fmt.Sprintf("%s %s:%s -> %s:%s", proto, srcNet, srcPort, dstNet, dstPort)
+}
