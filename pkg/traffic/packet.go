@@ -5,6 +5,46 @@ import (
 	"net"
 )
 
+type PacketOption func(*Packet)
+
+func WithProto(proto uint8) PacketOption {
+	return func(p *Packet) {
+		p.Protocol = proto
+	}
+}
+
+func WithSrcPort(port uint16) PacketOption {
+	return func(p *Packet) {
+		p.SrcPort = port
+	}
+}
+
+func WithDstPort(port uint16) PacketOption {
+	return func(p *Packet) {
+		p.DstPort = port
+	}
+}
+
+func WithSrcAddr(addr string) PacketOption {
+	return func(p *Packet) {
+		p.SrcAddr = net.ParseIP(addr)
+	}
+}
+
+func WithDstAddr(addr string) PacketOption {
+	return func(p *Packet) {
+		p.DstAddr = net.ParseIP(addr)
+	}
+}
+
+func NewPacket(opts ...PacketOption) *Packet {
+	var p Packet
+	for _, o := range opts {
+		o(&p)
+	}
+	return &p
+}
+
 type Packet struct {
 	SrcAddr  net.IP
 	DstAddr  net.IP
@@ -17,4 +57,11 @@ type Packet struct {
 func (p *Packet) String() string {
 	return fmt.Sprintf("%d %s:%d -> %s:%d", p.Protocol, p.SrcAddr.String(), p.SrcPort,
 		p.DstAddr.String(), p.DstPort)
+}
+
+func SamplePacket() *Packet {
+	return NewPacket(
+		WithSrcAddr("10.10.10.1"), WithSrcPort(55555), WithProto(17),
+		WithDstAddr("1.1.1.1"), WithDstPort(80),
+	)
 }

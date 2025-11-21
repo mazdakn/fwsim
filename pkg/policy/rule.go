@@ -41,6 +41,46 @@ func (a Action) Validate() error {
 	}
 }
 
+type RuleOption func(*Rule)
+
+func WithProto(proto uint8) RuleOption {
+	return func(r *Rule) {
+		r.Protocol = &proto
+	}
+}
+
+func WithSrcPort(port uint16) RuleOption {
+	return func(r *Rule) {
+		r.SrcPort = &port
+	}
+}
+
+func WithDstPort(port uint16) RuleOption {
+	return func(r *Rule) {
+		r.DstPort = &port
+	}
+}
+
+func WithSrcNet(cidr string) RuleOption {
+	return func(r *Rule) {
+		r.SrcNet = MustParseCIDR(cidr)
+	}
+}
+
+func WithDstNet(cidr string) RuleOption {
+	return func(r *Rule) {
+		r.DstNet = MustParseCIDR(cidr)
+	}
+}
+
+func NewRule(opts ...RuleOption) *Rule {
+	var r Rule
+	for _, o := range opts {
+		o(&r)
+	}
+	return &r
+}
+
 type Rule struct {
 	SrcNet   *net.IPNet
 	DstNet   *net.IPNet
@@ -93,4 +133,12 @@ func (r *Rule) String() string {
 		dstNet = r.DstNet.String()
 	}
 	return fmt.Sprintf("%s %s:%s -> %s:%s", proto, srcNet, srcPort, dstNet, dstPort)
+}
+
+func MustParseCIDR(cidr string) *net.IPNet {
+	_, ipnet, err := net.ParseCIDR(cidr)
+	if err != nil {
+		panic(fmt.Sprintf("CIDR %s is invalid", cidr))
+	}
+	return ipnet
 }
