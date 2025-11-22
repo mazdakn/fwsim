@@ -37,6 +37,48 @@ func TestEmptyRule(t *testing.T) {
 	}
 }
 
+func TestRuleIPFamilyMismatch(t *testing.T) {
+	RegisterTestingT(t)
+
+	// IPv6 packet
+	pktV6 := traffic.NewPacket(
+		traffic.WithSrcAddr("dead:beef::1"), traffic.WithSrcPort(44444), traffic.WithProto(6),
+		traffic.WithDstAddr("cafe::1"), traffic.WithDstPort(80),
+	)
+
+	// Rules with IPv4 networks should not match IPv6 packets
+	ipv4Rules := []*Rule{
+		NewRule(WithSrcNet("10.10.10.0/24")),
+		NewRule(WithDstNet("1.1.1.1/32")),
+		NewRule(WithSrcNet("10.10.10.0/24"), WithDstNet("1.1.1.1/32")),
+		NewRule(WithProto(17), WithSrcNet("10.10.10.0/24"), WithDstNet("1.1.1.1/32")),
+	}
+	for _, r := range ipv4Rules {
+		t.Run(fmt.Sprintf("IPv4 rule %v should not match IPv6 packet", r.String()), func(t *testing.T) {
+			Expect(r.match(pktV6)).To(BeFalse())
+		})
+	}
+
+	// IPv4 packet
+	pktV4 := traffic.NewPacket(
+		traffic.WithSrcAddr("10.10.10.1"), traffic.WithSrcPort(55555), traffic.WithProto(17),
+		traffic.WithDstAddr("1.1.1.1"), traffic.WithDstPort(53),
+	)
+
+	// Rules with IPv6 networks should not match IPv4 packets
+	ipv6Rules := []*Rule{
+		NewRule(WithSrcNet("dead:beef::/64")),
+		NewRule(WithDstNet("cafe::/112")),
+		NewRule(WithSrcNet("dead:beef::/64"), WithDstNet("cafe::/112")),
+		NewRule(WithProto(6), WithSrcNet("dead:beef::/64"), WithDstNet("cafe::/112")),
+	}
+	for _, r := range ipv6Rules {
+		t.Run(fmt.Sprintf("IPv6 rule %v should not match IPv4 packet", r.String()), func(t *testing.T) {
+			Expect(r.match(pktV4)).To(BeFalse())
+		})
+	}
+}
+
 func TestRuleMatch(t *testing.T) {
 	RegisterTestingT(t)
 
@@ -75,48 +117,6 @@ func TestRuleMatchV6(t *testing.T) {
 		})
 		t.Run(fmt.Sprintf("should not match %v", r.String()), func(t *testing.T) {
 			Expect(r.match(pktShouldNotMatch)).To(BeFalse())
-		})
-	}
-}
-
-func TestRuleIPFamilyMismatch(t *testing.T) {
-	RegisterTestingT(t)
-
-	// IPv4 packet
-	pktV4 := traffic.NewPacket(
-		traffic.WithSrcAddr("10.10.10.1"), traffic.WithSrcPort(55555), traffic.WithProto(17),
-		traffic.WithDstAddr("1.1.1.1"), traffic.WithDstPort(53),
-	)
-
-	// IPv6 packet
-	pktV6 := traffic.NewPacket(
-		traffic.WithSrcAddr("dead:beef::1"), traffic.WithSrcPort(44444), traffic.WithProto(6),
-		traffic.WithDstAddr("cafe::1"), traffic.WithDstPort(80),
-	)
-
-	// Rules with IPv4 networks should not match IPv6 packets
-	ipv4Rules := []*Rule{
-		NewRule(WithSrcNet("10.10.10.0/24")),
-		NewRule(WithDstNet("1.1.1.1/32")),
-		NewRule(WithSrcNet("10.10.10.0/24"), WithDstNet("1.1.1.1/32")),
-		NewRule(WithProto(17), WithSrcNet("10.10.10.0/24"), WithDstNet("1.1.1.1/32")),
-	}
-	for _, r := range ipv4Rules {
-		t.Run(fmt.Sprintf("IPv4 rule %v should not match IPv6 packet", r.String()), func(t *testing.T) {
-			Expect(r.match(pktV6)).To(BeFalse())
-		})
-	}
-
-	// Rules with IPv6 networks should not match IPv4 packets
-	ipv6Rules := []*Rule{
-		NewRule(WithSrcNet("dead:beef::/64")),
-		NewRule(WithDstNet("cafe::/112")),
-		NewRule(WithSrcNet("dead:beef::/64"), WithDstNet("cafe::/112")),
-		NewRule(WithProto(6), WithSrcNet("dead:beef::/64"), WithDstNet("cafe::/112")),
-	}
-	for _, r := range ipv6Rules {
-		t.Run(fmt.Sprintf("IPv6 rule %v should not match IPv4 packet", r.String()), func(t *testing.T) {
-			Expect(r.match(pktV4)).To(BeFalse())
 		})
 	}
 }
