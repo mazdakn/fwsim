@@ -58,10 +58,3 @@ func (p *Packet) String() string {
 	return fmt.Sprintf("%d %s:%d -> %s:%d", p.Protocol, p.SrcAddr.String(), p.SrcPort,
 		p.DstAddr.String(), p.DstPort)
 }
-
-func SamplePacket() *Packet {
-	return NewPacket(
-		WithSrcAddr("10.10.10.1"), WithSrcPort(55555), WithProto(17),
-		WithDstAddr("1.1.1.1"), WithDstPort(80),
-	)
-}

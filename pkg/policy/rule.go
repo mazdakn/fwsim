@@ -132,7 +132,7 @@ func (r *Rule) String() string {
 	if r.DstNet != nil {
 		dstNet = r.DstNet.String()
 	}
-	return fmt.Sprintf("%s %s:%s -> %s:%s", proto, srcNet, srcPort, dstNet, dstPort)
+	return fmt.Sprintf("%s|%s:%s->%s:%s", proto, srcNet, srcPort, dstNet, dstPort)
 }
 
 func MustParseCIDR(cidr string) *net.IPNet {
