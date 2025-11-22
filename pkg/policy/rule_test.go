@@ -121,6 +121,72 @@ func TestRuleMatchV6(t *testing.T) {
 	}
 }
 
+func TestActionString(t *testing.T) {
+	RegisterTestingT(t)
+
+	tests := []struct {
+		action   Action
+		expected string
+	}{
+		{Accept, "Accept"},
+		{Drop, "Drop"},
+		{Reject, "Reject"},
+		{Log, "Log"},
+		{Action(999), "Undefined(999)"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.expected, func(t *testing.T) {
+			Expect(tt.action.String()).To(Equal(tt.expected))
+		})
+	}
+}
+
+func TestActionValidate(t *testing.T) {
+	RegisterTestingT(t)
+
+	tests := []struct {
+		name      string
+		action    Action
+		shouldErr bool
+	}{
+		{"Accept is valid", Accept, false},
+		{"Drop is valid", Drop, false},
+		{"Reject is valid", Reject, false},
+		{"Log is valid", Log, false},
+		{"Undefined action is invalid", Action(999), true},
+		{"Another undefined action is invalid", Action(-1), true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.action.Validate()
+			if tt.shouldErr {
+				Expect(err).To(HaveOccurred())
+			} else {
+				Expect(err).ToNot(HaveOccurred())
+			}
+		})
+	}
+}
+
+func TestMustParseCIDRPanic(t *testing.T) {
+	RegisterTestingT(t)
+
+	tests := []string{
+		"invalid-cidr",
+		"10.10.10.1",        // Missing prefix length
+		"256.256.256.256/32", // Invalid IP
+		"not-an-ip/24",
+	}
+
+	for _, cidr := range tests {
+		t.Run(fmt.Sprintf("should panic on %s", cidr), func(t *testing.T) {
+			Expect(func() { MustParseCIDR(cidr) }).To(Panic())
+		})
+	}
+}
+
 func makeCommonRules(srcNet, dstNet string, proto uint8, srcPort, dstPort uint16) []*Rule {
 	return []*Rule{
 		NewRule(WithProto(proto)),
