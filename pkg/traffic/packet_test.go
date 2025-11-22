@@ -331,9 +331,7 @@ func TestPacketStringEmptyPacket(t *testing.T) {
 	pkt := NewPacket()
 	result := pkt.String()
 	// Empty packet will have nil IPs which will be formatted as <nil>
-	Expect(result).To(ContainSubstring("0{"))
-	Expect(result).To(ContainSubstring(":0->"))
-	Expect(result).To(ContainSubstring(":0}"))
+	Expect(result).To(Equal("0{<nil>:0-><nil>:0}"))
 }
 
 func TestPacketStringPartialPacket(t *testing.T) {
@@ -342,19 +340,17 @@ func TestPacketStringPartialPacket(t *testing.T) {
 	// Only protocol
 	pkt1 := NewPacket(WithProto(6))
 	result1 := pkt1.String()
-	Expect(result1).To(ContainSubstring("6{"))
+	Expect(result1).To(Equal("6{<nil>:0-><nil>:0}"))
 
 	// Only ports
 	pkt2 := NewPacket(WithSrcPort(1234), WithDstPort(5678))
 	result2 := pkt2.String()
-	Expect(result2).To(ContainSubstring(":1234->"))
-	Expect(result2).To(ContainSubstring(":5678}"))
+	Expect(result2).To(Equal("0{<nil>:1234-><nil>:5678}"))
 
 	// Only addresses
 	pkt3 := NewPacket(WithSrcAddr("10.0.0.1"), WithDstAddr("192.168.1.1"))
 	result3 := pkt3.String()
-	Expect(result3).To(ContainSubstring("10.0.0.1:"))
-	Expect(result3).To(ContainSubstring("->192.168.1.1:"))
+	Expect(result3).To(Equal("0{10.0.0.1:0->192.168.1.1:0}"))
 }
 
 func TestPacketOptionsCanBeReused(t *testing.T) {
