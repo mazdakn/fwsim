@@ -1,0 +1,399 @@
+package traffic
+
+import (
+	"testing"
+
+	. "github.com/onsi/gomega"
+)
+
+func TestNewPacketEmpty(t *testing.T) {
+	RegisterTestingT(t)
+
+	pkt := NewPacket()
+	Expect(pkt).ToNot(BeNil())
+	Expect(pkt.SrcAddr).To(BeNil())
+	Expect(pkt.DstAddr).To(BeNil())
+	Expect(pkt.Protocol).To(Equal(uint8(0)))
+	Expect(pkt.SrcPort).To(Equal(uint16(0)))
+	Expect(pkt.DstPort).To(Equal(uint16(0)))
+}
+
+func TestWithProto(t *testing.T) {
+	RegisterTestingT(t)
+
+	tests := []struct {
+		name  string
+		proto uint8
+	}{
+		{"TCP", 6},
+		{"UDP", 17},
+		{"ICMP", 1},
+		{"Custom", 255},
+		{"Zero", 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pkt := NewPacket(WithProto(tt.proto))
+			Expect(pkt.Protocol).To(Equal(tt.proto))
+		})
+	}
+}
+
+func TestWithSrcPort(t *testing.T) {
+	RegisterTestingT(t)
+
+	tests := []struct {
+		name string
+		port uint16
+	}{
+		{"HTTP", 80},
+		{"HTTPS", 443},
+		{"SSH", 22},
+		{"HighPort", 65535},
+		{"Zero", 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pkt := NewPacket(WithSrcPort(tt.port))
+			Expect(pkt.SrcPort).To(Equal(tt.port))
+		})
+	}
+}
+
+func TestWithDstPort(t *testing.T) {
+	RegisterTestingT(t)
+
+	tests := []struct {
+		name string
+		port uint16
+	}{
+		{"HTTP", 80},
+		{"HTTPS", 443},
+		{"DNS", 53},
+		{"HighPort", 65535},
+		{"Zero", 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pkt := NewPacket(WithDstPort(tt.port))
+			Expect(pkt.DstPort).To(Equal(tt.port))
+		})
+	}
+}
+
+func TestWithSrcAddrIPv4(t *testing.T) {
+	RegisterTestingT(t)
+
+	tests := []struct {
+		name string
+		addr string
+	}{
+		{"Localhost", "127.0.0.1"},
+		{"Private10", "10.0.0.1"},
+		{"Private172", "172.16.0.1"},
+		{"Private192", "192.168.1.1"},
+		{"Public", "8.8.8.8"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pkt := NewPacket(WithSrcAddr(tt.addr))
+			Expect(pkt.SrcAddr).ToNot(BeNil())
+			Expect(pkt.SrcAddr.String()).To(Equal(tt.addr))
+		})
+	}
+}
+
+func TestWithSrcAddrIPv6(t *testing.T) {
+	RegisterTestingT(t)
+
+	tests := []struct {
+		name     string
+		addr     string
+		expected string
+	}{
+		{"Localhost", "::1", "::1"},
+		{"Full", "2001:db8::1", "2001:db8::1"},
+		{"LinkLocal", "fe80::1", "fe80::1"},
+		{"Complex", "dead:beef::cafe", "dead:beef::cafe"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pkt := NewPacket(WithSrcAddr(tt.addr))
+			Expect(pkt.SrcAddr).ToNot(BeNil())
+			Expect(pkt.SrcAddr.String()).To(Equal(tt.expected))
+		})
+	}
+}
+
+func TestWithDstAddrIPv4(t *testing.T) {
+	RegisterTestingT(t)
+
+	tests := []struct {
+		name string
+		addr string
+	}{
+		{"Localhost", "127.0.0.1"},
+		{"Private10", "10.0.0.1"},
+		{"Private172", "172.16.0.1"},
+		{"Private192", "192.168.1.1"},
+		{"Public", "1.1.1.1"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pkt := NewPacket(WithDstAddr(tt.addr))
+			Expect(pkt.DstAddr).ToNot(BeNil())
+			Expect(pkt.DstAddr.String()).To(Equal(tt.addr))
+		})
+	}
+}
+
+func TestWithDstAddrIPv6(t *testing.T) {
+	RegisterTestingT(t)
+
+	tests := []struct {
+		name     string
+		addr     string
+		expected string
+	}{
+		{"Localhost", "::1", "::1"},
+		{"Full", "2001:db8::1", "2001:db8::1"},
+		{"LinkLocal", "fe80::1", "fe80::1"},
+		{"Complex", "cafe::1", "cafe::1"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pkt := NewPacket(WithDstAddr(tt.addr))
+			Expect(pkt.DstAddr).ToNot(BeNil())
+			Expect(pkt.DstAddr.String()).To(Equal(tt.expected))
+		})
+	}
+}
+
+func TestWithInvalidAddr(t *testing.T) {
+	RegisterTestingT(t)
+
+	tests := []struct {
+		name string
+		addr string
+	}{
+		{"InvalidIPv4", "999.999.999.999"},
+		{"InvalidIPv6", "gggg::1"},
+		{"EmptyString", ""},
+		{"NotAnIP", "not-an-ip"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pkt := NewPacket(WithSrcAddr(tt.addr))
+			Expect(pkt.SrcAddr).To(BeNil())
+
+			pkt2 := NewPacket(WithDstAddr(tt.addr))
+			Expect(pkt2.DstAddr).To(BeNil())
+		})
+	}
+}
+
+func TestNewPacketMultipleOptions(t *testing.T) {
+	RegisterTestingT(t)
+
+	pkt := NewPacket(
+		WithProto(6),
+		WithSrcAddr("10.0.0.1"),
+		WithSrcPort(12345),
+		WithDstAddr("192.168.1.1"),
+		WithDstPort(80),
+	)
+
+	Expect(pkt.Protocol).To(Equal(uint8(6)))
+	Expect(pkt.SrcAddr.String()).To(Equal("10.0.0.1"))
+	Expect(pkt.SrcPort).To(Equal(uint16(12345)))
+	Expect(pkt.DstAddr.String()).To(Equal("192.168.1.1"))
+	Expect(pkt.DstPort).To(Equal(uint16(80)))
+}
+
+func TestNewPacketMultipleOptionsIPv6(t *testing.T) {
+	RegisterTestingT(t)
+
+	pkt := NewPacket(
+		WithProto(17),
+		WithSrcAddr("2001:db8::1"),
+		WithSrcPort(54321),
+		WithDstAddr("cafe::1"),
+		WithDstPort(443),
+	)
+
+	Expect(pkt.Protocol).To(Equal(uint8(17)))
+	Expect(pkt.SrcAddr.String()).To(Equal("2001:db8::1"))
+	Expect(pkt.SrcPort).To(Equal(uint16(54321)))
+	Expect(pkt.DstAddr.String()).To(Equal("cafe::1"))
+	Expect(pkt.DstPort).To(Equal(uint16(443)))
+}
+
+func TestPacketStringIPv4(t *testing.T) {
+	RegisterTestingT(t)
+
+	tests := []struct {
+		name     string
+		packet   *Packet
+		expected string
+	}{
+		{
+			name: "FullPacket",
+			packet: NewPacket(
+				WithProto(6),
+				WithSrcAddr("10.0.0.1"),
+				WithSrcPort(12345),
+				WithDstAddr("192.168.1.1"),
+				WithDstPort(80),
+			),
+			expected: "6{10.0.0.1:12345->192.168.1.1:80}",
+		},
+		{
+			name: "TCPPacket",
+			packet: NewPacket(
+				WithProto(6),
+				WithSrcAddr("172.16.0.1"),
+				WithSrcPort(50000),
+				WithDstAddr("1.1.1.1"),
+				WithDstPort(443),
+			),
+			expected: "6{172.16.0.1:50000->1.1.1.1:443}",
+		},
+		{
+			name: "UDPPacket",
+			packet: NewPacket(
+				WithProto(17),
+				WithSrcAddr("192.168.0.1"),
+				WithSrcPort(55555),
+				WithDstAddr("8.8.8.8"),
+				WithDstPort(53),
+			),
+			expected: "17{192.168.0.1:55555->8.8.8.8:53}",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			Expect(tt.packet.String()).To(Equal(tt.expected))
+		})
+	}
+}
+
+func TestPacketStringIPv6(t *testing.T) {
+	RegisterTestingT(t)
+
+	tests := []struct {
+		name     string
+		packet   *Packet
+		expected string
+	}{
+		{
+			name: "FullPacket",
+			packet: NewPacket(
+				WithProto(6),
+				WithSrcAddr("2001:db8::1"),
+				WithSrcPort(12345),
+				WithDstAddr("cafe::1"),
+				WithDstPort(80),
+			),
+			expected: "6{2001:db8::1:12345->cafe::1:80}",
+		},
+		{
+			name: "TCPPacket",
+			packet: NewPacket(
+				WithProto(6),
+				WithSrcAddr("dead:beef::1"),
+				WithSrcPort(44444),
+				WithDstAddr("fe80::1"),
+				WithDstPort(443),
+			),
+			expected: "6{dead:beef::1:44444->fe80::1:443}",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			Expect(tt.packet.String()).To(Equal(tt.expected))
+		})
+	}
+}
+
+func TestPacketStringEmptyPacket(t *testing.T) {
+	RegisterTestingT(t)
+
+	pkt := NewPacket()
+	result := pkt.String()
+	// Empty packet will have nil IPs which will be formatted as <nil>
+	Expect(result).To(ContainSubstring("0{"))
+	Expect(result).To(ContainSubstring(":0->"))
+	Expect(result).To(ContainSubstring(":0}"))
+}
+
+func TestPacketStringPartialPacket(t *testing.T) {
+	RegisterTestingT(t)
+
+	// Only protocol
+	pkt1 := NewPacket(WithProto(6))
+	result1 := pkt1.String()
+	Expect(result1).To(ContainSubstring("6{"))
+
+	// Only ports
+	pkt2 := NewPacket(WithSrcPort(1234), WithDstPort(5678))
+	result2 := pkt2.String()
+	Expect(result2).To(ContainSubstring(":1234->"))
+	Expect(result2).To(ContainSubstring(":5678}"))
+
+	// Only addresses
+	pkt3 := NewPacket(WithSrcAddr("10.0.0.1"), WithDstAddr("192.168.1.1"))
+	result3 := pkt3.String()
+	Expect(result3).To(ContainSubstring("10.0.0.1:"))
+	Expect(result3).To(ContainSubstring("->192.168.1.1:"))
+}
+
+func TestPacketOptionsCanBeReused(t *testing.T) {
+	RegisterTestingT(t)
+
+	protoOpt := WithProto(6)
+	srcPortOpt := WithSrcPort(80)
+	dstPortOpt := WithDstPort(443)
+
+	pkt1 := NewPacket(protoOpt, srcPortOpt, dstPortOpt)
+	pkt2 := NewPacket(protoOpt, srcPortOpt, dstPortOpt)
+
+	Expect(pkt1.Protocol).To(Equal(pkt2.Protocol))
+	Expect(pkt1.SrcPort).To(Equal(pkt2.SrcPort))
+	Expect(pkt1.DstPort).To(Equal(pkt2.DstPort))
+}
+
+func TestPacketOptionsOrderIndependent(t *testing.T) {
+	RegisterTestingT(t)
+
+	pkt1 := NewPacket(
+		WithProto(6),
+		WithSrcAddr("10.0.0.1"),
+		WithSrcPort(80),
+		WithDstAddr("192.168.1.1"),
+		WithDstPort(443),
+	)
+
+	pkt2 := NewPacket(
+		WithDstPort(443),
+		WithDstAddr("192.168.1.1"),
+		WithSrcPort(80),
+		WithSrcAddr("10.0.0.1"),
+		WithProto(6),
+	)
+
+	Expect(pkt1.Protocol).To(Equal(pkt2.Protocol))
+	Expect(pkt1.SrcAddr.String()).To(Equal(pkt2.SrcAddr.String()))
+	Expect(pkt1.SrcPort).To(Equal(pkt2.SrcPort))
+	Expect(pkt1.DstAddr.String()).To(Equal(pkt2.DstAddr.String()))
+	Expect(pkt1.DstPort).To(Equal(pkt2.DstPort))
+}
