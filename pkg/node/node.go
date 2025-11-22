@@ -5,6 +5,53 @@ import (
 	"net"
 )
 
+type EndpointOption func(*Endpoint)
+
+func WithEndpointName(name string) EndpointOption {
+	return func(e *Endpoint) {
+		e.Name = name
+	}
+}
+
+func WithEndpointIPv4(addr string) EndpointOption {
+	return func(e *Endpoint) {
+		e.IPv4 = net.ParseIP(addr)
+	}
+}
+
+func WithEndpointIPv6(addr string) EndpointOption {
+	return func(e *Endpoint) {
+		e.IPv6 = net.ParseIP(addr)
+	}
+}
+
+func NewEndpoint(opts ...EndpointOption) *Endpoint {
+	var e Endpoint
+	for _, o := range opts {
+		o(&e)
+	}
+	return &e
+}
+
+type Endpoint struct {
+	Name string
+	IPv4 net.IP
+	IPv6 net.IP
+}
+
+func (e *Endpoint) String() string {
+	ipv4Str := "<nil>"
+	if e.IPv4 != nil {
+		ipv4Str = e.IPv4.String()
+	}
+	ipv6Str := "<nil>"
+	if e.IPv6 != nil {
+		ipv6Str = e.IPv6.String()
+	}
+	return fmt.Sprintf("Endpoint{Name: %s, IPv4: %s, IPv6: %s}",
+		e.Name, ipv4Str, ipv6Str)
+}
+
 type NodeOption func(*Node)
 
 func WithName(name string) NodeOption {
@@ -25,7 +72,7 @@ func WithIPv6(addr string) NodeOption {
 	}
 }
 
-func WithEndpoints(endpoints ...string) NodeOption {
+func WithEndpoints(endpoints ...*Endpoint) NodeOption {
 	return func(n *Node) {
 		n.Endpoints = append(n.Endpoints, endpoints...)
 	}
@@ -43,7 +90,7 @@ type Node struct {
 	Name      string
 	IPv4      net.IP
 	IPv6      net.IP
-	Endpoints []string
+	Endpoints []*Endpoint
 }
 
 func (n *Node) String() string {
