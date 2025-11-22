@@ -84,32 +84,12 @@ func TestNewNode(t *testing.T) {
 		node := NewNode()
 		Expect(node).ToNot(BeNil())
 		Expect(node.Name).To(BeEmpty())
-		Expect(node.IPv4).To(BeNil())
-		Expect(node.IPv6).To(BeNil())
 		Expect(node.Endpoints).To(BeEmpty())
 	})
 
 	t.Run("node with name", func(t *testing.T) {
 		node := NewNode(WithName("test-node"))
 		Expect(node.Name).To(Equal("test-node"))
-		Expect(node.IPv4).To(BeNil())
-		Expect(node.IPv6).To(BeNil())
-		Expect(node.Endpoints).To(BeEmpty())
-	})
-
-	t.Run("node with IPv4", func(t *testing.T) {
-		node := NewNode(WithIPv4("192.168.1.1"))
-		Expect(node.Name).To(BeEmpty())
-		Expect(node.IPv4).To(Equal(net.ParseIP("192.168.1.1")))
-		Expect(node.IPv6).To(BeNil())
-		Expect(node.Endpoints).To(BeEmpty())
-	})
-
-	t.Run("node with IPv6", func(t *testing.T) {
-		node := NewNode(WithIPv6("2001:db8::1"))
-		Expect(node.Name).To(BeEmpty())
-		Expect(node.IPv4).To(BeNil())
-		Expect(node.IPv6).To(Equal(net.ParseIP("2001:db8::1")))
 		Expect(node.Endpoints).To(BeEmpty())
 	})
 
@@ -118,8 +98,6 @@ func TestNewNode(t *testing.T) {
 		ep2 := NewEndpoint(WithEndpointName("eth1"))
 		node := NewNode(WithEndpoints(ep1, ep2))
 		Expect(node.Name).To(BeEmpty())
-		Expect(node.IPv4).To(BeNil())
-		Expect(node.IPv6).To(BeNil())
 		Expect(node.Endpoints).To(HaveLen(2))
 		Expect(node.Endpoints[0].Name).To(Equal("eth0"))
 		Expect(node.Endpoints[1].Name).To(Equal("eth1"))
@@ -138,13 +116,9 @@ func TestNewNode(t *testing.T) {
 		)
 		node := NewNode(
 			WithName("test-node"),
-			WithIPv4("10.0.0.1"),
-			WithIPv6("fe80::1"),
 			WithEndpoints(ep1, ep2),
 		)
 		Expect(node.Name).To(Equal("test-node"))
-		Expect(node.IPv4).To(Equal(net.ParseIP("10.0.0.1")))
-		Expect(node.IPv6).To(Equal(net.ParseIP("fe80::1")))
 		Expect(node.Endpoints).To(HaveLen(2))
 		Expect(node.Endpoints[0].Name).To(Equal("eth0"))
 		Expect(node.Endpoints[0].IPv4).To(Equal(net.ParseIP("10.0.0.10")))
@@ -175,13 +149,13 @@ func TestNodeString(t *testing.T) {
 	t.Run("empty node", func(t *testing.T) {
 		node := NewNode()
 		str := node.String()
-		Expect(str).To(Equal("Node{Name: , IPv4: <nil>, IPv6: <nil>, Endpoints: []}"))
+		Expect(str).To(Equal("Node{Name: , Endpoints: []}"))
 	})
 
 	t.Run("node with name only", func(t *testing.T) {
 		node := NewNode(WithName("test-node"))
 		str := node.String()
-		Expect(str).To(Equal("Node{Name: test-node, IPv4: <nil>, IPv6: <nil>, Endpoints: []}"))
+		Expect(str).To(Equal("Node{Name: test-node, Endpoints: []}"))
 	})
 
 	t.Run("node with all fields", func(t *testing.T) {
@@ -197,26 +171,12 @@ func TestNodeString(t *testing.T) {
 		)
 		node := NewNode(
 			WithName("test-node"),
-			WithIPv4("192.168.1.1"),
-			WithIPv6("2001:db8::1"),
 			WithEndpoints(ep1, ep2),
 		)
 		str := node.String()
-		Expect(str).To(ContainSubstring("Node{Name: test-node, IPv4: 192.168.1.1, IPv6: 2001:db8::1"))
+		Expect(str).To(ContainSubstring("Node{Name: test-node"))
 		Expect(str).To(ContainSubstring("Endpoint{Name: eth0, IPv4: 192.168.1.10, IPv6: fe80::10}"))
 		Expect(str).To(ContainSubstring("Endpoint{Name: eth1, IPv4: 192.168.1.11, IPv6: fe80::11}"))
-	})
-
-	t.Run("node with IPv4 only", func(t *testing.T) {
-		node := NewNode(WithIPv4("10.0.0.1"))
-		str := node.String()
-		Expect(str).To(Equal("Node{Name: , IPv4: 10.0.0.1, IPv6: <nil>, Endpoints: []}"))
-	})
-
-	t.Run("node with IPv6 only", func(t *testing.T) {
-		node := NewNode(WithIPv6("fe80::1"))
-		str := node.String()
-		Expect(str).To(Equal("Node{Name: , IPv4: <nil>, IPv6: fe80::1, Endpoints: []}"))
 	})
 
 	t.Run("node with endpoints only", func(t *testing.T) {
@@ -224,7 +184,7 @@ func TestNodeString(t *testing.T) {
 		ep2 := NewEndpoint(WithEndpointName("eth1"))
 		node := NewNode(WithEndpoints(ep1, ep2))
 		str := node.String()
-		Expect(str).To(ContainSubstring("Node{Name: , IPv4: <nil>, IPv6: <nil>"))
+		Expect(str).To(ContainSubstring("Node{Name: "))
 		Expect(str).To(ContainSubstring("Endpoint{Name: eth0"))
 		Expect(str).To(ContainSubstring("Endpoint{Name: eth1"))
 	})
