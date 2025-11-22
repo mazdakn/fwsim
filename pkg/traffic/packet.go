@@ -55,6 +55,6 @@ type Packet struct {
 }
 
 func (p *Packet) String() string {
-	return fmt.Sprintf("%d %s:%d -> %s:%d", p.Protocol, p.SrcAddr.String(), p.SrcPort,
+	return fmt.Sprintf("%d{%s:%d->%s:%d}", p.Protocol, p.SrcAddr.String(), p.SrcPort,
 		p.DstAddr.String(), p.DstPort)
 }
