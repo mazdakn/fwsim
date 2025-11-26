@@ -232,7 +232,7 @@ func TestRegisterAndSendIntegration(t *testing.T) {
 	RegisterTestingT(t)
 
 	gen := NewGenerator(10)
-	
+
 	// Register some packets
 	pkt1 := NewPacket(
 		WithProto(6),
