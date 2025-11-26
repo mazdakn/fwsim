@@ -276,6 +276,8 @@ func TestConcurrentSendAndReceive(t *testing.T) {
 	gen := NewGenerator(100)
 	numPackets := 50
 	var wg sync.WaitGroup
+	var mu sync.Mutex
+	receivedCount := 0
 
 	// Send packets concurrently
 	wg.Add(1)
@@ -288,16 +290,20 @@ func TestConcurrentSendAndReceive(t *testing.T) {
 	}()
 
 	// Receive packets concurrently
-	receivedCount := 0
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		for i := 0; i < numPackets; i++ {
 			<-gen.Channel()
+			mu.Lock()
 			receivedCount++
+			mu.Unlock()
 		}
 	}()
 
 	wg.Wait()
-	Expect(receivedCount).To(Equal(numPackets))
+	mu.Lock()
+	count := receivedCount
+	mu.Unlock()
+	Expect(count).To(Equal(numPackets))
 }
