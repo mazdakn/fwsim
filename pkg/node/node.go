@@ -80,6 +80,5 @@ type Node struct {
 }
 
 func (n *Node) String() string {
-	return fmt.Sprintf("Node{Name: %s, Endpoints: %v}",
-		n.Name, n.Endpoints)
+	return fmt.Sprintf("Node{Name: %s, Endpoints: %v}", n.Name, n.Endpoints)
 }
