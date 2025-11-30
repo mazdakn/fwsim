@@ -9,7 +9,7 @@ import (
 
 type GeneratorOption func(*Generator)
 
-func WithEgress(egress chan Packet) GeneratorOption {
+func WithEgress(egress chan []Packet) GeneratorOption {
 	return func(g *Generator) {
 		g.egress = egress
 	}
@@ -25,8 +25,8 @@ func WithRate(rate time.Duration) GeneratorOption {
 type Generator struct {
 	name    string
 	rate    time.Duration
-	packets []*Packet
-	egress  chan<- Packet
+	packets []Packet
+	egress  chan<- []Packet
 	logCtx  *logrus.Entry
 }
 
@@ -43,7 +43,7 @@ func NewGenerator(name string, opts ...GeneratorOption) *Generator {
 }
 
 func (g *Generator) Register(pkt *Packet) {
-	g.packets = append(g.packets, pkt)
+	g.packets = append(g.packets, *pkt)
 }
 
 func (g *Generator) Flush() {
@@ -51,10 +51,8 @@ func (g *Generator) Flush() {
 }
 
 func (g *Generator) Send() {
-	for _, pkt := range g.packets {
-		g.logCtx.Debugf("Sending packet %v", pkt)
-		g.egress <- *pkt
-	}
+	g.logCtx.Debugf("Sending packets %+v", g.packets)
+	g.egress <- g.packets
 }
 
 func (g *Generator) Start(ctx context.Context) {
