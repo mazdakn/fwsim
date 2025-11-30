@@ -42,8 +42,10 @@ func NewGenerator(name string, opts ...GeneratorOption) *Generator {
 	return &g
 }
 
-func (g *Generator) Register(pkt *Packet) {
-	g.packets = append(g.packets, *pkt)
+func (g *Generator) RegisterPackets(pkts ...*Packet) {
+	for _, p := range pkts {
+		g.packets = append(g.packets, *p)
+	}
 }
 
 func (g *Generator) Flush() {

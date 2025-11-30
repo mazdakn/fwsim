@@ -68,7 +68,7 @@ func TestGeneratorRegister(t *testing.T) {
 	t.Run("register single packet", func(t *testing.T) {
 		g := NewGenerator("test-generator")
 		pkt := NewPacket(WithProto(6), WithSrcAddr("10.0.0.1"), WithDstAddr("192.168.1.1"))
-		g.Register(pkt)
+		g.RegisterPackets(pkt)
 		Expect(g.packets).To(HaveLen(1))
 		Expect(g.packets[0].Protocol).To(Equal(uint8(6)))
 	})
@@ -78,9 +78,7 @@ func TestGeneratorRegister(t *testing.T) {
 		pkt1 := NewPacket(WithProto(6), WithSrcAddr("10.0.0.1"), WithDstAddr("192.168.1.1"))
 		pkt2 := NewPacket(WithProto(17), WithSrcAddr("10.0.0.2"), WithDstAddr("192.168.1.2"))
 		pkt3 := NewPacket(WithProto(1), WithSrcAddr("10.0.0.3"), WithDstAddr("192.168.1.3"))
-		g.Register(pkt1)
-		g.Register(pkt2)
-		g.Register(pkt3)
+		g.RegisterPackets(pkt1, pkt2, pkt3)
 		Expect(g.packets).To(HaveLen(3))
 		Expect(g.packets[0].Protocol).To(Equal(uint8(6)))
 		Expect(g.packets[1].Protocol).To(Equal(uint8(17)))
@@ -101,8 +99,7 @@ func TestGeneratorFlush(t *testing.T) {
 		g := NewGenerator("test-generator")
 		pkt1 := NewPacket(WithProto(6))
 		pkt2 := NewPacket(WithProto(17))
-		g.Register(pkt1)
-		g.Register(pkt2)
+		g.RegisterPackets(pkt1, pkt2)
 		Expect(g.packets).To(HaveLen(2))
 		g.Flush()
 		Expect(g.packets).To(BeNil())
@@ -111,10 +108,10 @@ func TestGeneratorFlush(t *testing.T) {
 	t.Run("register after flush", func(t *testing.T) {
 		g := NewGenerator("test-generator")
 		pkt1 := NewPacket(WithProto(6))
-		g.Register(pkt1)
+		g.RegisterPackets(pkt1)
 		g.Flush()
 		pkt2 := NewPacket(WithProto(17))
-		g.Register(pkt2)
+		g.RegisterPackets(pkt2)
 		Expect(g.packets).To(HaveLen(1))
 		Expect(g.packets[0].Protocol).To(Equal(uint8(17)))
 	})
@@ -136,8 +133,7 @@ func TestGeneratorSend(t *testing.T) {
 		g := NewGenerator("test-generator", WithEgress(egress))
 		pkt1 := NewPacket(WithProto(6), WithSrcAddr("10.0.0.1"), WithDstAddr("192.168.1.1"))
 		pkt2 := NewPacket(WithProto(17), WithSrcAddr("10.0.0.2"), WithDstAddr("192.168.1.2"))
-		g.Register(pkt1)
-		g.Register(pkt2)
+		g.RegisterPackets(pkt1, pkt2)
 		g.Send()
 		received := <-egress
 		Expect(received).To(HaveLen(2))
@@ -154,7 +150,7 @@ func TestGeneratorStart(t *testing.T) {
 		rate := time.Millisecond * 50
 		g := NewGenerator("test-generator", WithRate(rate), WithEgress(egress))
 		pkt := NewPacket(WithProto(6))
-		g.Register(pkt)
+		g.RegisterPackets(pkt)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		g.Start(ctx)
@@ -172,7 +168,7 @@ func TestGeneratorStart(t *testing.T) {
 		rate := time.Millisecond * 50
 		g := NewGenerator("test-generator", WithRate(rate), WithEgress(egress))
 		pkt := NewPacket(WithProto(6))
-		g.Register(pkt)
+		g.RegisterPackets(pkt)
 
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*500)
 		defer cancel()
