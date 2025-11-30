@@ -159,15 +159,12 @@ func TestGeneratorStart(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		g.Start(ctx)
 
-		// Wait for at least one send
-		time.Sleep(time.Millisecond * 100)
+		// Use Eventually to wait for at least one packet to be sent
+		Eventually(func() int {
+			return len(egress)
+		}, time.Second, time.Millisecond*10).Should(BeNumerically(">=", 1))
+
 		cancel()
-
-		// Allow time for goroutine to exit
-		time.Sleep(time.Millisecond * 50)
-
-		// Should have received at least one packet batch
-		Expect(len(egress)).To(BeNumerically(">=", 1))
 	})
 
 	t.Run("start with context timeout", func(t *testing.T) {
@@ -177,14 +174,13 @@ func TestGeneratorStart(t *testing.T) {
 		pkt := NewPacket(WithProto(6))
 		g.Register(pkt)
 
-		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*150)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*500)
 		defer cancel()
 		g.Start(ctx)
 
-		// Wait for context to timeout
-		time.Sleep(time.Millisecond * 200)
-
-		// Should have received at least one packet batch
-		Expect(len(egress)).To(BeNumerically(">=", 1))
+		// Use Eventually to wait for at least one packet to be sent
+		Eventually(func() int {
+			return len(egress)
+		}, time.Second, time.Millisecond*10).Should(BeNumerically(">=", 1))
 	})
 }
