@@ -37,7 +37,7 @@ func (a Action) Validate() error {
 	case Accept, Drop, Reject, Log:
 		return nil
 	default:
-		return fmt.Errorf("Undefined action %v", a)
+		return fmt.Errorf("undefined action %v", a)
 	}
 }
 
