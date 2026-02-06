@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"go.yaml.in/yaml/v3"
+	"github.com/goccy/go-yaml"
 )
 
 // Config represents the top-level configuration structure
