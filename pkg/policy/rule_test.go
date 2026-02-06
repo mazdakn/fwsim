@@ -175,7 +175,7 @@ func TestMustParseCIDRPanic(t *testing.T) {
 
 	tests := []string{
 		"invalid-cidr",
-		"10.10.10.1",        // Missing prefix length
+		"10.10.10.1",         // Missing prefix length
 		"256.256.256.256/32", // Invalid IP
 		"not-an-ip/24",
 	}

@@ -11,5 +11,4 @@ func New(input string) *Engine {
 }
 
 func (e *Engine) Validate() {
-
 }
