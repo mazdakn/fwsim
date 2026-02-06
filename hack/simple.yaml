@@ -1,21 +1,19 @@
-Policies:
-  - match:
-    - src: 192.168.1.0/24:*
-      dst: 1.1.1.1:80
-      proto: tcp
+rules:
+  - src_net: 192.168.1.0/24
+    dst_net: 1.1.1.1:80
+    dst_port: 80
+    protocol: tcp
     action: accept
-  - match:
-    - dst: 1.1.1.1:80
-      proto: 80
-    action: Drop
+  - dst_net: 1.1.1.1
+    dst_port: 80
+    protocol: 80
+    action: drop
 traffic:
-  - src: 192.168.10.1:*
-    dst: 1.1.1.1:80
-    proto: tcp
-    result: Accept
-  - src: "*"
-    dst: 2.2.2.2:*
+  - src_net: 192.168.10.1
+    dst_net: 1.1.1.1
+    dst_port: 80
+    protocol: tcp
+    result: accept
+  - dst_net: 2.2.2.2
     proto: udp
-    result: Reject
-
-
+    result: reject

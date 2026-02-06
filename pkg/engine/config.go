@@ -7,19 +7,21 @@ import (
 
 	"github.com/goccy/go-yaml"
 	"github.com/mazdakn/fwsim/pkg/policy"
+	"github.com/mazdakn/fwsim/pkg/traffic"
 )
 
 type Config struct {
-	Rules []RuleConfig `yaml:"rules"`
+	Rules   []RuleConfig   `yaml:"rules,omitempty"`
+	Packets []PacketConfig `yaml:"packets,omitempty"`
 }
 
 type RuleConfig struct {
-	SrcNet   string  `yaml:"src_net"`
-	DstNet   string  `yaml:"dst_net"`
-	Protocol *uint8  `yaml:"protocol"`
-	SrcPort  *uint16 `yaml:"src_port"`
-	DstPort  *uint16 `yaml:"dst_port"`
-	Action   string  `yaml:"action"`
+	SrcNet   string  `yaml:"src_net,omitempty"`
+	DstNet   string  `yaml:"dst_net,omitempty"`
+	Protocol *uint8  `yaml:"protocol,omitempty"`
+	SrcPort  *uint16 `yaml:"src_port,omitempty"`
+	DstPort  *uint16 `yaml:"dst_port,omitempty"`
+	Action   string  `yaml:"action,omitempty"`
 }
 
 func LoadConfig(path string) (*Config, error) {
@@ -77,4 +79,31 @@ func (c *Config) ToPolicyRules() ([]policy.Rule, error) {
 		rules = append(rules, *rule)
 	}
 	return rules, nil
+}
+
+type PacketConfig struct {
+	SrcAddr  string `yaml:"src_addr,omitempty"`
+	DstAddr  string `yaml:"dst_addr,omitempty"`
+	Protocol uint8  `yaml:"protocol,omitempty"`
+	SrcPort  uint16 `yaml:"src_port,omitempty"`
+	DstPort  uint16 `yaml:"dst_port,omitempty"`
+}
+
+func (c *Config) ToPackets() ([]traffic.Packet, error) {
+	var packets []traffic.Packet
+	for _, pc := range c.Packets {
+		var opts []traffic.PacketOption
+		if pc.SrcAddr != "" {
+			opts = append(opts, traffic.WithSrcAddr(pc.SrcAddr))
+		}
+		if pc.DstAddr != "" {
+			opts = append(opts, traffic.WithDstAddr(pc.DstAddr))
+		}
+		opts = append(opts, traffic.WithProto(pc.Protocol))
+		opts = append(opts, traffic.WithSrcPort(pc.SrcPort))
+		opts = append(opts, traffic.WithDstPort(pc.DstPort))
+
+		packets = append(packets, *traffic.NewPacket(opts...))
+	}
+	return packets, nil
 }

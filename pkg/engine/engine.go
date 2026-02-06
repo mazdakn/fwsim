@@ -1,11 +1,15 @@
 package engine
 
-import "github.com/mazdakn/fwsim/pkg/policy"
+import (
+	"github.com/mazdakn/fwsim/pkg/policy"
+	"github.com/mazdakn/fwsim/pkg/traffic"
+)
 
 type Engine struct {
 	input string
 
-	store *policy.Store
+	store   *policy.Store
+	packets []traffic.Packet
 }
 
 func New(input string) *Engine {
@@ -30,5 +34,12 @@ func (e *Engine) LoadRules(path string) error {
 	for _, r := range rules {
 		e.store.AddRule(r)
 	}
+
+	packets, err := cfg.ToPackets()
+	if err != nil {
+		return err
+	}
+	e.packets = append(e.packets, packets...)
+
 	return nil
 }
