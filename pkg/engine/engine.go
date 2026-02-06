@@ -17,3 +17,18 @@ func New(input string) *Engine {
 
 func (e *Engine) Validate() {
 }
+
+func (e *Engine) LoadRules(path string) error {
+	cfg, err := LoadConfig(path)
+	if err != nil {
+		return err
+	}
+	rules, err := cfg.ToPolicyRules()
+	if err != nil {
+		return err
+	}
+	for _, r := range rules {
+		e.store.AddRule(r)
+	}
+	return nil
+}

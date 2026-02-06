@@ -24,3 +24,7 @@ func (s *Store) Match(pkt *traffic.Packet) (int, *Rule) {
 	logrus.Debug("No rule matched")
 	return -1, nil
 }
+
+func (s *Store) AddRule(r Rule) {
+	s.rules = append(s.rules, r)
+}
