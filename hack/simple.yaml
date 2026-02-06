@@ -1,6 +1,13 @@
 Policies:
-  - match: tcp(192.168.1.0/24:*->1.1.1.1:80)
+  - match:
+    - src: 192.168.1.0/24:*
+      dst: 1.1.1.1:80
+      proto: tcp
     action: accept
+  - match:
+    - dst: 1.1.1.1:80
+      proto: 80
+    action: Drop
 traffic:
   - src: 192.168.10.1:*
     dst: 1.1.1.1:80
