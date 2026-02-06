@@ -5,6 +5,7 @@ go 1.24.1
 require (
 	github.com/onsi/gomega v1.38.2
 	github.com/sirupsen/logrus v1.9.3
+	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
 )
 
 require (

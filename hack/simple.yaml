@@ -13,7 +13,7 @@ traffic:
     dst: 1.1.1.1:80
     proto: tcp
     result: Accept
-  - src: *
+  - src: "*"
     dst: 2.2.2.2:*
     proto: udp
     result: Reject
