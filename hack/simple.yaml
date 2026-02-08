@@ -1,19 +1,26 @@
 rules:
   - src_net: 192.168.1.0/24
-    dst_net: 1.1.1.1:80
+    dst_net: 1.1.1.1/32
     dst_port: 80
-    protocol: tcp
-    action: accept
-  - dst_net: 1.1.1.1
+    src_port: 30000
+    proto: 7
+    action: Accept
+  - dst_net: 1.1.1.1/32
     dst_port: 80
-    protocol: 80
-    action: drop
-traffic:
-  - src_net: 192.168.10.1
-    dst_net: 1.1.1.1
-    dst_port: 80
-    protocol: tcp
-    result: accept
-  - dst_net: 2.2.2.2
-    proto: udp
-    result: reject
+    proto: 7
+    action: Drop
+expectations:
+  - result: Accept
+    packet:
+      src_addr: 192.168.1.10
+      dst_addr: 1.1.1.1
+      dst_port: 80
+      src_port: 30000
+      proto: 7
+  - result: Drop
+    packet:
+      src_addr: 192.168.2.20
+      dst_addr: 1.1.1.1
+      dst_port: 80
+      src_port: 30000
+      proto: 7

@@ -23,10 +23,6 @@ func (a Action) String() string {
 		return "Accept"
 	case Drop:
 		return "Drop"
-	case Reject:
-		return "Reject"
-	case Log:
-		return "Log"
 	default:
 		return fmt.Sprintf("Undefined(%d)", a)
 	}

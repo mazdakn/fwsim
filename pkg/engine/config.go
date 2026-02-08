@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
 
 	"github.com/goccy/go-yaml"
 	"github.com/mazdakn/fwsim/pkg/policy"
@@ -11,14 +12,14 @@ import (
 )
 
 type Config struct {
-	Rules   []RuleConfig   `yaml:"rules,omitempty"`
-	Packets []PacketConfig `yaml:"packets,omitempty"`
+	Rules        []RuleConfig  `yaml:"rules,omitempty"`
+	Expectations []Expectation `yaml:"expectations,omitempty"`
 }
 
 type RuleConfig struct {
 	SrcNet   string  `yaml:"src_net,omitempty"`
 	DstNet   string  `yaml:"dst_net,omitempty"`
-	Protocol *uint8  `yaml:"protocol,omitempty"`
+	Protocol *uint8  `yaml:"proto,omitempty"`
 	SrcPort  *uint16 `yaml:"src_port,omitempty"`
 	DstPort  *uint16 `yaml:"dst_port,omitempty"`
 	Action   string  `yaml:"action,omitempty"`
@@ -64,15 +65,11 @@ func (c *Config) ToPolicyRules() ([]policy.Rule, error) {
 
 		rule := policy.NewRule(opts...)
 
-		switch rc.Action {
-		case "Allow", "Accept":
+		switch strings.ToLower(rc.Action) {
+		case "accept":
 			rule.Action = policy.Accept
-		case "Drop":
+		case "drop": // Drop or Deny?
 			rule.Action = policy.Drop
-		case "Reject":
-			rule.Action = policy.Reject
-		case "Log":
-			rule.Action = policy.Log
 		default:
 			return nil, fmt.Errorf("unknown action: %s", rc.Action)
 		}
@@ -81,29 +78,38 @@ func (c *Config) ToPolicyRules() ([]policy.Rule, error) {
 	return rules, nil
 }
 
-type PacketConfig struct {
-	SrcAddr  string `yaml:"src_addr,omitempty"`
-	DstAddr  string `yaml:"dst_addr,omitempty"`
-	Protocol uint8  `yaml:"protocol,omitempty"`
-	SrcPort  uint16 `yaml:"src_port,omitempty"`
-	DstPort  uint16 `yaml:"dst_port,omitempty"`
+type Expectation struct {
+	Result string       `yaml:"result,omitempty"`
+	Packet PacketConfig `yaml:"packet,omitempty"`
 }
 
-func (c *Config) ToPackets() ([]traffic.Packet, error) {
-	var packets []traffic.Packet
-	for _, pc := range c.Packets {
-		var opts []traffic.PacketOption
-		if pc.SrcAddr != "" {
-			opts = append(opts, traffic.WithSrcAddr(pc.SrcAddr))
-		}
-		if pc.DstAddr != "" {
-			opts = append(opts, traffic.WithDstAddr(pc.DstAddr))
-		}
-		opts = append(opts, traffic.WithProto(pc.Protocol))
-		opts = append(opts, traffic.WithSrcPort(pc.SrcPort))
-		opts = append(opts, traffic.WithDstPort(pc.DstPort))
+// TODO: maybe use model.Packet directly
+// TODO: all fields must be set. Consider using CEL to validate.
+type PacketConfig struct {
+	SrcAddr string `yaml:"src_addr,omitempty"`
+	DstAddr string `yaml:"dst_addr,omitempty"`
+	Proto   uint8  `yaml:"proto,omitempty"`
+	SrcPort uint16 `yaml:"src_port,omitempty"`
+	DstPort uint16 `yaml:"dst_port,omitempty"`
+}
 
-		packets = append(packets, *traffic.NewPacket(opts...))
+func (c *Config) ToPacket(pc PacketConfig) (*traffic.Packet, error) {
+	var opts []traffic.PacketOption
+	// TODO: must validate src and dst addr
+	if pc.SrcAddr != "" {
+		if ip := net.ParseIP(pc.SrcAddr); ip == nil {
+			return nil, fmt.Errorf("invalid src addr %s", pc.SrcAddr)
+		}
+		opts = append(opts, traffic.WithSrcAddr(pc.SrcAddr))
 	}
-	return packets, nil
+	if pc.DstAddr != "" {
+		if ip := net.ParseIP(pc.DstAddr); ip == nil {
+			return nil, fmt.Errorf("invalid dst addr %s", pc.DstAddr)
+		}
+		opts = append(opts, traffic.WithDstAddr(pc.DstAddr))
+	}
+	opts = append(opts, traffic.WithProto(pc.Proto))
+	opts = append(opts, traffic.WithSrcPort(pc.SrcPort))
+	opts = append(opts, traffic.WithDstPort(pc.DstPort))
+	return traffic.NewPacket(opts...), nil
 }
