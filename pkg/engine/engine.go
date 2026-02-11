@@ -11,8 +11,7 @@ import (
 type Engine struct {
 	config *Config
 
-	store        *policy.Store
-	expectations []Expectation
+	store *policy.Store
 }
 
 func New() *Engine {

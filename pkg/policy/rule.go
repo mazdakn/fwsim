@@ -13,8 +13,6 @@ type Action int
 const (
 	Accept Action = iota
 	Drop
-	Reject
-	Log
 )
 
 func (a Action) String() string {
@@ -30,7 +28,7 @@ func (a Action) String() string {
 
 func (a Action) Validate() error {
 	switch a {
-	case Accept, Drop, Reject, Log:
+	case Accept, Drop:
 		return nil
 	default:
 		return fmt.Errorf("undefined action %v", a)

@@ -130,8 +130,6 @@ func TestActionString(t *testing.T) {
 	}{
 		{Accept, "Accept"},
 		{Drop, "Drop"},
-		{Reject, "Reject"},
-		{Log, "Log"},
 		{Action(999), "Undefined(999)"},
 	}
 
@@ -152,8 +150,6 @@ func TestActionValidate(t *testing.T) {
 	}{
 		{"Accept is valid", Accept, false},
 		{"Drop is valid", Drop, false},
-		{"Reject is valid", Reject, false},
-		{"Log is valid", Log, false},
 		{"Undefined action is invalid", Action(999), true},
 		{"Another undefined action is invalid", Action(-1), true},
 	}
