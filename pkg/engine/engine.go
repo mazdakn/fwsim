@@ -1,6 +1,9 @@
 package engine
 
 import (
+	"os"
+
+	"github.com/goccy/go-yaml"
 	"github.com/mazdakn/fwsim/pkg/policy"
 	"github.com/sirupsen/logrus"
 )
@@ -16,6 +19,28 @@ func New() *Engine {
 	return &Engine{
 		store: policy.NewStore(),
 	}
+}
+
+func (e *Engine) LoadConfig(path string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	var cfg Config
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		return err
+	}
+
+	rules, err := cfg.ToPolicyRules()
+	if err != nil {
+		return err
+	}
+	for _, r := range rules {
+		e.store.AddRule(r)
+	}
+
+	e.config = &cfg
+	return nil
 }
 
 func (e *Engine) Validate() {
@@ -36,21 +61,4 @@ func (e *Engine) Validate() {
 			logrus.Errorf("Expectation %d not met", index)
 		}
 	}
-}
-
-func (e *Engine) LoadConfig(path string) error {
-	cfg, err := LoadConfig(path)
-	if err != nil {
-		return err
-	}
-	rules, err := cfg.ToPolicyRules()
-	if err != nil {
-		return err
-	}
-	for _, r := range rules {
-		e.store.AddRule(r)
-	}
-
-	e.config = cfg
-	return nil
 }

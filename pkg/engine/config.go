@@ -3,10 +3,8 @@ package engine
 import (
 	"fmt"
 	"net"
-	"os"
 	"strings"
 
-	"github.com/goccy/go-yaml"
 	"github.com/mazdakn/fwsim/pkg/policy"
 	"github.com/mazdakn/fwsim/pkg/traffic"
 )
@@ -23,18 +21,6 @@ type RuleConfig struct {
 	SrcPort  *uint16 `yaml:"src_port,omitempty"`
 	DstPort  *uint16 `yaml:"dst_port,omitempty"`
 	Action   string  `yaml:"action,omitempty"`
-}
-
-func LoadConfig(path string) (*Config, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	var cfg Config
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
-		return nil, err
-	}
-	return &cfg, nil
 }
 
 func (c *Config) ToPolicyRules() ([]policy.Rule, error) {
