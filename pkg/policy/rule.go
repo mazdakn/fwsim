@@ -86,7 +86,7 @@ type Rule struct {
 	Action Action
 }
 
-func (r *Rule) match(pkt *traffic.Packet) bool {
+func (r *Rule) Match(pkt *traffic.Packet) bool {
 	if r.Protocol != nil && *r.Protocol != pkt.Protocol {
 		return false
 	}

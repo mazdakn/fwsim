@@ -5,19 +5,18 @@ import (
 
 	"github.com/goccy/go-yaml"
 	"github.com/mazdakn/fwsim/pkg/policy"
+	"github.com/mazdakn/fwsim/pkg/traffic"
 	"github.com/sirupsen/logrus"
 )
 
 type Engine struct {
 	config *Config
 
-	store *policy.Store
+	rules []policy.Rule
 }
 
 func New() *Engine {
-	return &Engine{
-		store: policy.NewStore(),
-	}
+	return &Engine{}
 }
 
 func (e *Engine) LoadConfig(path string) error {
@@ -34,10 +33,8 @@ func (e *Engine) LoadConfig(path string) error {
 	if err != nil {
 		return err
 	}
-	for _, r := range rules {
-		e.store.AddRule(r)
-	}
 
+	e.rules = append(e.rules, rules...)
 	e.config = &cfg
 	return nil
 }
@@ -50,7 +47,7 @@ func (e *Engine) Validate() {
 			continue
 		}
 
-		_, r := e.store.Match(pkt)
+		_, r := e.Match(pkt)
 		expA := r.Action.String()
 		expB := exp.Result
 
@@ -60,4 +57,16 @@ func (e *Engine) Validate() {
 			logrus.Errorf("Expectation %d not met", index)
 		}
 	}
+}
+
+func (e *Engine) Match(pkt *traffic.Packet) (int, *policy.Rule) {
+	logrus.Debugf("Matching packet %+v", pkt)
+	for i, r := range e.rules {
+		if r.Match(pkt) {
+			logrus.Debugf("Rule %+v matched", r)
+			return i, &r
+		}
+	}
+	logrus.Debug("No rule matched")
+	return -1, nil
 }

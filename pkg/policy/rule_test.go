@@ -32,7 +32,7 @@ func TestEmptyRule(t *testing.T) {
 	}
 	for _, pkt := range pkts {
 		t.Run(pkt.String(), func(t *testing.T) {
-			Expect(rule.match(pkt)).To(BeTrue())
+			Expect(rule.Match(pkt)).To(BeTrue())
 		})
 	}
 }
@@ -55,7 +55,7 @@ func TestRuleIPFamilyMismatch(t *testing.T) {
 	}
 	for _, r := range ipv4Rules {
 		t.Run(fmt.Sprintf("IPv4 rule %v should not match IPv6 packet", r.String()), func(t *testing.T) {
-			Expect(r.match(pktV6)).To(BeFalse())
+			Expect(r.Match(pktV6)).To(BeFalse())
 		})
 	}
 
@@ -74,7 +74,7 @@ func TestRuleIPFamilyMismatch(t *testing.T) {
 	}
 	for _, r := range ipv6Rules {
 		t.Run(fmt.Sprintf("IPv6 rule %v should not match IPv4 packet", r.String()), func(t *testing.T) {
-			Expect(r.match(pktV4)).To(BeFalse())
+			Expect(r.Match(pktV4)).To(BeFalse())
 		})
 	}
 }
@@ -92,10 +92,10 @@ func TestRuleMatch(t *testing.T) {
 	)
 	for _, r := range makeCommonRules("10.10.10.0/24", "1.1.1.1/32", 17, 55555, 53) {
 		t.Run(fmt.Sprintf("should match %v", r.String()), func(t *testing.T) {
-			Expect(r.match(pktShouldMatch)).To(BeTrue())
+			Expect(r.Match(pktShouldMatch)).To(BeTrue())
 		})
 		t.Run(fmt.Sprintf("should not match %v", r.String()), func(t *testing.T) {
-			Expect(r.match(pktShouldNotMatch)).To(BeFalse())
+			Expect(r.Match(pktShouldNotMatch)).To(BeFalse())
 		})
 	}
 }
@@ -113,10 +113,10 @@ func TestRuleMatchV6(t *testing.T) {
 	)
 	for _, r := range makeCommonRules("dead:beef::/64", "cafe::/112", 6, 44444, 80) {
 		t.Run(fmt.Sprintf("should match %v", r.String()), func(t *testing.T) {
-			Expect(r.match(pktShouldMatch)).To(BeTrue())
+			Expect(r.Match(pktShouldMatch)).To(BeTrue())
 		})
 		t.Run(fmt.Sprintf("should not match %v", r.String()), func(t *testing.T) {
-			Expect(r.match(pktShouldNotMatch)).To(BeFalse())
+			Expect(r.Match(pktShouldNotMatch)).To(BeFalse())
 		})
 	}
 }
