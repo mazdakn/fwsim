@@ -41,19 +41,28 @@ func (a *Action) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err := unmarshal(&s); err != nil {
 		return err
 	}
-	switch strings.ToLower(s) {
-	case "accept":
-		*a = Accept
-	case "drop":
-		*a = Drop
-	default:
-		return fmt.Errorf("unknown action: %s", s)
+	action, err := ParseAction(s)
+	if err != nil {
+		return err
 	}
+	*a = action
 	return nil
 }
 
 func (a Action) MarshalYAML() (interface{}, error) {
 	return a.String(), nil
+}
+
+// ParseAction parses an action string into an Action type
+func ParseAction(s string) (Action, error) {
+	switch strings.ToLower(s) {
+	case "accept":
+		return Accept, nil
+	case "drop":
+		return Drop, nil
+	default:
+		return Action(0), fmt.Errorf("unknown action: %s", s)
+	}
 }
 
 type RuleOption func(*Rule)
@@ -197,15 +206,12 @@ func (r *Rule) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	r.SrcPort = ry.SrcPort
 	r.DstPort = ry.DstPort
 
-	// Parse Action using Action.UnmarshalYAML
-	unmarshalAction := func(v interface{}) error {
-		s := v.(*string)
-		*s = ry.Action
-		return nil
-	}
-	if err := r.Action.UnmarshalYAML(unmarshalAction); err != nil {
+	// Parse Action using the helper function
+	action, err := ParseAction(ry.Action)
+	if err != nil {
 		return err
 	}
+	r.Action = action
 
 	return nil
 }

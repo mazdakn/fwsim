@@ -14,7 +14,8 @@ type Config struct {
 }
 
 func (c *Config) ToPolicyRules() ([]model.Rule, error) {
-	// Rules are already in the correct format, just return them
+	// Rules are already in the correct format and validated during YAML unmarshaling
+	// in Rule.UnmarshalYAML, so we just return them directly
 	return c.Rules, nil
 }
 

@@ -341,3 +341,35 @@ func TestActionYAMLUnmarshaling(t *testing.T) {
 		})
 	}
 }
+
+func TestParseAction(t *testing.T) {
+	RegisterTestingT(t)
+
+	tests := []struct {
+		input     string
+		expected  Action
+		shouldErr bool
+	}{
+		{"accept", Accept, false},
+		{"Accept", Accept, false},
+		{"ACCEPT", Accept, false},
+		{"drop", Drop, false},
+		{"Drop", Drop, false},
+		{"DROP", Drop, false},
+		{"invalid", Action(0), true},
+		{"", Action(0), true},
+		{"deny", Action(0), true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			action, err := ParseAction(tt.input)
+			if tt.shouldErr {
+				Expect(err).To(HaveOccurred())
+			} else {
+				Expect(err).ToNot(HaveOccurred())
+				Expect(action).To(Equal(tt.expected))
+			}
+		})
+	}
+}
