@@ -3,65 +3,19 @@ package engine
 import (
 	"fmt"
 	"net"
-	"strings"
 
 	"github.com/mazdakn/fwsim/internal/model"
 	"github.com/mazdakn/fwsim/internal/traffic"
 )
 
 type Config struct {
-	Rules        []RuleConfig  `yaml:"rules,omitempty"`
+	Rules        []model.Rule  `yaml:"rules,omitempty"`
 	Expectations []Expectation `yaml:"expectations,omitempty"`
 }
 
-type RuleConfig struct {
-	SrcNet   string  `yaml:"src_net,omitempty"`
-	DstNet   string  `yaml:"dst_net,omitempty"`
-	Protocol *uint8  `yaml:"proto,omitempty"`
-	SrcPort  *uint16 `yaml:"src_port,omitempty"`
-	DstPort  *uint16 `yaml:"dst_port,omitempty"`
-	Action   string  `yaml:"action,omitempty"`
-}
-
 func (c *Config) ToPolicyRules() ([]model.Rule, error) {
-	var rules []model.Rule
-	for _, rc := range c.Rules {
-		var opts []model.RuleOption
-		if rc.SrcNet != "" {
-			if _, _, err := net.ParseCIDR(rc.SrcNet); err != nil {
-				return nil, fmt.Errorf("invalid src_net %s: %w", rc.SrcNet, err)
-			}
-			opts = append(opts, model.WithSrcNet(rc.SrcNet))
-		}
-		if rc.DstNet != "" {
-			if _, _, err := net.ParseCIDR(rc.DstNet); err != nil {
-				return nil, fmt.Errorf("invalid dst_net %s: %w", rc.DstNet, err)
-			}
-			opts = append(opts, model.WithDstNet(rc.DstNet))
-		}
-		if rc.Protocol != nil {
-			opts = append(opts, model.WithProto(*rc.Protocol))
-		}
-		if rc.SrcPort != nil {
-			opts = append(opts, model.WithSrcPort(*rc.SrcPort))
-		}
-		if rc.DstPort != nil {
-			opts = append(opts, model.WithDstPort(*rc.DstPort))
-		}
-
-		rule := model.NewRule(opts...)
-
-		switch strings.ToLower(rc.Action) {
-		case "accept":
-			rule.Action = model.Accept
-		case "drop": // Drop or Deny?
-			rule.Action = model.Drop
-		default:
-			return nil, fmt.Errorf("unknown action: %s", rc.Action)
-		}
-		rules = append(rules, *rule)
-	}
-	return rules, nil
+	// Rules are already in the correct format, just return them
+	return c.Rules, nil
 }
 
 type Expectation struct {
