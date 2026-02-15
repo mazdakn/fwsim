@@ -410,3 +410,36 @@ func TestRulePacketCounter(t *testing.T) {
 	Expect(rule.Match(pktMatch)).To(BeTrue())
 	Expect(rule.GetPacketCount()).To(Equal(uint64(1)))
 }
+
+func TestRulePacketCounterConcurrency(t *testing.T) {
+	RegisterTestingT(t)
+
+	rule := NewRule(WithProto(17), WithDstPort(53))
+	pktMatch := traffic.NewPacket(
+		traffic.WithSrcAddr("10.10.10.1"), traffic.WithSrcPort(55555), traffic.WithProto(17),
+		traffic.WithDstAddr("1.1.1.1"), traffic.WithDstPort(53),
+	)
+
+	// Concurrently match packets to test thread-safety
+	numGoroutines := 100
+	matchesPerGoroutine := 100
+	expectedCount := uint64(numGoroutines * matchesPerGoroutine)
+
+	done := make(chan bool)
+	for i := 0; i < numGoroutines; i++ {
+		go func() {
+			for j := 0; j < matchesPerGoroutine; j++ {
+				rule.Match(pktMatch)
+			}
+			done <- true
+		}()
+	}
+
+	// Wait for all goroutines to finish
+	for i := 0; i < numGoroutines; i++ {
+		<-done
+	}
+
+	// Verify the counter is correct
+	Expect(rule.GetPacketCount()).To(Equal(expectedCount))
+}
