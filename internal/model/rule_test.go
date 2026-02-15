@@ -1,10 +1,10 @@
-package policy
+package model
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/mazdakn/fwsim/pkg/traffic"
+	"github.com/mazdakn/fwsim/internal/traffic"
 	. "github.com/onsi/gomega"
 )
 

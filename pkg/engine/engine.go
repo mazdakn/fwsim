@@ -4,15 +4,15 @@ import (
 	"os"
 
 	"github.com/goccy/go-yaml"
-	"github.com/mazdakn/fwsim/pkg/policy"
-	"github.com/mazdakn/fwsim/pkg/traffic"
+	"github.com/mazdakn/fwsim/internal/model"
+	"github.com/mazdakn/fwsim/internal/traffic"
 	"github.com/sirupsen/logrus"
 )
 
 type Engine struct {
 	config *Config
 
-	rules []policy.Rule
+	rules []model.Rule
 }
 
 func New() *Engine {
@@ -59,7 +59,7 @@ func (e *Engine) Validate() {
 	}
 }
 
-func (e *Engine) Match(pkt *traffic.Packet) (int, *policy.Rule) {
+func (e *Engine) Match(pkt *traffic.Packet) (int, *model.Rule) {
 	logrus.Debugf("Matching packet %+v", pkt)
 	for i, r := range e.rules {
 		if r.Match(pkt) {

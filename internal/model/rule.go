@@ -1,11 +1,11 @@
-package policy
+package model
 
 import (
 	"fmt"
 	"net"
 	"strconv"
 
-	"github.com/mazdakn/fwsim/pkg/traffic"
+	"github.com/mazdakn/fwsim/internal/traffic"
 )
 
 type Action int
