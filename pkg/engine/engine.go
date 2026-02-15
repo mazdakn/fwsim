@@ -41,13 +41,12 @@ func (e *Engine) LoadConfig(path string) error {
 
 func (e *Engine) Validate() {
 	for index, exp := range e.config.Expectations {
-		pkt, err := e.config.ToPacket(exp.Packet)
-		if err != nil {
-			logrus.WithError(err).Errorf("failed to parse packet: %#v - Skipping.", exp.Packet)
+		if exp.Packet == nil {
+			logrus.Errorf("Expectation %d has no packet - Skipping.", index)
 			continue
 		}
 
-		_, r := e.Match(pkt)
+		_, r := e.Match(exp.Packet)
 		expA := r.Action.String()
 		expB := exp.Result
 
