@@ -20,4 +20,3 @@ type Expectation struct {
 	Result string          `yaml:"result,omitempty"`
 	Packet *traffic.Packet `yaml:"packet,omitempty"`
 }
-
