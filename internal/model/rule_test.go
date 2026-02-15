@@ -219,12 +219,6 @@ func makeCommonRules(srcNet, dstNet string, proto uint8, srcPort, dstPort uint16
 func TestRuleYAMLMarshaling(t *testing.T) {
 	RegisterTestingT(t)
 
-	// Import yaml package for testing
-	yaml := func() interface{} {
-		type testYAML struct{}
-		return testYAML{}
-	}
-
 	proto := uint8(17)
 	srcPort := uint16(55555)
 	dstPort := uint16(53)
@@ -252,19 +246,10 @@ func TestRuleYAMLMarshaling(t *testing.T) {
 	Expect(*yamlMap.SrcPort).To(Equal(srcPort))
 	Expect(*yamlMap.DstPort).To(Equal(dstPort))
 	Expect(yamlMap.Action).To(Equal("Accept"))
-
-	_ = yaml
 }
 
 func TestRuleYAMLUnmarshaling(t *testing.T) {
 	RegisterTestingT(t)
-
-	yamlString := `src_net: 192.168.1.0/24
-dst_net: 1.1.1.1/32
-proto: 7
-src_port: 30000
-dst_port: 80
-action: Drop`
 
 	// Simulate unmarshal
 	var rule Rule
@@ -297,8 +282,6 @@ action: Drop`
 	Expect(rule.DstPort).ToNot(BeNil())
 	Expect(*rule.DstPort).To(Equal(uint16(80)))
 	Expect(rule.Action).To(Equal(Drop))
-
-	_ = yamlString
 }
 
 func TestActionYAMLMarshaling(t *testing.T) {

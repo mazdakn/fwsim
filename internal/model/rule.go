@@ -197,14 +197,14 @@ func (r *Rule) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	r.SrcPort = ry.SrcPort
 	r.DstPort = ry.DstPort
 
-	// Parse Action
-	switch strings.ToLower(ry.Action) {
-	case "accept":
-		r.Action = Accept
-	case "drop":
-		r.Action = Drop
-	default:
-		return fmt.Errorf("unknown action: %s", ry.Action)
+	// Parse Action using Action.UnmarshalYAML
+	unmarshalAction := func(v interface{}) error {
+		s := v.(*string)
+		*s = ry.Action
+		return nil
+	}
+	if err := r.Action.UnmarshalYAML(unmarshalAction); err != nil {
+		return err
 	}
 
 	return nil
