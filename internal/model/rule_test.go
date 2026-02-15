@@ -373,3 +373,40 @@ func TestParseAction(t *testing.T) {
 		})
 	}
 }
+
+func TestRulePacketCounter(t *testing.T) {
+	RegisterTestingT(t)
+
+	rule := NewRule(WithProto(17), WithDstPort(53))
+	pktMatch := traffic.NewPacket(
+		traffic.WithSrcAddr("10.10.10.1"), traffic.WithSrcPort(55555), traffic.WithProto(17),
+		traffic.WithDstAddr("1.1.1.1"), traffic.WithDstPort(53),
+	)
+	pktNoMatch := traffic.NewPacket(
+		traffic.WithSrcAddr("10.10.10.1"), traffic.WithSrcPort(55555), traffic.WithProto(6),
+		traffic.WithDstAddr("1.1.1.1"), traffic.WithDstPort(80),
+	)
+
+	// Initially, packet count should be 0
+	Expect(rule.GetPacketCount()).To(Equal(uint64(0)))
+
+	// Match a packet, count should increment to 1
+	Expect(rule.Match(pktMatch)).To(BeTrue())
+	Expect(rule.GetPacketCount()).To(Equal(uint64(1)))
+
+	// Match another packet, count should increment to 2
+	Expect(rule.Match(pktMatch)).To(BeTrue())
+	Expect(rule.GetPacketCount()).To(Equal(uint64(2)))
+
+	// Non-matching packet should not increment counter
+	Expect(rule.Match(pktNoMatch)).To(BeFalse())
+	Expect(rule.GetPacketCount()).To(Equal(uint64(2)))
+
+	// Reset counter
+	rule.ResetPacketCount()
+	Expect(rule.GetPacketCount()).To(Equal(uint64(0)))
+
+	// Match after reset should increment from 0
+	Expect(rule.Match(pktMatch)).To(BeTrue())
+	Expect(rule.GetPacketCount()).To(Equal(uint64(1)))
+}

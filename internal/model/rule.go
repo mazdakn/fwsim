@@ -5,6 +5,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"sync/atomic"
 
 	"github.com/mazdakn/fwsim/internal/traffic"
 )
@@ -114,6 +115,8 @@ type Rule struct {
 	DstPort *uint16
 
 	Action Action
+
+	packetCount uint64
 }
 
 func (r *Rule) Match(pkt *traffic.Packet) bool {
@@ -132,7 +135,16 @@ func (r *Rule) Match(pkt *traffic.Packet) bool {
 	if r.DstNet != nil && !r.DstNet.Contains(pkt.DstAddr) {
 		return false
 	}
+	atomic.AddUint64(&r.packetCount, 1)
 	return true
+}
+
+func (r *Rule) GetPacketCount() uint64 {
+	return atomic.LoadUint64(&r.packetCount)
+}
+
+func (r *Rule) ResetPacketCount() {
+	atomic.StoreUint64(&r.packetCount, 0)
 }
 
 func (r *Rule) String() string {
