@@ -215,3 +215,161 @@ func makeCommonRules(srcNet, dstNet string, proto uint8, srcPort, dstPort uint16
 		NewRule(WithProto(proto), WithSrcPort(srcPort), WithDstPort(dstPort), WithSrcNet(srcNet), WithDstNet(dstNet)),
 	}
 }
+
+func TestRuleYAMLMarshaling(t *testing.T) {
+	RegisterTestingT(t)
+
+	proto := uint8(17)
+	srcPort := uint16(55555)
+	dstPort := uint16(53)
+
+	rule := NewRule(
+		WithProto(proto),
+		WithSrcPort(srcPort),
+		WithDstPort(dstPort),
+		WithSrcNet("10.10.10.0/24"),
+		WithDstNet("1.1.1.1/32"),
+	)
+	rule.Action = Accept
+
+	// Marshal to YAML
+	yamlData, err := rule.MarshalYAML()
+	Expect(err).ToNot(HaveOccurred())
+	Expect(yamlData).ToNot(BeNil())
+
+	// Verify the marshaled data structure
+	yamlMap, ok := yamlData.(ruleYAML)
+	Expect(ok).To(BeTrue())
+	Expect(yamlMap.SrcNet).To(Equal("10.10.10.0/24"))
+	Expect(yamlMap.DstNet).To(Equal("1.1.1.1/32"))
+	Expect(*yamlMap.Protocol).To(Equal(proto))
+	Expect(*yamlMap.SrcPort).To(Equal(srcPort))
+	Expect(*yamlMap.DstPort).To(Equal(dstPort))
+	Expect(yamlMap.Action).To(Equal("Accept"))
+}
+
+func TestRuleYAMLUnmarshaling(t *testing.T) {
+	RegisterTestingT(t)
+
+	// Simulate unmarshal
+	var rule Rule
+	unmarshalFunc := func(v interface{}) error {
+		// Simulate YAML unmarshal by directly setting the ruleYAML struct
+		ry := v.(*ruleYAML)
+		proto := uint8(7)
+		srcPort := uint16(30000)
+		dstPort := uint16(80)
+		ry.SrcNet = "192.168.1.0/24"
+		ry.DstNet = "1.1.1.1/32"
+		ry.Protocol = &proto
+		ry.SrcPort = &srcPort
+		ry.DstPort = &dstPort
+		ry.Action = "Drop"
+		return nil
+	}
+
+	err := rule.UnmarshalYAML(unmarshalFunc)
+	Expect(err).ToNot(HaveOccurred())
+
+	Expect(rule.SrcNet).ToNot(BeNil())
+	Expect(rule.SrcNet.String()).To(Equal("192.168.1.0/24"))
+	Expect(rule.DstNet).ToNot(BeNil())
+	Expect(rule.DstNet.String()).To(Equal("1.1.1.1/32"))
+	Expect(rule.Protocol).ToNot(BeNil())
+	Expect(*rule.Protocol).To(Equal(uint8(7)))
+	Expect(rule.SrcPort).ToNot(BeNil())
+	Expect(*rule.SrcPort).To(Equal(uint16(30000)))
+	Expect(rule.DstPort).ToNot(BeNil())
+	Expect(*rule.DstPort).To(Equal(uint16(80)))
+	Expect(rule.Action).To(Equal(Drop))
+}
+
+func TestActionYAMLMarshaling(t *testing.T) {
+	RegisterTestingT(t)
+
+	tests := []struct {
+		action   Action
+		expected string
+	}{
+		{Accept, "Accept"},
+		{Drop, "Drop"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.expected, func(t *testing.T) {
+			result, err := tt.action.MarshalYAML()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(result).To(Equal(tt.expected))
+		})
+	}
+}
+
+func TestActionYAMLUnmarshaling(t *testing.T) {
+	RegisterTestingT(t)
+
+	tests := []struct {
+		input    string
+		expected Action
+		shouldErr bool
+	}{
+		{"accept", Accept, false},
+		{"Accept", Accept, false},
+		{"ACCEPT", Accept, false},
+		{"drop", Drop, false},
+		{"Drop", Drop, false},
+		{"DROP", Drop, false},
+		{"invalid", Action(0), true},
+		{"", Action(0), true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			var action Action
+			unmarshalFunc := func(v interface{}) error {
+				s := v.(*string)
+				*s = tt.input
+				return nil
+			}
+
+			err := action.UnmarshalYAML(unmarshalFunc)
+			if tt.shouldErr {
+				Expect(err).To(HaveOccurred())
+			} else {
+				Expect(err).ToNot(HaveOccurred())
+				Expect(action).To(Equal(tt.expected))
+			}
+		})
+	}
+}
+
+func TestParseAction(t *testing.T) {
+	RegisterTestingT(t)
+
+	tests := []struct {
+		input     string
+		expected  Action
+		shouldErr bool
+	}{
+		{"accept", Accept, false},
+		{"Accept", Accept, false},
+		{"ACCEPT", Accept, false},
+		{"drop", Drop, false},
+		{"Drop", Drop, false},
+		{"DROP", Drop, false},
+		{"invalid", Action(0), true},
+		{"", Action(0), true},
+		{"deny", Action(0), true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			action, err := ParseAction(tt.input)
+			if tt.shouldErr {
+				Expect(err).To(HaveOccurred())
+			} else {
+				Expect(err).ToNot(HaveOccurred())
+				Expect(action).To(Equal(tt.expected))
+			}
+		})
+	}
+}
