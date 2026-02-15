@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/mazdakn/fwsim/internal/traffic"
@@ -425,20 +426,19 @@ func TestRulePacketCounterConcurrency(t *testing.T) {
 	matchesPerGoroutine := 100
 	expectedCount := uint64(numGoroutines * matchesPerGoroutine)
 
-	done := make(chan bool)
+	var wg sync.WaitGroup
+	wg.Add(numGoroutines)
 	for i := 0; i < numGoroutines; i++ {
 		go func() {
+			defer wg.Done()
 			for j := 0; j < matchesPerGoroutine; j++ {
 				rule.Match(pktMatch)
 			}
-			done <- true
 		}()
 	}
 
 	// Wait for all goroutines to finish
-	for i := 0; i < numGoroutines; i++ {
-		<-done
-	}
+	wg.Wait()
 
 	// Verify the counter is correct
 	Expect(rule.GetPacketCount()).To(Equal(expectedCount))

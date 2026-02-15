@@ -135,6 +135,7 @@ func (r *Rule) Match(pkt *traffic.Packet) bool {
 	if r.DstNet != nil && !r.DstNet.Contains(pkt.DstAddr) {
 		return false
 	}
+	// All conditions passed - increment packet counter
 	atomic.AddUint64(&r.packetCount, 1)
 	return true
 }
