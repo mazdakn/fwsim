@@ -3,10 +3,11 @@ package engine
 import "github.com/sirupsen/logrus"
 
 func (e *Engine) Validate() {
-	e.ValidateExpectations()
+	e.validateExpectations()
+	e.validateAllRulesUsed()
 }
 
-func (e *Engine) ValidateExpectations() {
+func (e *Engine) validateExpectations() {
 	for index, exp := range e.config.Expectations {
 		if exp.Packet == nil {
 			logrus.Errorf("Expectation %d has no packet - Skipping.", index)
@@ -21,6 +22,14 @@ func (e *Engine) ValidateExpectations() {
 			logrus.Infof("Expectation %d met", index)
 		} else {
 			logrus.Errorf("Expectation %d not met", index)
+		}
+	}
+}
+
+func (e *Engine) validateAllRulesUsed() {
+	for i, r := range e.rules {
+		if r.PacketCount() == 0 {
+			logrus.Infof("Rule %v not used", i)
 		}
 	}
 }
