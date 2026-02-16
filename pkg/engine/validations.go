@@ -18,7 +18,7 @@ func (e *Engine) validateExpectations() {
 
 		_, r := e.Match(pkt)
 		if r == nil {
-			logrus.Infof("no rule matched packet %s", exp.Packet)
+			logrus.Infof("no rule matched packet %+v", exp.Packet)
 			continue
 		}
 		expA := r.Action.String()

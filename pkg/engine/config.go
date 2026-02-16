@@ -74,7 +74,7 @@ func (c *Config) validateExpectations() error {
 	for _, e := range c.Expectations {
 		if e.Packet.SrcAddr != "" {
 			if ip := net.ParseIP(e.Packet.SrcAddr); ip == nil {
-				return fmt.Errorf("invalid src_addr %s: %w", e.Packet.SrcAddr)
+				return fmt.Errorf("invalid src_addr %s", e.Packet.SrcAddr)
 			}
 		}
 
