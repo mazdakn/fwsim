@@ -9,6 +9,10 @@ rules:
     dst_port: 80
     proto: 7
     action: Drop
+  - dst_net: 2.2.2.2/32
+    dst_port: 8080
+    proto: 7
+    action: Drop
 expectations:
   - result: Accept
     packet:

@@ -1,6 +1,8 @@
 package engine
 
 import (
+	"fmt"
+	"net"
 	"os"
 
 	"github.com/goccy/go-yaml"
@@ -12,30 +14,71 @@ import (
 type Engine struct {
 	config *Config
 
-	rules []model.Rule
+	rules []*model.Rule
 }
 
 func New() *Engine {
 	return &Engine{}
 }
 
-func (e *Engine) LoadConfig(path string) error {
-	data, err := os.ReadFile(path)
+func (e *Engine) ConfigFromFile(file string) error {
+	data, err := os.ReadFile(file)
 	if err != nil {
 		return err
 	}
-	var cfg Config
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
+	var conf Config
+	if err := yaml.Unmarshal(data, &conf); err != nil {
 		return err
 	}
+	if err := conf.Validate(); err != nil {
+		return err
+	}
+	e.config = &conf
+	return nil
+}
 
-	rules, err := cfg.ToPolicyRules()
+func (e *Engine) Run() error {
+	err := e.loadRules()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to load rules: %w", err)
 	}
 
-	e.rules = append(e.rules, rules...)
-	e.config = &cfg
+	e.Validate()
+	return nil
+}
+
+func (e *Engine) loadRules() error {
+	var err error
+	for _, r := range e.config.Rules {
+		rule := model.NewRule()
+
+		rule.Protocol = r.Protocol
+		rule.SrcPort = r.SrcPort
+		rule.DstPort = r.DstPort
+
+		rule.Action, err = model.ParseAction(r.Action)
+		if err != nil {
+			return fmt.Errorf("invalid action %s", rule.Action)
+		}
+
+		if r.SrcNet != "" {
+			_, ipnet, err := net.ParseCIDR(r.SrcNet)
+			if err != nil {
+				return fmt.Errorf("invalid source net %s: %w", r.SrcNet, err)
+			}
+			rule.SrcNet = ipnet
+		}
+
+		if r.DstNet != "" {
+			_, ipnet, err := net.ParseCIDR(r.DstNet)
+			if err != nil {
+				return fmt.Errorf("invalid destination net %s: %w", r.DstNet, err)
+			}
+			rule.DstNet = ipnet
+		}
+
+		e.rules = append(e.rules, rule)
+	}
 	return nil
 }
 
@@ -44,7 +87,7 @@ func (e *Engine) Match(pkt *traffic.Packet) (int, *model.Rule) {
 	for i, r := range e.rules {
 		if r.Match(pkt) {
 			logrus.Debugf("Rule %+v matched", r)
-			return i, &r
+			return i, r
 		}
 	}
 	logrus.Debug("No rule matched")

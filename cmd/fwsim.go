@@ -23,10 +23,16 @@ func main() {
 
 	e := engine.New()
 
-	err := e.LoadConfig(*input)
+	err := e.ConfigFromFile(*input)
 	if err != nil {
 		logrus.WithError(err).Errorf("failed to load config %s", *input)
 		os.Exit(1)
 	}
-	e.Validate()
+
+	if err := e.Run(); err != nil {
+		logrus.WithError(err).Errorf("failed to run the engine")
+		os.Exit(1)
+	}
+
+	os.Exit(0)
 }
