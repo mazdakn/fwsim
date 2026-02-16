@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/mazdakn/fwsim/internal/traffic"
-	"github.com/mazdakn/fwsim/pkg/engine/config"
+	"github.com/mazdakn/fwsim/internal/model"
 	. "github.com/onsi/gomega"
 )
 
@@ -34,8 +34,8 @@ func TestEngineMatchSingleRule(t *testing.T) {
 	RegisterTestingT(t)
 
 	engine := New()
-	engine.rules = []config.Rule{
-		*config.NewRule(config.WithProto(17), config.WithDstPort(53)),
+	engine.rules = []model.Rule{
+		*model.NewRule(model.WithProto(17), model.WithDstPort(53)),
 	}
 
 	pkt := traffic.NewPacket(
@@ -54,10 +54,10 @@ func TestEngineMatchMultipleRules(t *testing.T) {
 	RegisterTestingT(t)
 
 	engine := New()
-	engine.rules = []config.Rule{
-		*config.NewRule(config.WithProto(6), config.WithDstPort(80)),   // Should not match
-		*config.NewRule(config.WithProto(17), config.WithDstPort(53)),  // Should match
-		*config.NewRule(config.WithProto(17), config.WithDstPort(443)), // Should not be reached
+	engine.rules = []model.Rule{
+		*model.NewRule(model.WithProto(6), model.WithDstPort(80)),   // Should not match
+		*model.NewRule(model.WithProto(17), model.WithDstPort(53)),  // Should match
+		*model.NewRule(model.WithProto(17), model.WithDstPort(443)), // Should not be reached
 	}
 
 	pkt := traffic.NewPacket(
@@ -76,9 +76,9 @@ func TestEngineMatchNoMatch(t *testing.T) {
 	RegisterTestingT(t)
 
 	engine := New()
-	engine.rules = []config.Rule{
-		*config.NewRule(config.WithProto(6), config.WithDstPort(80)),
-		*config.NewRule(config.WithProto(6), config.WithDstPort(443)),
+	engine.rules = []model.Rule{
+		*model.NewRule(model.WithProto(6), model.WithDstPort(80)),
+		*model.NewRule(model.WithProto(6), model.WithDstPort(443)),
 	}
 
 	// Packet with protocol 17 won't match TCP rules
@@ -96,9 +96,9 @@ func TestEngineMatchWithNetworks(t *testing.T) {
 	RegisterTestingT(t)
 
 	engine := New()
-	engine.rules = []config.Rule{
-		*config.NewRule(config.WithSrcNet("192.168.0.0/16")), // Should not match
-		*config.NewRule(config.WithSrcNet("10.10.0.0/16")),   // Should match
+	engine.rules = []model.Rule{
+		*model.NewRule(model.WithSrcNet("192.168.0.0/16")), // Should not match
+		*model.NewRule(model.WithSrcNet("10.10.0.0/16")),   // Should match
 	}
 
 	pkt := traffic.NewPacket(
@@ -116,9 +116,9 @@ func TestEngineMatchIPv6(t *testing.T) {
 	RegisterTestingT(t)
 
 	engine := New()
-	engine.rules = []config.Rule{
-		*config.NewRule(config.WithProto(6), config.WithSrcNet("dead:beef::/64")),
-		*config.NewRule(config.WithDstNet("cafe::/112")),
+	engine.rules = []model.Rule{
+		*model.NewRule(model.WithProto(6), model.WithSrcNet("dead:beef::/64")),
+		*model.NewRule(model.WithDstNet("cafe::/112")),
 	}
 
 	pkt := traffic.NewPacket(

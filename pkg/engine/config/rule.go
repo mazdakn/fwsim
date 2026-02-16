@@ -3,179 +3,10 @@ package config
 import (
 	"fmt"
 	"net"
-	"strconv"
-	"strings"
-
-	"github.com/mazdakn/fwsim/internal/counter"
-	"github.com/mazdakn/fwsim/internal/traffic"
 )
 
-type Action int
-
-const (
-	Accept Action = iota
-	Drop
-)
-
-func (a Action) String() string {
-	switch a {
-	case Accept:
-		return "Accept"
-	case Drop:
-		return "Drop"
-	default:
-		return fmt.Sprintf("Undefined(%d)", a)
-	}
-}
-
-func (a Action) Validate() error {
-	switch a {
-	case Accept, Drop:
-		return nil
-	default:
-		return fmt.Errorf("undefined action %v", a)
-	}
-}
-
-func (a *Action) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var s string
-	if err := unmarshal(&s); err != nil {
-		return err
-	}
-	action, err := ParseAction(s)
-	if err != nil {
-		return err
-	}
-	*a = action
-	return nil
-}
-
-func (a Action) MarshalYAML() (interface{}, error) {
-	return a.String(), nil
-}
-
-// ParseAction parses an action string into an Action type
-func ParseAction(s string) (Action, error) {
-	switch strings.ToLower(s) {
-	case "accept":
-		return Accept, nil
-	case "drop":
-		return Drop, nil
-	default:
-		return Action(0), fmt.Errorf("unknown action: %s", s)
-	}
-}
-
-type RuleOption func(*Rule)
-
-func WithProto(proto uint8) RuleOption {
-	return func(r *Rule) {
-		r.Protocol = &proto
-	}
-}
-
-func WithSrcPort(port uint16) RuleOption {
-	return func(r *Rule) {
-		r.SrcPort = &port
-	}
-}
-
-func WithDstPort(port uint16) RuleOption {
-	return func(r *Rule) {
-		r.DstPort = &port
-	}
-}
-
-func WithSrcNet(cidr string) RuleOption {
-	return func(r *Rule) {
-		r.SrcNet = MustParseCIDR(cidr)
-	}
-}
-
-func WithDstNet(cidr string) RuleOption {
-	return func(r *Rule) {
-		r.DstNet = MustParseCIDR(cidr)
-	}
-}
-
-func NewRule(opts ...RuleOption) *Rule {
-	r := Rule{
-		packetCount: counter.New(),
-	}
-	for _, o := range opts {
-		o(&r)
-	}
-	return &r
-}
-
-type Rule struct {
-	SrcNet   *net.IPNet
-	DstNet   *net.IPNet
-	Protocol *uint8
-
-	SrcPort *uint16
-	DstPort *uint16
-
-	Action Action
-
-	packetCount *counter.Counter
-}
-
-func (r *Rule) Match(pkt *traffic.Packet) bool {
-	if r.Protocol != nil && *r.Protocol != pkt.Protocol {
-		return false
-	}
-	if r.SrcPort != nil && *r.SrcPort != pkt.SrcPort {
-		return false
-	}
-	if r.DstPort != nil && *r.DstPort != pkt.DstPort {
-		return false
-	}
-	if r.SrcNet != nil && !r.SrcNet.Contains(pkt.SrcAddr) {
-		return false
-	}
-	if r.DstNet != nil && !r.DstNet.Contains(pkt.DstAddr) {
-		return false
-	}
-	// All conditions passed - increment packet counter
-	r.packetCount.Increment()
-	return true
-}
-
-func (r *Rule) PacketCount() uint64 {
-	return r.packetCount.Get()
-}
-
-func (r *Rule) ResetPacketCount() {
-	r.packetCount.Reset()
-}
-
-func (r *Rule) String() string {
-	proto := "*"
-	if r.Protocol != nil {
-		proto = strconv.Itoa(int(*r.Protocol))
-	}
-	srcPort := "*"
-	if r.SrcPort != nil {
-		srcPort = strconv.Itoa(int(*r.SrcPort))
-	}
-	dstPort := "*"
-	if r.DstPort != nil {
-		dstPort = strconv.Itoa(int(*r.DstPort))
-	}
-	srcNet := "*"
-	if r.SrcNet != nil {
-		srcNet = r.SrcNet.String()
-	}
-	dstNet := "*"
-	if r.DstNet != nil {
-		dstNet = r.DstNet.String()
-	}
-	return fmt.Sprintf("%s{%s:%s->%s:%s}", proto, srcNet, srcPort, dstNet, dstPort)
-}
-
-// ruleYAML is a helper struct for YAML marshaling/unmarshaling
-type ruleYAML struct {
+// RuleYAML is a helper struct for YAML marshaling/unmarshaling
+type RuleYAML struct {
 	SrcNet   string  `yaml:"src_net,omitempty"`
 	DstNet   string  `yaml:"dst_net,omitempty"`
 	Protocol *uint8  `yaml:"proto,omitempty"`
@@ -184,70 +15,63 @@ type ruleYAML struct {
 	Action   string  `yaml:"action,omitempty"`
 }
 
-func (r *Rule) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var ry ruleYAML
+// UnmarshalRuleFromYAML contains the unmarshaling logic for Rule
+// This is called by Rule.UnmarshalYAML in internal/model
+func UnmarshalRuleFromYAML(unmarshal func(interface{}) error) (*RuleYAML, error) {
+	var ry RuleYAML
 	if err := unmarshal(&ry); err != nil {
-		return err
+		return nil, err
 	}
+	return &ry, nil
+}
 
+// ParseRuleYAML converts RuleYAML data to Rule fields
+func ParseRuleYAML(ry *RuleYAML) (srcNet, dstNet *net.IPNet, protocol *uint8, srcPort, dstPort *uint16, actionStr string, err error) {
 	// Parse SrcNet
 	if ry.SrcNet != "" {
-		_, ipnet, err := net.ParseCIDR(ry.SrcNet)
-		if err != nil {
-			return fmt.Errorf("invalid src_net %s: %w", ry.SrcNet, err)
+		_, ipnet, parseErr := net.ParseCIDR(ry.SrcNet)
+		if parseErr != nil {
+			err = fmt.Errorf("invalid src_net %s: %w", ry.SrcNet, parseErr)
+			return
 		}
-		r.SrcNet = ipnet
+		srcNet = ipnet
 	}
 
 	// Parse DstNet
 	if ry.DstNet != "" {
-		_, ipnet, err := net.ParseCIDR(ry.DstNet)
-		if err != nil {
-			return fmt.Errorf("invalid dst_net %s: %w", ry.DstNet, err)
+		_, ipnet, parseErr := net.ParseCIDR(ry.DstNet)
+		if parseErr != nil {
+			err = fmt.Errorf("invalid dst_net %s: %w", ry.DstNet, parseErr)
+			return
 		}
-		r.DstNet = ipnet
+		dstNet = ipnet
 	}
 
 	// Copy other fields
-	r.Protocol = ry.Protocol
-	r.SrcPort = ry.SrcPort
-	r.DstPort = ry.DstPort
+	protocol = ry.Protocol
+	srcPort = ry.SrcPort
+	dstPort = ry.DstPort
+	actionStr = ry.Action
 
-	// Parse Action using the helper function
-	action, err := ParseAction(ry.Action)
-	if err != nil {
-		return err
-	}
-	r.Action = action
-
-	// Initialize packet counter
-	r.packetCount = counter.New()
-
-	return nil
+	return
 }
 
-func (r *Rule) MarshalYAML() (interface{}, error) {
-	ry := ruleYAML{
-		Protocol: r.Protocol,
-		SrcPort:  r.SrcPort,
-		DstPort:  r.DstPort,
-		Action:   r.Action.String(),
+// MarshalRuleToYAML converts Rule fields to RuleYAML for marshaling
+func MarshalRuleToYAML(srcNet, dstNet *net.IPNet, protocol *uint8, srcPort, dstPort *uint16, actionStr string) interface{} {
+	ry := RuleYAML{
+		Protocol: protocol,
+		SrcPort:  srcPort,
+		DstPort:  dstPort,
+		Action:   actionStr,
 	}
 
-	if r.SrcNet != nil {
-		ry.SrcNet = r.SrcNet.String()
+	if srcNet != nil {
+		ry.SrcNet = srcNet.String()
 	}
-	if r.DstNet != nil {
-		ry.DstNet = r.DstNet.String()
+	if dstNet != nil {
+		ry.DstNet = dstNet.String()
 	}
 
-	return ry, nil
+	return ry
 }
 
-func MustParseCIDR(cidr string) *net.IPNet {
-	_, ipnet, err := net.ParseCIDR(cidr)
-	if err != nil {
-		panic(fmt.Sprintf("CIDR %s is invalid", cidr))
-	}
-	return ipnet
-}
