@@ -5,8 +5,8 @@ import (
 	"net"
 	"strconv"
 	"strings"
-	"sync/atomic"
 
+	"github.com/mazdakn/fwsim/internal/counter"
 	"github.com/mazdakn/fwsim/internal/traffic"
 )
 
@@ -116,7 +116,7 @@ type Rule struct {
 
 	Action Action
 
-	packetCount uint64
+	packetCount counter.Counter
 }
 
 func (r *Rule) Match(pkt *traffic.Packet) bool {
@@ -136,16 +136,16 @@ func (r *Rule) Match(pkt *traffic.Packet) bool {
 		return false
 	}
 	// All conditions passed - increment packet counter
-	atomic.AddUint64(&r.packetCount, 1)
+	r.packetCount.Increment()
 	return true
 }
 
 func (r *Rule) GetPacketCount() uint64 {
-	return atomic.LoadUint64(&r.packetCount)
+	return r.packetCount.Get()
 }
 
 func (r *Rule) ResetPacketCount() {
-	atomic.StoreUint64(&r.packetCount, 0)
+	r.packetCount.Reset()
 }
 
 func (r *Rule) String() string {
