@@ -220,6 +220,9 @@ func (r *Rule) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 	r.Action = action
 
+	// Initialize packet counter
+	r.packetCount = counter.New()
+
 	return nil
 }
 
