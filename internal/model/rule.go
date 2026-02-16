@@ -99,7 +99,9 @@ func WithDstNet(cidr string) RuleOption {
 }
 
 func NewRule(opts ...RuleOption) *Rule {
-	var r Rule
+	r := Rule{
+		packetCount: counter.New(),
+	}
 	for _, o := range opts {
 		o(&r)
 	}
@@ -116,7 +118,7 @@ type Rule struct {
 
 	Action Action
 
-	packetCount counter.Counter
+	packetCount *counter.Counter
 }
 
 func (r *Rule) Match(pkt *traffic.Packet) bool {
@@ -140,7 +142,7 @@ func (r *Rule) Match(pkt *traffic.Packet) bool {
 	return true
 }
 
-func (r *Rule) GetPacketCount() uint64 {
+func (r *Rule) PacketCount() uint64 {
 	return r.packetCount.Get()
 }
 
@@ -170,14 +172,6 @@ func (r *Rule) String() string {
 		dstNet = r.DstNet.String()
 	}
 	return fmt.Sprintf("%s{%s:%s->%s:%s}", proto, srcNet, srcPort, dstNet, dstPort)
-}
-
-func MustParseCIDR(cidr string) *net.IPNet {
-	_, ipnet, err := net.ParseCIDR(cidr)
-	if err != nil {
-		panic(fmt.Sprintf("CIDR %s is invalid", cidr))
-	}
-	return ipnet
 }
 
 // ruleYAML is a helper struct for YAML marshaling/unmarshaling
@@ -229,7 +223,7 @@ func (r *Rule) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-func (r Rule) MarshalYAML() (interface{}, error) {
+func (r *Rule) MarshalYAML() (interface{}, error) {
 	ry := ruleYAML{
 		Protocol: r.Protocol,
 		SrcPort:  r.SrcPort,
@@ -245,4 +239,12 @@ func (r Rule) MarshalYAML() (interface{}, error) {
 	}
 
 	return ry, nil
+}
+
+func MustParseCIDR(cidr string) *net.IPNet {
+	_, ipnet, err := net.ParseCIDR(cidr)
+	if err != nil {
+		panic(fmt.Sprintf("CIDR %s is invalid", cidr))
+	}
+	return ipnet
 }

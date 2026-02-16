@@ -309,8 +309,8 @@ func TestActionYAMLUnmarshaling(t *testing.T) {
 	RegisterTestingT(t)
 
 	tests := []struct {
-		input    string
-		expected Action
+		input     string
+		expected  Action
 		shouldErr bool
 	}{
 		{"accept", Accept, false},
@@ -389,27 +389,27 @@ func TestRulePacketCounter(t *testing.T) {
 	)
 
 	// Initially, packet count should be 0
-	Expect(rule.GetPacketCount()).To(Equal(uint64(0)))
+	Expect(rule.PacketCount()).To(Equal(uint64(0)))
 
 	// Match a packet, count should increment to 1
 	Expect(rule.Match(pktMatch)).To(BeTrue())
-	Expect(rule.GetPacketCount()).To(Equal(uint64(1)))
+	Expect(rule.PacketCount()).To(Equal(uint64(1)))
 
 	// Match another packet, count should increment to 2
 	Expect(rule.Match(pktMatch)).To(BeTrue())
-	Expect(rule.GetPacketCount()).To(Equal(uint64(2)))
+	Expect(rule.PacketCount()).To(Equal(uint64(2)))
 
 	// Non-matching packet should not increment counter
 	Expect(rule.Match(pktNoMatch)).To(BeFalse())
-	Expect(rule.GetPacketCount()).To(Equal(uint64(2)))
+	Expect(rule.PacketCount()).To(Equal(uint64(2)))
 
 	// Reset counter
 	rule.ResetPacketCount()
-	Expect(rule.GetPacketCount()).To(Equal(uint64(0)))
+	Expect(rule.PacketCount()).To(Equal(uint64(0)))
 
 	// Match after reset should increment from 0
 	Expect(rule.Match(pktMatch)).To(BeTrue())
-	Expect(rule.GetPacketCount()).To(Equal(uint64(1)))
+	Expect(rule.PacketCount()).To(Equal(uint64(1)))
 }
 
 func TestRulePacketCounterConcurrency(t *testing.T) {
@@ -441,5 +441,5 @@ func TestRulePacketCounterConcurrency(t *testing.T) {
 	wg.Wait()
 
 	// Verify the counter is correct
-	Expect(rule.GetPacketCount()).To(Equal(expectedCount))
+	Expect(rule.PacketCount()).To(Equal(expectedCount))
 }
