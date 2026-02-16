@@ -14,14 +14,14 @@ rules:
     proto: 7
     action: Drop
 expectations:
-  - result: Accept
+  - verdict: Accept
     packet:
       src_addr: 192.168.1.10
       dst_addr: 1.1.1.1
       dst_port: 80
       src_port: 30000
       proto: 7
-  - result: Drop
+  - verdict: Drop
     packet:
       src_addr: 192.168.2.20
       dst_addr: 1.1.1.1

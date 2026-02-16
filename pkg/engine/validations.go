@@ -9,18 +9,20 @@ func (e *Engine) Validate() {
 
 func (e *Engine) validateExpectations() {
 	for index, exp := range e.config.Expectations {
-		if exp.Packet == nil {
+		/*if exp.Packet == nil {
 			logrus.Errorf("Expectation %d has no packet - Skipping.", index)
 			continue
-		}
+		}*/
 
-		_, r := e.Match(exp.Packet)
+		pkt := packetFromExpectation(&exp)
+
+		_, r := e.Match(pkt)
 		if r == nil {
 			logrus.Infof("no rule matched packet %s", exp.Packet)
 			continue
 		}
 		expA := r.Action.String()
-		expB := exp.Result
+		expB := exp.Verdict
 
 		if expA == expB {
 			logrus.Infof("Expectation %d met", index)

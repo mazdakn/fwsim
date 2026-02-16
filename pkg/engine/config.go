@@ -5,7 +5,6 @@ import (
 	"net"
 
 	"github.com/mazdakn/fwsim/internal/model"
-	"github.com/mazdakn/fwsim/internal/traffic"
 )
 
 type Config struct {
@@ -14,8 +13,8 @@ type Config struct {
 }
 
 type Expectation struct {
-	Result string          `yaml:"result,omitempty"`
-	Packet *traffic.Packet `yaml:"packet,omitempty"`
+	Verdict string `yaml:"verdict,omitempty"`
+	Packet  Packet `yaml:"packet,omitempty"`
 }
 
 type Rule struct {
@@ -27,7 +26,27 @@ type Rule struct {
 	Action   string  `yaml:"action,omitempty"`
 }
 
+type Packet struct {
+	SrcAddr string `yaml:"src_addr,omitempty"`
+	DstAddr string `yaml:"dst_addr,omitempty"`
+	Proto   uint8  `yaml:"proto,omitempty"`
+	SrcPort uint16 `yaml:"src_port,omitempty"`
+	DstPort uint16 `yaml:"dst_port,omitempty"`
+}
+
 func (c *Config) Validate() error {
+	if err := c.validateRules(); err != nil {
+		return fmt.Errorf("failed to validate rules: %w", err)
+	}
+
+	if err := c.validateExpectations(); err != nil {
+		return fmt.Errorf("failed to validate expectations: %w", err)
+	}
+
+	return nil
+}
+
+func (c *Config) validateRules() error {
 	for _, r := range c.Rules {
 		if r.SrcNet != "" {
 			_, _, err := net.ParseCIDR(r.SrcNet)
@@ -36,7 +55,6 @@ func (c *Config) Validate() error {
 			}
 		}
 
-		// Parse DstNet
 		if r.DstNet != "" {
 			_, _, err := net.ParseCIDR(r.DstNet)
 			if err != nil {
@@ -46,6 +64,28 @@ func (c *Config) Validate() error {
 
 		if _, err := model.ParseAction(r.Action); err != nil {
 			return fmt.Errorf("invalid action %s: %w", r.Action, err)
+		}
+	}
+
+	return nil
+}
+
+func (c *Config) validateExpectations() error {
+	for _, e := range c.Expectations {
+		if e.Packet.SrcAddr != "" {
+			if ip := net.ParseIP(e.Packet.SrcAddr); ip == nil {
+				return fmt.Errorf("invalid src_addr %s: %w", e.Packet.SrcAddr)
+			}
+		}
+
+		if e.Packet.DstAddr != "" {
+			if ip := net.ParseIP(e.Packet.DstAddr); ip == nil {
+				return fmt.Errorf("invalid dst_addr %s", e.Packet.DstAddr)
+			}
+		}
+
+		if _, err := model.ParseAction(e.Verdict); err != nil {
+			return fmt.Errorf("invalid verdict %s: %w", e.Verdict, err)
 		}
 	}
 
