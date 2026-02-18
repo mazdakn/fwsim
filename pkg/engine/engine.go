@@ -97,13 +97,3 @@ func (e *Engine) Match(pkt *traffic.Packet) (int, *model.Rule) {
 	logrus.Debug("No rule matched")
 	return -1, nil
 }
-
-func packetFromExpectation(e *Expectation) *traffic.Packet {
-	return traffic.NewPacket(
-		traffic.WithProto(e.Packet.Proto),
-		traffic.WithSrcPort(e.Packet.SrcPort),
-		traffic.WithDstPort(e.Packet.DstPort),
-		traffic.WithSrcAddr(e.Packet.SrcAddr),
-		traffic.WithDstAddr(e.Packet.DstAddr),
-	)
-}

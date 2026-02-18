@@ -20,7 +20,6 @@ var (
 		Use:   "fwsim",
 		Short: "Firewall simulator",
 		Long:  `fwsim is a firewall simulator that processes rules and packets from an input file.`,
-		Run:   run,
 	}
 	evaluateCmd = &cobra.Command{
 		Use:   "evaluate",
@@ -32,22 +31,20 @@ var (
 
 // Flags for evaluate command
 var (
-	rulesFile string
-	srcAddr   string
-	dstAddr   string
-	proto     uint
-	srcPort   uint
-	dstPort   uint
+	srcAddr string
+	dstAddr string
+	proto   uint
+	srcPort uint
+	dstPort uint
 )
 
 func init() {
-	rootCmd.Flags().StringVarP(&inputFile, "input", "i", defaultInputFile, "input file with all rules and packets")
+	rootCmd.PersistentFlags().StringVarP(&inputFile, "file", "f", defaultInputFile, "input file with all rules and packets")
 
 	// Add evaluate subcommand
 	rootCmd.AddCommand(evaluateCmd)
 
 	// Add flags for evaluate command
-	evaluateCmd.Flags().StringVar(&rulesFile, "rules", defaultInputFile, "rules file")
 	evaluateCmd.Flags().StringVar(&srcAddr, "src-addr", "", "source IP address")
 	evaluateCmd.Flags().StringVar(&dstAddr, "dst-addr", "", "destination IP address")
 	evaluateCmd.Flags().UintVar(&proto, "proto", 0, "IP protocol number")
@@ -58,34 +55,18 @@ func init() {
 	if err := evaluateCmd.MarkFlagRequired("src-addr"); err != nil {
 		panic(err)
 	}
+	if err := evaluateCmd.MarkFlagRequired("src-port"); err != nil {
+		panic(err)
+	}
 	if err := evaluateCmd.MarkFlagRequired("dst-addr"); err != nil {
+		panic(err)
+	}
+	if err := evaluateCmd.MarkFlagRequired("dst-port"); err != nil {
 		panic(err)
 	}
 	if err := evaluateCmd.MarkFlagRequired("proto"); err != nil {
 		panic(err)
 	}
-}
-
-func run(cmd *cobra.Command, args []string) {
-	if len(inputFile) == 0 {
-		logrus.Errorf("No input file")
-		os.Exit(1)
-	}
-
-	e := engine.New()
-
-	err := e.ConfigFromFile(inputFile)
-	if err != nil {
-		logrus.WithError(err).Errorf("failed to load config %s", inputFile)
-		os.Exit(1)
-	}
-
-	if err := e.Run(); err != nil {
-		logrus.WithError(err).Errorf("failed to run the engine")
-		os.Exit(1)
-	}
-
-	os.Exit(0)
 }
 
 func runEvaluate(cmd *cobra.Command, args []string) {
@@ -107,9 +88,9 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 
 	// Create engine and load rules
 	e := engine.New()
-	err := e.ConfigFromFile(rulesFile)
+	err := e.ConfigFromFile(inputFile)
 	if err != nil {
-		logrus.WithError(err).Errorf("failed to load rules from %s", rulesFile)
+		logrus.WithError(err).Errorf("failed to load rules from %s", inputFile)
 		os.Exit(1)
 	}
 
@@ -136,13 +117,12 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 		os.Exit(0)
 	}
 
-	fmt.Printf("%s\n", rule.Action)
+	fmt.Printf("Verdict: %s\n", rule.Action)
 	os.Exit(0)
 }
 
 func main() {
 	if err := rootCmd.Execute(); err != nil {
-		logrus.WithError(err).Error("Failed to execute command")
 		os.Exit(1)
 	}
 }

@@ -8,13 +8,7 @@ import (
 )
 
 type Config struct {
-	Rules        []Rule        `yaml:"rules,omitempty"`
-	Expectations []Expectation `yaml:"expectations,omitempty"`
-}
-
-type Expectation struct {
-	Verdict string `yaml:"verdict,omitempty"`
-	Packet  Packet `yaml:"packet,omitempty"`
+	Rules []Rule `yaml:"rules,omitempty"`
 }
 
 type Rule struct {
@@ -38,11 +32,6 @@ func (c *Config) Validate() error {
 	if err := c.validateRules(); err != nil {
 		return fmt.Errorf("failed to validate rules: %w", err)
 	}
-
-	if err := c.validateExpectations(); err != nil {
-		return fmt.Errorf("failed to validate expectations: %w", err)
-	}
-
 	return nil
 }
 
@@ -64,28 +53,6 @@ func (c *Config) validateRules() error {
 
 		if _, err := model.ParseAction(r.Action); err != nil {
 			return fmt.Errorf("invalid action %s: %w", r.Action, err)
-		}
-	}
-
-	return nil
-}
-
-func (c *Config) validateExpectations() error {
-	for _, e := range c.Expectations {
-		if e.Packet.SrcAddr != "" {
-			if ip := net.ParseIP(e.Packet.SrcAddr); ip == nil {
-				return fmt.Errorf("invalid src_addr %s", e.Packet.SrcAddr)
-			}
-		}
-
-		if e.Packet.DstAddr != "" {
-			if ip := net.ParseIP(e.Packet.DstAddr); ip == nil {
-				return fmt.Errorf("invalid dst_addr %s", e.Packet.DstAddr)
-			}
-		}
-
-		if _, err := model.ParseAction(e.Verdict); err != nil {
-			return fmt.Errorf("invalid verdict %s: %w", e.Verdict, err)
 		}
 	}
 
