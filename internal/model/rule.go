@@ -37,23 +37,6 @@ func (a Action) Validate() error {
 	}
 }
 
-func (a *Action) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var s string
-	if err := unmarshal(&s); err != nil {
-		return err
-	}
-	action, err := ParseAction(s)
-	if err != nil {
-		return err
-	}
-	*a = action
-	return nil
-}
-
-func (a Action) MarshalYAML() (interface{}, error) {
-	return a.String(), nil
-}
-
 // ParseAction parses an action string into an Action type
 func ParseAction(s string) (Action, error) {
 	switch strings.ToLower(s) {

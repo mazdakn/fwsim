@@ -11,4 +11,4 @@ test: static-check
 all: clean static-check test build
 
 clean:
-	rm bin/*
+	rm -rf bin/*
