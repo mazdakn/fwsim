@@ -42,10 +42,10 @@ var (
 
 func init() {
 	rootCmd.Flags().StringVarP(&inputFile, "input", "i", defaultInputFile, "input file with all rules and packets")
-	
+
 	// Add evaluate subcommand
 	rootCmd.AddCommand(evaluateCmd)
-	
+
 	// Add flags for evaluate command
 	evaluateCmd.Flags().StringVar(&rulesFile, "rules", defaultInputFile, "rules file")
 	evaluateCmd.Flags().StringVar(&srcAddr, "src-addr", "", "source IP address")
@@ -53,7 +53,7 @@ func init() {
 	evaluateCmd.Flags().UintVar(&proto, "proto", 0, "IP protocol number")
 	evaluateCmd.Flags().UintVar(&srcPort, "src-port", 0, "source port")
 	evaluateCmd.Flags().UintVar(&dstPort, "dst-port", 0, "destination port")
-	
+
 	// Mark required flags
 	if err := evaluateCmd.MarkFlagRequired("src-addr"); err != nil {
 		panic(err)
@@ -94,7 +94,7 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 		logrus.Errorf("Protocol must be between 0 and 255")
 		os.Exit(1)
 	}
-	
+
 	// Validate port values
 	if srcPort > 65535 {
 		logrus.Errorf("Source port must be between 0 and 65535")
@@ -104,7 +104,7 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 		logrus.Errorf("Destination port must be between 0 and 65535")
 		os.Exit(1)
 	}
-	
+
 	// Create engine and load rules
 	e := engine.New()
 	err := e.ConfigFromFile(rulesFile)
@@ -112,13 +112,13 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 		logrus.WithError(err).Errorf("failed to load rules from %s", rulesFile)
 		os.Exit(1)
 	}
-	
+
 	// Load rules into engine
 	if err := e.LoadRules(); err != nil {
 		logrus.WithError(err).Errorf("failed to load rules")
 		os.Exit(1)
 	}
-	
+
 	// Create packet from parameters
 	pkt := traffic.NewPacket(
 		traffic.WithSrcAddr(srcAddr),
@@ -127,15 +127,15 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 		traffic.WithSrcPort(uint16(srcPort)),
 		traffic.WithDstPort(uint16(dstPort)),
 	)
-	
+
 	// Match packet against rules
 	_, rule := e.Match(pkt)
-	
+
 	if rule == nil {
 		fmt.Println("No match")
 		os.Exit(0)
 	}
-	
+
 	fmt.Printf("%s\n", rule.Action)
 	os.Exit(0)
 }
