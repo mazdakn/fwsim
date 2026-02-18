@@ -55,9 +55,15 @@ func init() {
 	evaluateCmd.Flags().UintVar(&dstPort, "dst-port", 0, "destination port")
 	
 	// Mark required flags
-	evaluateCmd.MarkFlagRequired("src-addr")
-	evaluateCmd.MarkFlagRequired("dst-addr")
-	evaluateCmd.MarkFlagRequired("proto")
+	if err := evaluateCmd.MarkFlagRequired("src-addr"); err != nil {
+		panic(err)
+	}
+	if err := evaluateCmd.MarkFlagRequired("dst-addr"); err != nil {
+		panic(err)
+	}
+	if err := evaluateCmd.MarkFlagRequired("proto"); err != nil {
+		panic(err)
+	}
 }
 
 func run(cmd *cobra.Command, args []string) {
