@@ -47,6 +47,10 @@ func (e *Engine) Run() error {
 	return nil
 }
 
+func (e *Engine) LoadRules() error {
+	return e.loadRules()
+}
+
 func (e *Engine) loadRules() error {
 	var err error
 	for _, r := range e.config.Rules {

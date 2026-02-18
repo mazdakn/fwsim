@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
+	"github.com/mazdakn/fwsim/internal/traffic"
 	"github.com/mazdakn/fwsim/pkg/engine"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -20,10 +22,48 @@ var (
 		Long:  `fwsim is a firewall simulator that processes rules and packets from an input file.`,
 		Run:   run,
 	}
+	evaluateCmd = &cobra.Command{
+		Use:   "evaluate",
+		Short: "Evaluate a packet against firewall rules",
+		Long:  `Evaluate a packet against firewall rules and return a verdict.`,
+		Run:   runEvaluate,
+	}
+)
+
+// Flags for evaluate command
+var (
+	rulesFile string
+	srcAddr   string
+	dstAddr   string
+	proto     uint
+	srcPort   uint
+	dstPort   uint
 )
 
 func init() {
 	rootCmd.Flags().StringVarP(&inputFile, "input", "i", defaultInputFile, "input file with all rules and packets")
+
+	// Add evaluate subcommand
+	rootCmd.AddCommand(evaluateCmd)
+
+	// Add flags for evaluate command
+	evaluateCmd.Flags().StringVar(&rulesFile, "rules", defaultInputFile, "rules file")
+	evaluateCmd.Flags().StringVar(&srcAddr, "src-addr", "", "source IP address")
+	evaluateCmd.Flags().StringVar(&dstAddr, "dst-addr", "", "destination IP address")
+	evaluateCmd.Flags().UintVar(&proto, "proto", 0, "IP protocol number")
+	evaluateCmd.Flags().UintVar(&srcPort, "src-port", 0, "source port")
+	evaluateCmd.Flags().UintVar(&dstPort, "dst-port", 0, "destination port")
+
+	// Mark required flags
+	if err := evaluateCmd.MarkFlagRequired("src-addr"); err != nil {
+		panic(err)
+	}
+	if err := evaluateCmd.MarkFlagRequired("dst-addr"); err != nil {
+		panic(err)
+	}
+	if err := evaluateCmd.MarkFlagRequired("proto"); err != nil {
+		panic(err)
+	}
 }
 
 func run(cmd *cobra.Command, args []string) {
@@ -45,6 +85,58 @@ func run(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
+	os.Exit(0)
+}
+
+func runEvaluate(cmd *cobra.Command, args []string) {
+	// Validate protocol value
+	if proto > 255 {
+		logrus.Errorf("Protocol must be between 0 and 255")
+		os.Exit(1)
+	}
+
+	// Validate port values
+	if srcPort > 65535 {
+		logrus.Errorf("Source port must be between 0 and 65535")
+		os.Exit(1)
+	}
+	if dstPort > 65535 {
+		logrus.Errorf("Destination port must be between 0 and 65535")
+		os.Exit(1)
+	}
+
+	// Create engine and load rules
+	e := engine.New()
+	err := e.ConfigFromFile(rulesFile)
+	if err != nil {
+		logrus.WithError(err).Errorf("failed to load rules from %s", rulesFile)
+		os.Exit(1)
+	}
+
+	// Load rules into engine
+	if err := e.LoadRules(); err != nil {
+		logrus.WithError(err).Errorf("failed to load rules")
+		os.Exit(1)
+	}
+
+	// Create packet from parameters
+	pkt := traffic.NewPacket(
+		traffic.WithSrcAddr(srcAddr),
+		traffic.WithDstAddr(dstAddr),
+		traffic.WithProto(uint8(proto)),
+		traffic.WithSrcPort(uint16(srcPort)),
+		traffic.WithDstPort(uint16(dstPort)),
+	)
+
+	// Match packet against rules
+	_, rule := e.Match(pkt)
+
+	if rule == nil {
+		fmt.Println("No match")
+		os.Exit(0)
+	}
+
+	fmt.Printf("%s\n", rule.Action)
 	os.Exit(0)
 }
 
