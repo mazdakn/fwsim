@@ -13,7 +13,7 @@ func TestNew(t *testing.T) {
 
 	engine := New()
 	Expect(engine).ToNot(BeNil())
-	Expect(engine.rules).To(BeEmpty())
+	Expect(engine.table.Rules).To(BeEmpty())
 }
 
 func TestEngineMatchNoRules(t *testing.T) {
@@ -34,7 +34,7 @@ func TestEngineMatchSingleRule(t *testing.T) {
 	RegisterTestingT(t)
 
 	engine := New()
-	engine.rules = []*model.Rule{
+	engine.table.Rules = []*model.Rule{
 		model.NewRule(model.WithProto(17), model.WithDstPort(53)),
 	}
 
@@ -54,7 +54,7 @@ func TestEngineMatchMultipleRules(t *testing.T) {
 	RegisterTestingT(t)
 
 	engine := New()
-	engine.rules = []*model.Rule{
+	engine.table.Rules = []*model.Rule{
 		model.NewRule(model.WithProto(6), model.WithDstPort(80)),   // Should not match
 		model.NewRule(model.WithProto(17), model.WithDstPort(53)),  // Should match
 		model.NewRule(model.WithProto(17), model.WithDstPort(443)), // Should not be reached
@@ -76,7 +76,7 @@ func TestEngineMatchNoMatch(t *testing.T) {
 	RegisterTestingT(t)
 
 	engine := New()
-	engine.rules = []*model.Rule{
+	engine.table.Rules = []*model.Rule{
 		model.NewRule(model.WithProto(6), model.WithDstPort(80)),
 		model.NewRule(model.WithProto(6), model.WithDstPort(443)),
 	}
@@ -96,7 +96,7 @@ func TestEngineMatchWithNetworks(t *testing.T) {
 	RegisterTestingT(t)
 
 	engine := New()
-	engine.rules = []*model.Rule{
+	engine.table.Rules = []*model.Rule{
 		model.NewRule(model.WithSrcNet("192.168.0.0/16")), // Should not match
 		model.NewRule(model.WithSrcNet("10.10.0.0/16")),   // Should match
 	}
@@ -116,7 +116,7 @@ func TestEngineMatchIPv6(t *testing.T) {
 	RegisterTestingT(t)
 
 	engine := New()
-	engine.rules = []*model.Rule{
+	engine.table.Rules = []*model.Rule{
 		model.NewRule(model.WithProto(6), model.WithSrcNet("dead:beef::/64")),
 		model.NewRule(model.WithDstNet("cafe::/112")),
 	}
@@ -142,10 +142,10 @@ func TestLoadRulesFromConfig(t *testing.T) {
 
 	err = engine.LoadRules()
 	Expect(err).To(BeNil())
-	Expect(len(engine.rules)).To(Equal(3))
+	Expect(len(engine.table.Rules)).To(Equal(3))
 
 	// Verify first rule
-	rule1 := engine.rules[0]
+	rule1 := engine.table.Rules[0]
 	Expect(rule1.SrcNet).ToNot(BeNil())
 	Expect(rule1.SrcNet.String()).To(Equal("192.168.1.0/24"))
 	Expect(rule1.DstNet).ToNot(BeNil())
@@ -155,7 +155,7 @@ func TestLoadRulesFromConfig(t *testing.T) {
 	Expect(rule1.Action.String()).To(Equal("Accept"))
 
 	// Verify second rule
-	rule2 := engine.rules[1]
+	rule2 := engine.table.Rules[1]
 	Expect(rule2.DstNet).ToNot(BeNil())
 	Expect(rule2.DstNet.String()).To(Equal("1.1.1.1/32"))
 	Expect(rule2.Protocol).ToNot(BeNil())

@@ -7,7 +7,7 @@ func (e *Engine) Validate() {
 }
 
 func (e *Engine) validateAllRulesUsed() {
-	for i, r := range e.rules {
+	for i, r := range e.table.Rules {
 		if r.PacketCount() == 0 {
 			logrus.Infof("Rule %v not used", i)
 		}
