@@ -14,7 +14,7 @@ import (
 type Engine struct {
 	config *Config
 
-	rules []*model.Rule
+	table model.Table
 }
 
 func New() *Engine {
@@ -81,14 +81,14 @@ func (e *Engine) loadRules() error {
 			rule.DstNet = ipnet
 		}
 
-		e.rules = append(e.rules, rule)
+		e.table.Rules = append(e.table.Rules, rule)
 	}
 	return nil
 }
 
 func (e *Engine) Match(pkt *traffic.Packet) (int, *model.Rule) {
 	logrus.Debugf("Matching packet %+v", pkt)
-	for i, r := range e.rules {
+	for i, r := range e.table.Rules {
 		if r.Match(pkt) {
 			logrus.Debugf("Rule %+v matched", r)
 			return i, r
