@@ -81,6 +81,12 @@ func WithDstNet(cidr string) RuleOption {
 	}
 }
 
+func WithAction(action Action) RuleOption {
+	return func(r *Rule) {
+		r.Action = action
+	}
+}
+
 func NewRule(opts ...RuleOption) *Rule {
 	r := Rule{
 		packetCount: counter.New(),

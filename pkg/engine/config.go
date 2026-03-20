@@ -8,7 +8,8 @@ import (
 )
 
 type Config struct {
-	Rules []Rule `yaml:"rules,omitempty"`
+	Rules         []Rule `yaml:"rules,omitempty"`
+	DefaultAction string `yaml:"default_action,omitempty"`
 }
 
 type Rule struct {
@@ -31,6 +32,12 @@ type Packet struct {
 func (c *Config) Validate() error {
 	if err := c.validateRules(); err != nil {
 		return fmt.Errorf("failed to validate rules: %w", err)
+	}
+	if c.DefaultAction == "" {
+		return fmt.Errorf("default_action is required")
+	}
+	if _, err := model.ParseAction(c.DefaultAction); err != nil {
+		return fmt.Errorf("invalid default_action %s: %w", c.DefaultAction, err)
 	}
 	return nil
 }
