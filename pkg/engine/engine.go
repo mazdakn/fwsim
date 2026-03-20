@@ -89,7 +89,7 @@ func (e *Engine) loadRules() error {
 		if err != nil {
 			return fmt.Errorf("invalid default action %s: %w", e.config.DefaultAction, err)
 		}
-		e.table.DefaultAction = model.NewRule(model.WithAction(action))
+		e.table.DefaultAction = &action
 	}
 
 	return nil
@@ -104,10 +104,8 @@ func (e *Engine) Match(pkt *traffic.Packet) (int, *model.Rule) {
 		}
 	}
 	if e.table.DefaultAction != nil {
-		if e.table.DefaultAction.Match(pkt) {
-			logrus.Debugf("No rule matched, using default action %v", e.table.DefaultAction.Action)
-			return -1, e.table.DefaultAction
-		}
+		logrus.Debugf("No rule matched, using default action %v", *e.table.DefaultAction)
+		return -1, model.NewRule(model.WithAction(*e.table.DefaultAction))
 	}
 	logrus.Debug("No rule matched")
 	return -1, nil
