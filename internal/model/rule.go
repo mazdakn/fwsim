@@ -13,8 +13,7 @@ import (
 type Action int
 
 const (
-	Unset  Action = iota
-	Accept
+	Accept Action = iota
 	Drop
 )
 

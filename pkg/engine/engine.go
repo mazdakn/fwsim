@@ -84,13 +84,11 @@ func (e *Engine) loadRules() error {
 		e.table.Rules = append(e.table.Rules, rule)
 	}
 
-	if e.config.DefaultAction != "" {
-		action, err := model.ParseAction(e.config.DefaultAction)
-		if err != nil {
-			return fmt.Errorf("invalid default action %s: %w", e.config.DefaultAction, err)
-		}
-		e.table.DefaultAction = action
+	action, err := model.ParseAction(e.config.DefaultAction)
+	if err != nil {
+		return fmt.Errorf("invalid default action %s: %w", e.config.DefaultAction, err)
 	}
+	e.table.DefaultAction = action
 
 	return nil
 }
@@ -103,10 +101,6 @@ func (e *Engine) Match(pkt *traffic.Packet) (int, *model.Rule) {
 			return i, r
 		}
 	}
-	if e.table.DefaultAction != model.Unset {
-		logrus.Debugf("No rule matched, using default action %s", e.table.DefaultAction.String())
-		return -1, model.NewRule(model.WithAction(e.table.DefaultAction))
-	}
-	logrus.Debug("No rule matched")
-	return -1, nil
+	logrus.Debugf("No rule matched, using default action %s", e.table.DefaultAction.String())
+	return -1, model.NewRule(model.WithAction(e.table.DefaultAction))
 }
