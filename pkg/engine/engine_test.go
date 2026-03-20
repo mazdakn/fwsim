@@ -99,8 +99,7 @@ func TestEngineMatchDefaultAction(t *testing.T) {
 	engine.table.Rules = []*model.Rule{
 		model.NewRule(model.WithProto(6), model.WithDstPort(80)),
 	}
-	defaultAction := model.Drop
-	engine.table.DefaultAction = &defaultAction
+	engine.table.DefaultAction = model.Drop
 
 	// Packet with protocol 17 will not match TCP rules, should use default action
 	pkt := traffic.NewPacket(
@@ -118,8 +117,7 @@ func TestEngineMatchDefaultActionNoRules(t *testing.T) {
 	RegisterTestingT(t)
 
 	engine := New()
-	defaultAction := model.Accept
-	engine.table.DefaultAction = &defaultAction
+	engine.table.DefaultAction = model.Accept
 
 	pkt := traffic.NewPacket(
 		traffic.WithSrcAddr("10.10.10.1"), traffic.WithSrcPort(55555), traffic.WithProto(17),
@@ -203,6 +201,6 @@ func TestLoadRulesFromConfig(t *testing.T) {
 	Expect(rule2.Action.String()).To(Equal("Drop"))
 
 	// Verify default action is set
-	Expect(engine.table.DefaultAction).ToNot(BeNil())
+	Expect(engine.table.DefaultAction).ToNot(Equal(model.Unset))
 	Expect(engine.table.DefaultAction.String()).To(Equal("Drop"))
 }
