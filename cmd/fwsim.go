@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/mazdakn/fwsim/internal/model"
 	"github.com/mazdakn/fwsim/internal/traffic"
 	"github.com/mazdakn/fwsim/pkg/engine"
 	"github.com/sirupsen/logrus"
@@ -114,11 +115,18 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 
 	if rule == nil {
 		fmt.Println("No match")
-		os.Exit(0)
+		return
 	}
 
-	fmt.Printf("Verdict: %s\n", rule.Action)
-	os.Exit(0)
+	fmt.Printf("%s:\n", pkt)
+	switch rule.Action {
+	case model.Accept:
+		fmt.Printf("- Accepted by %s\n", rule)
+	case model.Drop:
+		fmt.Printf("- Denied by %s\n", rule)
+	default:
+		fmt.Println("No match")
+	}
 }
 
 func main() {

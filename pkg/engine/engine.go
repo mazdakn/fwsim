@@ -93,14 +93,19 @@ func (e *Engine) loadRules() error {
 	return nil
 }
 
-func (e *Engine) Match(pkt *traffic.Packet) (int, *model.Rule) {
+func (e *Engine) Match(pkt *traffic.Packet) Result {
 	logrus.Debugf("Matching packet %+v", pkt)
-	for i, r := range e.table.Rules {
+	var res Result
+	for _, r := range e.table.Rules {
 		if r.Match(pkt) {
 			logrus.Debugf("Rule %+v matched", r)
-			return i, r
+			res.EnforcedBy = r
+			return res
+		} else {
+			res.Trace = append(res.Trace, r)
+
 		}
 	}
 	logrus.Debugf("No rule matched, using default action %s", e.table.DefaultAction.String())
-	return -1, model.NewRule(model.WithAction(e.table.DefaultAction))
+	return res
 }
