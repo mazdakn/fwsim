@@ -9,11 +9,11 @@ import (
 type Table struct {
 	Name          string
 	Rules         []*Rule
-	DefaultAction Action
+	DefaultAction *Rule
 	logCtx        *logrus.Entry
 }
 
-func NewTable(name string, defaultAction Action) *Table {
+func NewTable(name string, defaultAction *Rule) *Table {
 	return &Table{
 		Name:          name,
 		DefaultAction: defaultAction,
@@ -28,20 +28,15 @@ func (t *Table) AddRule(r *Rule) {
 	t.Rules = append(t.Rules, r)
 }
 
-func (t *Table) Match(pkt *traffic.Packet) Result {
+func (t *Table) Match(pkt *traffic.Packet) (int, *Rule) {
 	t.logCtx.Debugf("Matching packet %+v", pkt)
-	var res Result
-	for _, r := range t.Rules {
+	for i, r := range t.Rules {
 		if r.Match(pkt) {
 			t.logCtx.Debugf("Rule %+v matched", r)
-			res.EnforcedBy = r
-			return res
-		} else {
-			res.Trace = append(res.Trace, r)
-
+			return i, r
 		}
 	}
-	t.logCtx.Debugf("No rule matched, using default action %s", t.DefaultAction.String())
-	return res
+	t.logCtx.Debugf("No rule matched, using default action %s", t.DefaultAction.Action.String())
+	return -1, t.DefaultAction
 
 }

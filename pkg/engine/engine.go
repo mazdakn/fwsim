@@ -18,7 +18,7 @@ type Engine struct {
 
 func New() *Engine {
 	return &Engine{
-		table: model.NewTable("main", model.Drop), // TODO: get default action directly from config.
+		table: model.NewTable("main", model.NewRule(model.WithAction(model.Drop))), // TODO: get default action directly from config.
 	}
 }
 
@@ -89,11 +89,11 @@ func (e *Engine) loadRules() error {
 	if err != nil {
 		return fmt.Errorf("invalid default action %s: %w", e.config.DefaultAction, err)
 	}
-	e.table.DefaultAction = action
+	e.table.DefaultAction = model.NewRule(model.WithAction(action))
 
 	return nil
 }
 
-func (e *Engine) Match(pkt *traffic.Packet) model.Result {
+func (e *Engine) Match(pkt *traffic.Packet) (int, *model.Rule) {
 	return e.table.Match(pkt)
 }
