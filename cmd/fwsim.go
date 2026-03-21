@@ -12,12 +12,14 @@ import (
 )
 
 const (
-	defaultInputFile = "rules.yaml"
+	defaultInputFile   = "rules.yaml"
+	defaultPacketsFile = "packets.yaml"
 )
 
 var (
-	inputFile string
-	rootCmd   = &cobra.Command{
+	inputFile   string
+	packetsFile string
+	rootCmd     = &cobra.Command{
 		Use:   "fwsim",
 		Short: "Firewall simulator",
 		Long:  `fwsim is a firewall simulator that processes rules and packets from an input file.`,
@@ -27,6 +29,12 @@ var (
 		Short: "Evaluate a packet against firewall rules",
 		Long:  `Evaluate a packet against firewall rules and return a verdict.`,
 		Run:   runEvaluate,
+	}
+	runCmd = &cobra.Command{
+		Use:   "run",
+		Short: "Run packets from a file against firewall rules",
+		Long:  `Load packets from an input file and evaluate each one against firewall rules.`,
+		Run:   runPackets,
 	}
 )
 
@@ -68,6 +76,10 @@ func init() {
 	if err := evaluateCmd.MarkFlagRequired("proto"); err != nil {
 		panic(err)
 	}
+
+	// Add run subcommand
+	rootCmd.AddCommand(runCmd)
+	runCmd.Flags().StringVarP(&packetsFile, "packets", "p", defaultPacketsFile, "input file with packet information")
 }
 
 func runEvaluate(cmd *cobra.Command, args []string) {
@@ -113,6 +125,37 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 	// Match packet against rules
 	res := e.Match(pkt)
 
+	printResult(pkt, res)
+}
+
+func runPackets(cmd *cobra.Command, args []string) {
+	// Create engine and load rules
+	e := engine.New()
+	if err := e.ConfigFromFile(inputFile); err != nil {
+		logrus.WithError(err).Errorf("failed to load rules from %s", inputFile)
+		os.Exit(1)
+	}
+	if err := e.LoadRules(); err != nil {
+		logrus.WithError(err).Errorf("failed to load rules")
+		os.Exit(1)
+	}
+
+	// Load packets from file
+	pkts, err := e.PacketsFromFile(packetsFile)
+	if err != nil {
+		logrus.WithError(err).Errorf("failed to load packets from %s", packetsFile)
+		os.Exit(1)
+	}
+
+	// Evaluate each packet
+	for _, pkt := range pkts {
+		res := e.Match(pkt)
+		printResult(pkt, res)
+		fmt.Println()
+	}
+}
+
+func printResult(pkt *traffic.Packet, res model.Result) {
 	fmt.Printf("%s:\n", pkt)
 	switch res.EnforcedBy.Action {
 	case model.Accept:
