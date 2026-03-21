@@ -317,3 +317,20 @@ func TestRulePacketCounterConcurrency(t *testing.T) {
 	// Verify the counter is correct
 	Expect(rule.PacketCount()).To(Equal(expectedCount))
 }
+
+func TestRuleWithName(t *testing.T) {
+	RegisterTestingT(t)
+
+	// Rule without name should use the full rule representation
+	ruleNoName := NewRule(WithAction(Accept), WithProto(6), WithDstPort(80))
+	Expect(ruleNoName.String()).To(Equal("Accept 6{*:*->*:80}"))
+
+	// Rule with name should use the name for output
+	ruleWithName := NewRule(WithAction(Accept), WithProto(6), WithDstPort(80), WithName("allow-http"))
+	Expect(ruleWithName.String()).To(Equal("allow-http"))
+
+	// Setting Name directly should also work
+	ruleDirectName := NewRule(WithAction(Drop))
+	ruleDirectName.Name = "block-all"
+	Expect(ruleDirectName.String()).To(Equal("block-all"))
+}

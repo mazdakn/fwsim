@@ -105,3 +105,24 @@ func TestLoadRulesFromConfig(t *testing.T) {
 	// Verify default action is set
 	Expect(engine.table.DefaultAction.Action.String()).To(Equal("Accept"))
 }
+
+func TestLoadRulesWithName(t *testing.T) {
+	RegisterTestingT(t)
+
+	engine := New()
+	err := engine.ConfigFromFile("../../hack/simple.yaml")
+	Expect(err).To(BeNil())
+
+	err = engine.LoadRules()
+	Expect(err).To(BeNil())
+
+	// First rule has a name set
+	rule1 := engine.table.Rules[0]
+	Expect(rule1.Name).To(Equal("allow-192.168-to-1.1.1.1"))
+	Expect(rule1.String()).To(Equal("allow-192.168-to-1.1.1.1"))
+
+	// Second rule has no name - should use rule representation
+	rule2 := engine.table.Rules[1]
+	Expect(rule2.Name).To(Equal(""))
+	Expect(rule2.String()).ToNot(Equal(""))
+}

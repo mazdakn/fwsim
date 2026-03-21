@@ -57,6 +57,7 @@ func (e *Engine) LoadRules() error {
 	for _, r := range e.config.Rules {
 		rule := model.NewRule()
 
+		rule.Name = r.Name
 		rule.Protocol = r.Protocol
 		rule.SrcPort = r.SrcPort
 		rule.DstPort = r.DstPort
