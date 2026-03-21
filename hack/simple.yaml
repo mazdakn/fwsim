@@ -6,11 +6,13 @@ rules:
     src_port: 30000
     proto: 7
     action: Accept
-  - dst_net: 1.1.1.1/32
+  - name: deny-access-http
+    dst_net: 1.1.1.1/32
     dst_port: 80
     proto: 7
     action: Drop
-  - dst_net: 2.2.2.2/32
+  - name: deny-tcp-8080
+    dst_net: 2.2.2.2/32
     dst_port: 8080
     proto: 7
     action: Drop

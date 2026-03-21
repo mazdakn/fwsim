@@ -1,15 +1,18 @@
 packets:
-  - src_addr: 192.168.1.5
+  - name: access backend
+    src_addr: 192.168.1.5
     dst_addr: 1.1.1.1
     proto: 7
     src_port: 30000
     dst_port: 80
-  - src_addr: 10.0.0.1
+  - name: access app1
+    src_addr: 10.0.0.1
     dst_addr: 2.2.2.2
     proto: 7
     src_port: 12345
     dst_port: 8080
-  - src_addr: 172.16.0.1
+  - name: dns traffic
+    src_addr: 172.16.0.1
     dst_addr: 8.8.8.8
     proto: 17
     src_port: 54321
