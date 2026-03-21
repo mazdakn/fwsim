@@ -122,6 +122,11 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 	default:
 		fmt.Println("No match")
 	}
+
+	fmt.Printf("Packet trace:\n")
+	for _, r := range res.Trace {
+		fmt.Printf(" - %s\n", r)
+	}
 }
 
 func main() {
