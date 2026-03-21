@@ -13,10 +13,10 @@ type Table struct {
 	logCtx        *logrus.Entry
 }
 
-func NewTable(name string, defaultAction *Rule) *Table {
+func NewTable(name string, defaultAction Action) *Table {
 	return &Table{
 		Name:          name,
-		DefaultAction: defaultAction,
+		DefaultAction: NewRule(WithAction(defaultAction)),
 		logCtx: logrus.WithFields(logrus.Fields{
 			"name":          name,
 			"defaultAction": defaultAction,

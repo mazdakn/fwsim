@@ -18,7 +18,7 @@ type Engine struct {
 
 func New() *Engine {
 	return &Engine{
-		table: model.NewTable("main", model.NewRule(model.WithAction(model.Drop))), // TODO: get default action directly from config.
+		table: model.NewTable("main", model.Drop), // TODO: get default action directly from config.
 	}
 }
 
