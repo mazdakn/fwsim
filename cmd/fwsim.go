@@ -124,8 +124,11 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 
 	// Match packet against rules
 	res := e.Match(pkt)
-
 	printResult(pkt, res)
+	fmt.Println()
+
+	// Run and print validations.
+	printValidations(e.Validate())
 }
 
 func runPackets(cmd *cobra.Command, args []string) {
@@ -153,12 +156,22 @@ func runPackets(cmd *cobra.Command, args []string) {
 		printResult(pkt, res)
 		fmt.Println()
 	}
+
+	// Run and print validations.
+	printValidations(e.Validate())
 }
 
 func printResult(pkt *traffic.Packet, res model.Result) {
 	fmt.Printf("%s %s:\n", res.Verdict, pkt)
 	for _, r := range res.Trace {
 		fmt.Printf(" - %s\n", r)
+	}
+}
+
+func printValidations(validations []string) {
+	fmt.Printf("Validations:\n")
+	for _, v := range validations {
+		fmt.Printf(" - %s\n", v)
 	}
 }
 
