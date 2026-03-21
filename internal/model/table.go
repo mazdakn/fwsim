@@ -32,18 +32,19 @@ func (t *Table) Match(pkt *traffic.Packet) Result {
 	t.logCtx.Debugf("Matching packet %+v", pkt)
 	var res Result
 	for _, r := range t.Rules {
+		res.Trace = append(res.Trace, r)
 		if r.Match(pkt) {
 			t.logCtx.Debugf("Rule %+v matched", r)
 			res.EnforcedBy = r
 			return res
 		}
-		res.Trace = append(res.Trace, r)
 	}
 	if t.DefaultAction == nil {
 		t.logCtx.Warn("No rule matched and no default action is set")
 		return res
 	}
 	t.logCtx.Debugf("No rule matched, using default action %s", t.DefaultAction.Action.String())
+	res.Trace = append(res.Trace, t.DefaultAction)
 	res.EnforcedBy = t.DefaultAction
 	return res
 }
