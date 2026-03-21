@@ -111,21 +111,21 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 	)
 
 	// Match packet against rules
-	_, rule := e.Match(pkt)
-
-	if rule == nil {
-		fmt.Println("No match")
-		return
-	}
+	res := e.Match(pkt)
 
 	fmt.Printf("%s:\n", pkt)
-	switch rule.Action {
+	switch res.EnforcedBy.Action {
 	case model.Accept:
-		fmt.Printf("- Accepted by %s\n", rule)
+		fmt.Printf("- Accepted by %s\n", res.EnforcedBy)
 	case model.Drop:
-		fmt.Printf("- Denied by %s\n", rule)
+		fmt.Printf("- Denied by %s\n", res.EnforcedBy)
 	default:
 		fmt.Println("No match")
+	}
+
+	fmt.Printf("Packet trace:\n")
+	for _, r := range res.Trace {
+		fmt.Printf(" - %s\n", r)
 	}
 }
 

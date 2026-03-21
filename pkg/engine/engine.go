@@ -8,17 +8,18 @@ import (
 	"github.com/goccy/go-yaml"
 	"github.com/mazdakn/fwsim/internal/model"
 	"github.com/mazdakn/fwsim/internal/traffic"
-	"github.com/sirupsen/logrus"
 )
 
 type Engine struct {
 	config *Config
 
-	table model.Table
+	table *model.Table
 }
 
 func New() *Engine {
-	return &Engine{}
+	return &Engine{
+		table: model.NewTable("main", model.Drop), // TODO: get default action directly from config.
+	}
 }
 
 func (e *Engine) ConfigFromFile(file string) error {
@@ -93,19 +94,6 @@ func (e *Engine) loadRules() error {
 	return nil
 }
 
-func (e *Engine) Match(pkt *traffic.Packet) Result {
-	logrus.Debugf("Matching packet %+v", pkt)
-	var res Result
-	for _, r := range e.table.Rules {
-		if r.Match(pkt) {
-			logrus.Debugf("Rule %+v matched", r)
-			res.EnforcedBy = r
-			return res
-		} else {
-			res.Trace = append(res.Trace, r)
-
-		}
-	}
-	logrus.Debugf("No rule matched, using default action %s", e.table.DefaultAction.String())
-	return res
+func (e *Engine) Match(pkt *traffic.Packet) model.Result {
+	return e.table.Match(pkt)
 }
