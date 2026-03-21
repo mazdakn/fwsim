@@ -23,6 +23,7 @@ type Rule struct {
 }
 
 type Packet struct {
+	Name    string `yaml:"name,omitempty"`
 	SrcAddr string `yaml:"src_addr,omitempty"`
 	DstAddr string `yaml:"dst_addr,omitempty"`
 	Proto   uint8  `yaml:"proto,omitempty"`

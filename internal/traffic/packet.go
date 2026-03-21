@@ -7,6 +7,12 @@ import (
 
 type PacketOption func(*Packet)
 
+func WithName(name string) PacketOption {
+	return func(p *Packet) {
+		p.Name = name
+	}
+}
+
 func WithProto(proto uint8) PacketOption {
 	return func(p *Packet) {
 		p.Protocol = proto
@@ -46,6 +52,7 @@ func NewPacket(opts ...PacketOption) *Packet {
 }
 
 type Packet struct {
+	Name     string
 	SrcAddr  net.IP
 	DstAddr  net.IP
 	Protocol uint8
@@ -55,6 +62,9 @@ type Packet struct {
 }
 
 func (p *Packet) String() string {
+	if p.Name != "" {
+		return p.Name
+	}
 	return fmt.Sprintf("%d{%s:%d->%s:%d}", p.Protocol, p.SrcAddr.String(), p.SrcPort,
 		p.DstAddr.String(), p.DstPort)
 }
