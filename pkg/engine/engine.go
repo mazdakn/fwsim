@@ -18,8 +18,22 @@ type Engine struct {
 
 func New() *Engine {
 	return &Engine{
-		table: model.NewTable("main", model.Drop), // TODO: get default action directly from config.
+		table: model.NewTable("main", model.Drop),
 	}
+}
+
+func (e *Engine) Run() error {
+	err := e.LoadRules()
+	if err != nil {
+		return fmt.Errorf("failed to load rules: %w", err)
+	}
+
+	e.Validate()
+	return nil
+}
+
+func (e *Engine) Match(pkt *traffic.Packet) model.Result {
+	return e.table.Match(pkt)
 }
 
 func (e *Engine) ConfigFromFile(file string) error {
@@ -38,21 +52,7 @@ func (e *Engine) ConfigFromFile(file string) error {
 	return nil
 }
 
-func (e *Engine) Run() error {
-	err := e.loadRules()
-	if err != nil {
-		return fmt.Errorf("failed to load rules: %w", err)
-	}
-
-	e.Validate()
-	return nil
-}
-
 func (e *Engine) LoadRules() error {
-	return e.loadRules()
-}
-
-func (e *Engine) loadRules() error {
 	var err error
 	for _, r := range e.config.Rules {
 		rule := model.NewRule()
@@ -92,8 +92,4 @@ func (e *Engine) loadRules() error {
 	e.table.DefaultAction = model.NewRule(model.WithAction(action))
 
 	return nil
-}
-
-func (e *Engine) Match(pkt *traffic.Packet) model.Result {
-	return e.table.Match(pkt)
 }

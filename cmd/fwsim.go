@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/mazdakn/fwsim/internal/model"
 	"github.com/mazdakn/fwsim/internal/traffic"
 	"github.com/mazdakn/fwsim/pkg/engine"
 	"github.com/sirupsen/logrus"
@@ -113,17 +112,8 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 	// Match packet against rules
 	res := e.Match(pkt)
 
-	fmt.Printf("%s:\n", pkt)
-	switch res.EnforcedBy.Action {
-	case model.Accept:
-		fmt.Printf("- Accepted by %s\n", res.EnforcedBy)
-	case model.Drop:
-		fmt.Printf("- Denied by %s\n", res.EnforcedBy)
-	default:
-		fmt.Println("No match")
-	}
-
-	fmt.Printf("Packet trace:\n")
+	fmt.Printf("Verdict: %s\n", res.Verdict)
+	fmt.Printf("Trace:\n")
 	for _, r := range res.Trace {
 		fmt.Printf(" - %s\n", r)
 	}

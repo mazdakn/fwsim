@@ -1,6 +1,8 @@
 package model
 
 import (
+	"fmt"
+
 	"github.com/mazdakn/fwsim/internal/traffic"
 	"github.com/sirupsen/logrus"
 )
@@ -32,10 +34,10 @@ func (t *Table) Match(pkt *traffic.Packet) Result {
 	t.logCtx.Debugf("Matching packet %+v", pkt)
 	var res Result
 	for _, r := range t.Rules {
-		res.Trace = append(res.Trace, r)
+		res.Trace = append(res.Trace, r.String())
 		if r.Match(pkt) {
 			t.logCtx.Debugf("Rule %+v matched", r)
-			res.EnforcedBy = r
+			res.Verdict = r.Action
 			return res
 		}
 	}
@@ -44,7 +46,7 @@ func (t *Table) Match(pkt *traffic.Packet) Result {
 		return res
 	}
 	t.logCtx.Debugf("No rule matched, using default action %s", t.DefaultAction.Action.String())
-	res.Trace = append(res.Trace, t.DefaultAction)
-	res.EnforcedBy = t.DefaultAction
+	res.Trace = append(res.Trace, fmt.Sprintf("%s all. table %s default action", t.DefaultAction.Action, t.Name))
+	res.Verdict = t.DefaultAction.Action
 	return res
 }
