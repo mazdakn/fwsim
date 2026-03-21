@@ -29,6 +29,10 @@ type Packet struct {
 	DstPort uint16 `yaml:"dst_port,omitempty"`
 }
 
+type PacketsConfig struct {
+	Packets []Packet `yaml:"packets,omitempty"`
+}
+
 func (c *Config) Validate() error {
 	if err := c.validateRules(); err != nil {
 		return fmt.Errorf("failed to validate rules: %w", err)

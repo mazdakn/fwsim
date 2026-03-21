@@ -93,3 +93,26 @@ func (e *Engine) LoadRules() error {
 
 	return nil
 }
+
+func (e *Engine) PacketsFromFile(file string) ([]*traffic.Packet, error) {
+	data, err := os.ReadFile(file)
+	if err != nil {
+		return nil, err
+	}
+	var conf PacketsConfig
+	if err := yaml.Unmarshal(data, &conf); err != nil {
+		return nil, err
+	}
+	pkts := make([]*traffic.Packet, 0, len(conf.Packets))
+	for _, p := range conf.Packets {
+		pkt := traffic.NewPacket(
+			traffic.WithSrcAddr(p.SrcAddr),
+			traffic.WithDstAddr(p.DstAddr),
+			traffic.WithProto(p.Proto),
+			traffic.WithSrcPort(p.SrcPort),
+			traffic.WithDstPort(p.DstPort),
+		)
+		pkts = append(pkts, pkt)
+	}
+	return pkts, nil
+}
