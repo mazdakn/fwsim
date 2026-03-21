@@ -111,7 +111,6 @@ type Rule struct {
 }
 
 func (r *Rule) Match(pkt *traffic.Packet) bool {
-	r.packetCount.Increment()
 	if r.Protocol != nil && *r.Protocol != pkt.Protocol {
 		return false
 	}
@@ -127,6 +126,8 @@ func (r *Rule) Match(pkt *traffic.Packet) bool {
 	if r.DstNet != nil && !r.DstNet.Contains(pkt.DstAddr) {
 		return false
 	}
+	// All conditions passed - increment packet counter
+	r.packetCount.Increment()
 	return true
 }
 
