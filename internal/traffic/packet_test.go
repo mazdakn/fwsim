@@ -6,6 +6,51 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+func TestWithName(t *testing.T) {
+	RegisterTestingT(t)
+
+	tests := []struct {
+		name     string
+		pktName  string
+	}{
+		{"Simple", "my-packet"},
+		{"Empty", ""},
+		{"WithSpaces", "http traffic"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pkt := NewPacket(WithName(tt.pktName))
+			Expect(pkt.Name).To(Equal(tt.pktName))
+		})
+	}
+}
+
+func TestPacketStringWithName(t *testing.T) {
+	RegisterTestingT(t)
+
+	// When name is set, String() should return the name
+	pkt := NewPacket(
+		WithName("web-traffic"),
+		WithProto(6),
+		WithSrcAddr("10.0.0.1"),
+		WithSrcPort(12345),
+		WithDstAddr("192.168.1.1"),
+		WithDstPort(80),
+	)
+	Expect(pkt.String()).To(Equal("web-traffic"))
+
+	// When name is empty, String() should return the detailed format
+	pkt2 := NewPacket(
+		WithProto(6),
+		WithSrcAddr("10.0.0.1"),
+		WithSrcPort(12345),
+		WithDstAddr("192.168.1.1"),
+		WithDstPort(80),
+	)
+	Expect(pkt2.String()).To(Equal("6{10.0.0.1:12345->192.168.1.1:80}"))
+}
+
 func TestNewPacketEmpty(t *testing.T) {
 	RegisterTestingT(t)
 
