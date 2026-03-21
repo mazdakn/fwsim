@@ -9,14 +9,14 @@ import (
 type Table struct {
 	Name          string
 	Rules         []*Rule
-	DefaultAction Action
+	DefaultAction *Rule
 	logCtx        *logrus.Entry
 }
 
 func NewTable(name string, defaultAction Action) *Table {
 	return &Table{
 		Name:          name,
-		DefaultAction: defaultAction,
+		DefaultAction: NewRule(WithAction(defaultAction)),
 		logCtx: logrus.WithFields(logrus.Fields{
 			"name":          name,
 			"defaultAction": defaultAction,
@@ -36,12 +36,14 @@ func (t *Table) Match(pkt *traffic.Packet) Result {
 			t.logCtx.Debugf("Rule %+v matched", r)
 			res.EnforcedBy = r
 			return res
-		} else {
-			res.Trace = append(res.Trace, r)
-
 		}
+		res.Trace = append(res.Trace, r)
 	}
-	t.logCtx.Debugf("No rule matched, using default action %s", t.DefaultAction.String())
+	if t.DefaultAction == nil {
+		t.logCtx.Warn("No rule matched and no default action is set")
+		return res
+	}
+	t.logCtx.Debugf("No rule matched, using default action %s", t.DefaultAction.Action.String())
+	res.EnforcedBy = t.DefaultAction
 	return res
-
 }

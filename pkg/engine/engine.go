@@ -89,7 +89,7 @@ func (e *Engine) loadRules() error {
 	if err != nil {
 		return fmt.Errorf("invalid default action %s: %w", e.config.DefaultAction, err)
 	}
-	e.table.DefaultAction = action
+	e.table.DefaultAction = model.NewRule(model.WithAction(action))
 
 	return nil
 }
