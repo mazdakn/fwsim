@@ -111,6 +111,7 @@ type Rule struct {
 }
 
 func (r *Rule) Match(pkt *traffic.Packet) bool {
+	r.packetCount.Increment()
 	if r.Protocol != nil && *r.Protocol != pkt.Protocol {
 		return false
 	}
@@ -126,8 +127,6 @@ func (r *Rule) Match(pkt *traffic.Packet) bool {
 	if r.DstNet != nil && !r.DstNet.Contains(pkt.DstAddr) {
 		return false
 	}
-	// All conditions passed - increment packet counter
-	r.packetCount.Increment()
 	return true
 }
 
@@ -160,7 +159,7 @@ func (r *Rule) String() string {
 	if r.DstNet != nil {
 		dstNet = r.DstNet.String()
 	}
-	return fmt.Sprintf("%s{%s:%s->%s:%s}", proto, srcNet, srcPort, dstNet, dstPort)
+	return fmt.Sprintf("%s %s{%s:%s->%s:%s}", r.Action, proto, srcNet, srcPort, dstNet, dstPort)
 }
 
 func MustParseCIDR(cidr string) *net.IPNet {

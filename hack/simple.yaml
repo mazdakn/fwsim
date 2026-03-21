@@ -13,4 +13,4 @@ rules:
     dst_port: 8080
     proto: 7
     action: Drop
-default_action: Drop
+default_action: Accept
