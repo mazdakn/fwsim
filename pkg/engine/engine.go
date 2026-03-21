@@ -94,6 +94,6 @@ func (e *Engine) loadRules() error {
 	return nil
 }
 
-func (e *Engine) Match(pkt *traffic.Packet) (int, *model.Rule) {
+func (e *Engine) Match(pkt *traffic.Packet) model.Result {
 	return e.table.Match(pkt)
 }

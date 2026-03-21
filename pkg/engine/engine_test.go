@@ -26,10 +26,9 @@ func TestEngineMatchNoRules(t *testing.T) {
 		traffic.WithDstAddr("1.1.1.1"), traffic.WithDstPort(53),
 	)
 
-	idx, rule := engine.Match(pkt)
-	Expect(idx).To(Equal(-1))
-	Expect(rule).ToNot(BeNil())
-	Expect(rule.Action).To(Equal(model.Drop))
+	res := engine.Match(pkt)
+	Expect(res.EnforcedBy).ToNot(BeNil())
+	Expect(res.EnforcedBy.Action).To(Equal(model.Drop))
 }
 
 func TestEngineMatchSingleRule(t *testing.T) {
@@ -45,11 +44,10 @@ func TestEngineMatchSingleRule(t *testing.T) {
 		traffic.WithDstAddr("1.1.1.1"), traffic.WithDstPort(53),
 	)
 
-	idx, rule := engine.Match(pkt)
-	Expect(idx).To(Equal(0))
-	Expect(rule).ToNot(BeNil())
-	Expect(*rule.DstPort).To(Equal(uint16(53)))
-	Expect(*rule.Protocol).To(Equal(uint8(17)))
+	res := engine.Match(pkt)
+	Expect(res.EnforcedBy).ToNot(BeNil())
+	Expect(*res.EnforcedBy.DstPort).To(Equal(uint16(53)))
+	Expect(*res.EnforcedBy.Protocol).To(Equal(uint8(17)))
 }
 
 func TestEngineMatchMultipleRules(t *testing.T) {
@@ -67,11 +65,11 @@ func TestEngineMatchMultipleRules(t *testing.T) {
 		traffic.WithDstAddr("1.1.1.1"), traffic.WithDstPort(53),
 	)
 
-	idx, rule := engine.Match(pkt)
-	Expect(idx).To(Equal(1)) // Should match the second rule
-	Expect(rule).ToNot(BeNil())
-	Expect(*rule.DstPort).To(Equal(uint16(53)))
-	Expect(*rule.Protocol).To(Equal(uint8(17)))
+	res := engine.Match(pkt)
+	Expect(res.EnforcedBy).ToNot(BeNil())
+	// DstPort 53 uniquely identifies the second rule (first has DstPort 80, third has DstPort 443)
+	Expect(*res.EnforcedBy.DstPort).To(Equal(uint16(53)))
+	Expect(*res.EnforcedBy.Protocol).To(Equal(uint8(17)))
 }
 
 func TestEngineMatchNoMatch(t *testing.T) {
@@ -90,10 +88,9 @@ func TestEngineMatchNoMatch(t *testing.T) {
 		traffic.WithDstAddr("1.1.1.1"), traffic.WithDstPort(53),
 	)
 
-	idx, rule := engine.Match(pkt)
-	Expect(idx).To(Equal(-1))
-	Expect(rule).ToNot(BeNil())
-	Expect(rule.Action).To(Equal(model.Accept))
+	res := engine.Match(pkt)
+	Expect(res.EnforcedBy).ToNot(BeNil())
+	Expect(res.EnforcedBy.Action).To(Equal(model.Accept))
 }
 
 func TestEngineMatchDefaultAction(t *testing.T) {
@@ -111,10 +108,9 @@ func TestEngineMatchDefaultAction(t *testing.T) {
 		traffic.WithDstAddr("1.1.1.1"), traffic.WithDstPort(53),
 	)
 
-	idx, rule := engine.Match(pkt)
-	Expect(idx).To(Equal(-1))
-	Expect(rule).ToNot(BeNil())
-	Expect(rule.Action).To(Equal(model.Drop))
+	res := engine.Match(pkt)
+	Expect(res.EnforcedBy).ToNot(BeNil())
+	Expect(res.EnforcedBy.Action).To(Equal(model.Drop))
 }
 
 func TestEngineMatchDefaultActionNoRules(t *testing.T) {
@@ -128,10 +124,9 @@ func TestEngineMatchDefaultActionNoRules(t *testing.T) {
 		traffic.WithDstAddr("1.1.1.1"), traffic.WithDstPort(53),
 	)
 
-	idx, rule := engine.Match(pkt)
-	Expect(idx).To(Equal(-1))
-	Expect(rule).ToNot(BeNil())
-	Expect(rule.Action).To(Equal(model.Accept))
+	res := engine.Match(pkt)
+	Expect(res.EnforcedBy).ToNot(BeNil())
+	Expect(res.EnforcedBy.Action).To(Equal(model.Accept))
 }
 
 func TestEngineMatchWithNetworks(t *testing.T) {
@@ -148,10 +143,9 @@ func TestEngineMatchWithNetworks(t *testing.T) {
 		traffic.WithDstAddr("1.1.1.1"), traffic.WithDstPort(53),
 	)
 
-	idx, rule := engine.Match(pkt)
-	Expect(idx).To(Equal(1))
-	Expect(rule).ToNot(BeNil())
-	Expect(rule.SrcNet.String()).To(Equal("10.10.0.0/16"))
+	res := engine.Match(pkt)
+	Expect(res.EnforcedBy).ToNot(BeNil())
+	Expect(res.EnforcedBy.SrcNet.String()).To(Equal("10.10.0.0/16"))
 }
 
 func TestEngineMatchIPv6(t *testing.T) {
@@ -168,11 +162,10 @@ func TestEngineMatchIPv6(t *testing.T) {
 		traffic.WithDstAddr("cafe::1"), traffic.WithDstPort(80),
 	)
 
-	idx, rule := engine.Match(pkt)
-	Expect(idx).To(Equal(0)) // Should match the first rule
-	Expect(rule).ToNot(BeNil())
-	Expect(*rule.Protocol).To(Equal(uint8(6)))
-	Expect(rule.SrcNet.String()).To(Equal("dead:beef::/64"))
+	res := engine.Match(pkt)
+	Expect(res.EnforcedBy).ToNot(BeNil())
+	Expect(*res.EnforcedBy.Protocol).To(Equal(uint8(6)))
+	Expect(res.EnforcedBy.SrcNet.String()).To(Equal("dead:beef::/64"))
 }
 
 func TestLoadRulesFromConfig(t *testing.T) {

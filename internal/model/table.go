@@ -28,15 +28,18 @@ func (t *Table) AddRule(r *Rule) {
 	t.Rules = append(t.Rules, r)
 }
 
-func (t *Table) Match(pkt *traffic.Packet) (int, *Rule) {
+func (t *Table) Match(pkt *traffic.Packet) Result {
 	t.logCtx.Debugf("Matching packet %+v", pkt)
-	for i, r := range t.Rules {
+	for _, r := range t.Rules {
 		if r.Match(pkt) {
 			t.logCtx.Debugf("Rule %+v matched", r)
-			return i, r
+			return Result{EnforcedBy: r}
 		}
 	}
+	if t.DefaultAction == nil {
+		t.logCtx.Warn("No rule matched and no default action is set")
+		return Result{}
+	}
 	t.logCtx.Debugf("No rule matched, using default action %s", t.DefaultAction.Action.String())
-	return -1, t.DefaultAction
-
+	return Result{EnforcedBy: t.DefaultAction}
 }
