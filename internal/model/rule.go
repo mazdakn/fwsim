@@ -87,6 +87,12 @@ func WithAction(action Action) RuleOption {
 	}
 }
 
+func WithName(name string) RuleOption {
+	return func(r *Rule) {
+		r.Name = name
+	}
+}
+
 func NewRule(opts ...RuleOption) *Rule {
 	r := Rule{
 		packetCount: counter.New(),
@@ -98,6 +104,7 @@ func NewRule(opts ...RuleOption) *Rule {
 }
 
 type Rule struct {
+	Name     string
 	SrcNet   *net.IPNet
 	DstNet   *net.IPNet
 	Protocol *uint8
@@ -140,6 +147,9 @@ func (r *Rule) ResetPacketCount() {
 }
 
 func (r *Rule) String() string {
+	if r.Name != "" {
+		return r.Name
+	}
 	proto := "*"
 	if r.Protocol != nil {
 		proto = strconv.Itoa(int(*r.Protocol))
