@@ -17,8 +17,8 @@ type Rule struct {
 	SrcNet   string  `yaml:"src_net,omitempty"`
 	DstNet   string  `yaml:"dst_net,omitempty"`
 	Protocol *uint8  `yaml:"proto,omitempty"`
-	SrcPort  *uint16 `yaml:"src_port,omitempty"`
-	DstPort  *uint16 `yaml:"dst_port,omitempty"`
+	SrcPort  []uint16 `yaml:"src_port,omitempty"`
+	DstPort  []uint16 `yaml:"dst_port,omitempty"`
 	Action   string  `yaml:"action,omitempty"`
 }
 

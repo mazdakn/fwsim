@@ -7,6 +7,7 @@ import (
 
 	"github.com/goccy/go-yaml"
 	"github.com/mazdakn/fwsim/internal/model"
+	"github.com/mazdakn/fwsim/internal/set"
 	"github.com/mazdakn/fwsim/internal/traffic"
 )
 
@@ -59,8 +60,19 @@ func (e *Engine) LoadRules() error {
 
 		rule.Name = r.Name
 		rule.Protocol = r.Protocol
-		rule.SrcPort = r.SrcPort
-		rule.DstPort = r.DstPort
+
+		if len(r.SrcPort) > 0 {
+			rule.SrcPort = set.NewPortSet()
+			for _, port := range r.SrcPort {
+				rule.SrcPort.Add(port)
+			}
+		}
+		if len(r.DstPort) > 0 {
+			rule.DstPort = set.NewPortSet()
+			for _, port := range r.DstPort {
+				rule.DstPort.Add(port)
+			}
+		}
 
 		rule.Action, err = model.ParseAction(r.Action)
 		if err != nil {
