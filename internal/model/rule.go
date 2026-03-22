@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/mazdakn/fwsim/internal/counter"
+	"github.com/mazdakn/fwsim/internal/set"
 	"github.com/mazdakn/fwsim/internal/traffic"
 )
 
@@ -59,13 +60,19 @@ func WithProto(proto uint8) RuleOption {
 
 func WithSrcPort(port uint16) RuleOption {
 	return func(r *Rule) {
-		r.SrcPort = &port
+		if r.SrcPort == nil {
+			r.SrcPort = set.NewPortSet()
+		}
+		r.SrcPort.Add(port)
 	}
 }
 
 func WithDstPort(port uint16) RuleOption {
 	return func(r *Rule) {
-		r.DstPort = &port
+		if r.DstPort == nil {
+			r.DstPort = set.NewPortSet()
+		}
+		r.DstPort.Add(port)
 	}
 }
 
@@ -109,8 +116,8 @@ type Rule struct {
 	DstNet   *net.IPNet
 	Protocol *uint8
 
-	SrcPort *uint16
-	DstPort *uint16
+	SrcPort *set.PortSet
+	DstPort *set.PortSet
 
 	Action Action
 
@@ -121,10 +128,10 @@ func (r *Rule) Match(pkt *traffic.Packet) bool {
 	if r.Protocol != nil && *r.Protocol != pkt.Protocol {
 		return false
 	}
-	if r.SrcPort != nil && *r.SrcPort != pkt.SrcPort {
+	if r.SrcPort != nil && !r.SrcPort.Match(pkt.SrcPort) {
 		return false
 	}
-	if r.DstPort != nil && *r.DstPort != pkt.DstPort {
+	if r.DstPort != nil && !r.DstPort.Match(pkt.DstPort) {
 		return false
 	}
 	if r.SrcNet != nil && !r.SrcNet.Contains(pkt.SrcAddr) {
@@ -156,11 +163,11 @@ func (r *Rule) String() string {
 	}
 	srcPort := "*"
 	if r.SrcPort != nil {
-		srcPort = strconv.Itoa(int(*r.SrcPort))
+		srcPort = r.SrcPort.String()
 	}
 	dstPort := "*"
 	if r.DstPort != nil {
-		dstPort = strconv.Itoa(int(*r.DstPort))
+		dstPort = r.DstPort.String()
 	}
 	srcNet := "*"
 	if r.SrcNet != nil {
