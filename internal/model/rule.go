@@ -78,13 +78,19 @@ func WithDstPort(port uint16) RuleOption {
 
 func WithSrcNet(cidr string) RuleOption {
 	return func(r *Rule) {
-		r.SrcNet = MustParseCIDR(cidr)
+		if r.SrcNet == nil {
+			r.SrcNet = set.NewIPSet()
+		}
+		r.SrcNet.Add(MustParseCIDR(cidr))
 	}
 }
 
 func WithDstNet(cidr string) RuleOption {
 	return func(r *Rule) {
-		r.DstNet = MustParseCIDR(cidr)
+		if r.DstNet == nil {
+			r.DstNet = set.NewIPSet()
+		}
+		r.DstNet.Add(MustParseCIDR(cidr))
 	}
 }
 
@@ -112,8 +118,8 @@ func NewRule(opts ...RuleOption) *Rule {
 
 type Rule struct {
 	Name     string
-	SrcNet   *net.IPNet
-	DstNet   *net.IPNet
+	SrcNet   *set.IPSet
+	DstNet   *set.IPSet
 	Protocol *uint8
 
 	SrcPort *set.PortSet
@@ -134,10 +140,10 @@ func (r *Rule) Match(pkt *traffic.Packet) bool {
 	if r.DstPort != nil && !r.DstPort.Match(pkt.DstPort) {
 		return false
 	}
-	if r.SrcNet != nil && !r.SrcNet.Contains(pkt.SrcAddr) {
+	if r.SrcNet != nil && !r.SrcNet.Match(pkt.SrcAddr) {
 		return false
 	}
-	if r.DstNet != nil && !r.DstNet.Contains(pkt.DstAddr) {
+	if r.DstNet != nil && !r.DstNet.Match(pkt.DstAddr) {
 		return false
 	}
 	// All conditions passed - increment packet counter

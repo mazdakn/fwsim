@@ -84,7 +84,8 @@ func (e *Engine) LoadRules() error {
 			if err != nil {
 				return fmt.Errorf("invalid source net %s: %w", r.SrcNet, err)
 			}
-			rule.SrcNet = ipnet
+			rule.SrcNet = set.NewIPSet()
+			rule.SrcNet.Add(ipnet)
 		}
 
 		if r.DstNet != "" {
@@ -92,7 +93,8 @@ func (e *Engine) LoadRules() error {
 			if err != nil {
 				return fmt.Errorf("invalid destination net %s: %w", r.DstNet, err)
 			}
-			rule.DstNet = ipnet
+			rule.DstNet = set.NewIPSet()
+			rule.DstNet.Add(ipnet)
 		}
 
 		e.table.Rules = append(e.table.Rules, rule)
