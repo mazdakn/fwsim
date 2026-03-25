@@ -51,7 +51,7 @@ func ParseAction(s string) (Action, error) {
 
 type RuleOption func(*Rule)
 
-func WithProto(proto uint16) RuleOption {
+func WithProto(proto uint8) RuleOption {
 	return func(r *Rule) {
 		if r.Proto == nil {
 			r.Proto = set.NewProtoSet()
@@ -133,7 +133,7 @@ type Rule struct {
 }
 
 func (r *Rule) Match(pkt *traffic.Packet) bool {
-	if r.Proto != nil && !r.Proto.Match(uint16(pkt.Protocol)) {
+	if r.Proto != nil && !r.Proto.Match(pkt.Protocol) {
 		return false
 	}
 	if r.SrcPort != nil && !r.SrcPort.Match(pkt.SrcPort) {

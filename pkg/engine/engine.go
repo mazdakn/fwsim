@@ -62,7 +62,7 @@ func (e *Engine) LoadRules() error {
 
 		if r.Protocol != nil {
 			rule.Proto = set.NewProtoSet()
-			rule.Proto.Add(uint16(*r.Protocol))
+			rule.Proto.Add(*r.Protocol)
 		}
 
 		if len(r.SrcPort) > 0 {

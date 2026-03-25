@@ -184,7 +184,7 @@ func TestMustParseCIDRPanic(t *testing.T) {
 	}
 }
 
-func makeCommonRules(srcNet, dstNet string, proto uint16, srcPort, dstPort uint16) []*Rule {
+func makeCommonRules(srcNet, dstNet string, proto uint8, srcPort, dstPort uint16) []*Rule {
 	return []*Rule{
 		NewRule(WithProto(proto)),
 		NewRule(WithSrcPort(srcPort)),
