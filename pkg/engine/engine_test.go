@@ -90,16 +90,16 @@ func TestLoadRulesFromConfig(t *testing.T) {
 	Expect(rule1.SrcNet.String()).To(Equal("192.168.1.0/24"))
 	Expect(rule1.DstNet).ToNot(BeNil())
 	Expect(rule1.DstNet.String()).To(Equal("1.1.1.1/32"))
-	Expect(rule1.Protocol).ToNot(BeNil())
-	Expect(*rule1.Protocol).To(Equal(uint8(7)))
+	Expect(rule1.Proto).ToNot(BeNil())
+	Expect(rule1.Proto.Match(7)).To(BeTrue())
 	Expect(rule1.Action.String()).To(Equal("Accept"))
 
 	// Verify second rule
 	rule2 := engine.table.Rules[1]
 	Expect(rule2.DstNet).ToNot(BeNil())
 	Expect(rule2.DstNet.String()).To(Equal("1.1.1.1/32"))
-	Expect(rule2.Protocol).ToNot(BeNil())
-	Expect(*rule2.Protocol).To(Equal(uint8(7)))
+	Expect(rule2.Proto).ToNot(BeNil())
+	Expect(rule2.Proto.Match(7)).To(BeTrue())
 	Expect(rule2.Action.String()).To(Equal("Drop"))
 
 	// Verify default action is set

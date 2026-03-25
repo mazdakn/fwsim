@@ -96,6 +96,59 @@ func TestPortSetStringMultiplePorts(t *testing.T) {
 	Expect(ps.String()).To(Equal("{80,443}"))
 }
 
+func TestProtoSetAdd(t *testing.T) {
+	RegisterTestingT(t)
+
+	ps := NewProtoSet()
+
+	ps.Add(6)
+	Expect(ps.Match(6)).To(BeTrue())
+	Expect(ps.Match(17)).To(BeFalse())
+}
+
+func TestProtoSetDelete(t *testing.T) {
+	RegisterTestingT(t)
+
+	ps := NewProtoSet()
+
+	ps.Add(6)
+	ps.Add(17)
+	Expect(ps.Match(6)).To(BeTrue())
+
+	ps.Delete(6)
+	Expect(ps.Match(6)).To(BeFalse())
+	Expect(ps.Match(17)).To(BeTrue())
+}
+
+func TestProtoSetMatch(t *testing.T) {
+	RegisterTestingT(t)
+
+	ps := NewProtoSet()
+
+	Expect(ps.Match(6)).To(BeFalse())
+
+	ps.Add(6)
+	Expect(ps.Match(6)).To(BeTrue())
+	Expect(ps.Match(17)).To(BeFalse())
+}
+
+func TestProtoSetStringOneProto(t *testing.T) {
+	RegisterTestingT(t)
+
+	ps := NewProtoSet()
+	ps.Add(6)
+	Expect(ps.String()).To(Equal("6"))
+}
+
+func TestProtoSetStringMultipleProtos(t *testing.T) {
+	RegisterTestingT(t)
+
+	ps := NewProtoSet()
+	ps.Add(17)
+	ps.Add(6)
+	Expect(ps.String()).To(Equal("{6,17}"))
+}
+
 func TestIPSetAdd(t *testing.T) {
 	RegisterTestingT(t)
 
