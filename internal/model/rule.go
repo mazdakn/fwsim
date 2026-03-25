@@ -108,6 +108,12 @@ func WithName(name string) RuleOption {
 	}
 }
 
+func WithOrder(order uint64) RuleOption {
+	return func(r *Rule) {
+		r.Order = order
+	}
+}
+
 func NewRule(opts ...RuleOption) *Rule {
 	r := Rule{
 		packetCount: counter.New(),
@@ -120,6 +126,7 @@ func NewRule(opts ...RuleOption) *Rule {
 
 type Rule struct {
 	Name   string
+	Order  uint64
 	SrcNet *set.IPSet
 	DstNet *set.IPSet
 	Proto  *set.ProtoSet

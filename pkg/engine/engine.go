@@ -59,6 +59,7 @@ func (e *Engine) LoadRules() error {
 		rule := model.NewRule()
 
 		rule.Name = r.Name
+		rule.Order = r.Order
 
 		if len(r.Protocol) > 0 {
 			rule.Proto = set.NewProtoSet()
@@ -115,7 +116,7 @@ func (e *Engine) LoadRules() error {
 			}
 		}
 
-		e.table.Rules = append(e.table.Rules, rule)
+		e.table.AddRule(rule)
 	}
 
 	action, err := model.ParseAction(e.config.DefaultAction)

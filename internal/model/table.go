@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/mazdakn/fwsim/internal/traffic"
 	"github.com/sirupsen/logrus"
@@ -30,7 +31,12 @@ func NewTable(name string, defaultAction Action) *Table {
 }
 
 func (t *Table) AddRule(r *Rule) {
-	t.Rules = append(t.Rules, r)
+	i := sort.Search(len(t.Rules), func(i int) bool {
+		return t.Rules[i].Order > r.Order
+	})
+	t.Rules = append(t.Rules, nil)
+	copy(t.Rules[i+1:], t.Rules[i:])
+	t.Rules[i] = r
 }
 
 func (t *Table) Match(pkt *traffic.Packet) Result {
