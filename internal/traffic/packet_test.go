@@ -10,8 +10,8 @@ func TestWithName(t *testing.T) {
 	RegisterTestingT(t)
 
 	tests := []struct {
-		name     string
-		pktName  string
+		name    string
+		pktName string
 	}{
 		{"Simple", "my-packet"},
 		{"Empty", ""},

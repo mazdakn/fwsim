@@ -13,22 +13,18 @@ type IPSet struct {
 
 // NewIPSet returns an empty IPSet.
 func NewIPSet() *IPSet {
-	return &IPSet{nets: make(map[string]*net.IPNet)}
+	return &IPSet{
+		nets: make(map[string]*net.IPNet),
+	}
 }
 
 // Add inserts ipnet into the set.
 func (s *IPSet) Add(ipnet *net.IPNet) {
-	if ipnet == nil {
-		return
-	}
 	s.nets[ipnet.String()] = ipnet
 }
 
 // Delete removes ipnet from the set.
 func (s *IPSet) Delete(ipnet *net.IPNet) {
-	if ipnet == nil {
-		return
-	}
 	delete(s.nets, ipnet.String())
 }
 
