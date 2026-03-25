@@ -14,6 +14,7 @@ type Config struct {
 
 type Rule struct {
 	Name     string   `yaml:"name,omitempty"`
+	Order    uint64   `yaml:"order,omitempty"`
 	SrcNet   []string `yaml:"src_net,omitempty"`
 	DstNet   []string `yaml:"dst_net,omitempty"`
 	Protocol []uint8  `yaml:"proto,omitempty"`
