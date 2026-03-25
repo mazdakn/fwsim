@@ -21,7 +21,7 @@ func TestPacketsFromFile(t *testing.T) {
 	engine := New()
 	pkts, err := engine.PacketsFromFile("../../hack/packets.yaml")
 	Expect(err).To(BeNil())
-	Expect(len(pkts)).To(Equal(3))
+	Expect(len(pkts)).To(Equal(5))
 
 	// Verify first packet
 	Expect(pkts[0].SrcAddr.String()).To(Equal("192.168.1.5"))
@@ -58,7 +58,7 @@ func TestPacketsFromFileAndMatch(t *testing.T) {
 
 	pkts, err := engine.PacketsFromFile("../../hack/packets.yaml")
 	Expect(err).To(BeNil())
-	Expect(len(pkts)).To(Equal(3))
+	Expect(len(pkts)).To(Equal(5))
 
 	// First packet: src 192.168.1.5 -> dst 1.1.1.1:80 proto 7, src_port 30000 — matches rule 1 (Accept)
 	res := engine.Match(pkts[0])

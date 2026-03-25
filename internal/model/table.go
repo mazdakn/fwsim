@@ -55,6 +55,7 @@ func (t *Table) Match(pkt *traffic.Packet) Result {
 		return res
 	}
 	t.logCtx.Debugf("No rule matched, using default action %s", t.DefaultAction.Action.String())
+	t.DefaultAction.packetCount.Increment()
 	res.Trace = append(res.Trace, t.DefaultAction)
 	res.Verdict = t.DefaultAction.Action
 	return res

@@ -17,3 +17,15 @@ packets:
     proto: 17
     src_port: 54321
     dst_port: 53
+  - name: access backend
+    src_addr: 192.168.1.5
+    dst_addr: 1.1.1.1
+    proto: 7
+    src_port: 30000
+    dst_port: 80
+  - name: dns traffic
+    src_addr: 172.16.0.1
+    dst_addr: 8.8.8.8
+    proto: 17
+    src_port: 54321
+    dst_port: 53

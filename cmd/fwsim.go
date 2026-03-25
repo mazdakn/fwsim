@@ -164,7 +164,7 @@ func runPackets(cmd *cobra.Command, args []string) {
 func printResult(pkt *traffic.Packet, res model.Result) {
 	fmt.Printf("%s %s:\n", res.Verdict, pkt)
 	for _, r := range res.Trace {
-		fmt.Printf(" - Rule: %s Action: %s\n", r, r.Action)
+		fmt.Printf(" - Rule: %s Action: %s Counter: %d\n", r, r.Action, r.PacketCount())
 	}
 }
 
