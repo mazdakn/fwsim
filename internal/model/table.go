@@ -17,8 +17,11 @@ type Table struct {
 
 func NewTable(name string, defaultAction Action) *Table {
 	return &Table{
-		Name:          name,
-		DefaultAction: NewRule(WithAction(defaultAction)),
+		Name: name,
+		DefaultAction: NewRule(
+			WithAction(defaultAction),
+			WithName(fmt.Sprintf("table %s default action", name)),
+		),
 		logCtx: logrus.WithFields(logrus.Fields{
 			"name":          name,
 			"defaultAction": defaultAction,
@@ -34,7 +37,7 @@ func (t *Table) Match(pkt *traffic.Packet) Result {
 	t.logCtx.Debugf("Matching packet %+v", pkt)
 	var res Result
 	for _, r := range t.Rules {
-		res.Trace = append(res.Trace, r.String())
+		res.Trace = append(res.Trace, r)
 		if r.Match(pkt) {
 			t.logCtx.Debugf("Rule %+v matched", r)
 			res.Verdict = r.Action
@@ -46,7 +49,7 @@ func (t *Table) Match(pkt *traffic.Packet) Result {
 		return res
 	}
 	t.logCtx.Debugf("No rule matched, using default action %s", t.DefaultAction.Action.String())
-	res.Trace = append(res.Trace, fmt.Sprintf("%s all. table %s default action", t.DefaultAction.Action, t.Name))
+	res.Trace = append(res.Trace, t.DefaultAction)
 	res.Verdict = t.DefaultAction.Action
 	return res
 }
