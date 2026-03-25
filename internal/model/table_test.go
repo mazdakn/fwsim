@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestTableAddRuleSortDescending(t *testing.T) {
+func TestTableAddRuleSortAscending(t *testing.T) {
 	RegisterTestingT(t)
 
 	table := NewTable("test", Drop)
@@ -21,11 +21,11 @@ func TestTableAddRuleSortDescending(t *testing.T) {
 	table.AddRule(rule2)
 	table.AddRule(rule3)
 
-	// Rules should be sorted in descending order by Order field
+	// Rules should be sorted in ascending order by Order field
 	Expect(table.Rules).To(HaveLen(3))
-	Expect(table.Rules[0].Order).To(Equal(uint64(30)))
+	Expect(table.Rules[0].Order).To(Equal(uint64(10)))
 	Expect(table.Rules[1].Order).To(Equal(uint64(20)))
-	Expect(table.Rules[2].Order).To(Equal(uint64(10)))
+	Expect(table.Rules[2].Order).To(Equal(uint64(30)))
 }
 
 func TestTableAddRuleSortStableForEqualOrders(t *testing.T) {
@@ -49,7 +49,7 @@ func TestTableAddRuleSortStableForEqualOrders(t *testing.T) {
 	Expect(table.Rules[2].Name).To(Equal("rule3"))
 }
 
-func TestTableMatchUsesDescendingOrder(t *testing.T) {
+func TestTableMatchUsesAscendingOrder(t *testing.T) {
 	RegisterTestingT(t)
 
 	table := NewTable("test", Drop)
@@ -61,15 +61,15 @@ func TestTableMatchUsesDescendingOrder(t *testing.T) {
 		traffic.WithDstPort(80),
 	)
 
-	// Add a low-order rule that drops traffic first, then a high-order rule that accepts it
-	// After sorting descending, the high-order Accept rule should match first
-	lowOrderDrop := NewRule(WithName("low-drop"), WithOrder(1), WithAction(Drop),
+	// Add a high-order rule that drops traffic and a low-order rule that accepts it
+	// After sorting ascending, the low-order Accept rule should match first
+	highOrderDrop := NewRule(WithName("high-drop"), WithOrder(100), WithAction(Drop),
 		WithProto(6), WithDstPort(80))
-	highOrderAccept := NewRule(WithName("high-accept"), WithOrder(100), WithAction(Accept),
+	lowOrderAccept := NewRule(WithName("low-accept"), WithOrder(1), WithAction(Accept),
 		WithProto(6), WithDstPort(80))
 
-	table.AddRule(lowOrderDrop)
-	table.AddRule(highOrderAccept)
+	table.AddRule(highOrderDrop)
+	table.AddRule(lowOrderAccept)
 
 	res := table.Match(pkt)
 	Expect(res.Verdict).To(Equal(Accept))

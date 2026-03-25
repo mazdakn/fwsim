@@ -32,7 +32,7 @@ func NewTable(name string, defaultAction Action) *Table {
 
 func (t *Table) AddRule(r *Rule) {
 	i := sort.Search(len(t.Rules), func(i int) bool {
-		return t.Rules[i].Order < r.Order
+		return t.Rules[i].Order > r.Order
 	})
 	t.Rules = append(t.Rules, nil)
 	copy(t.Rules[i+1:], t.Rules[i:])
