@@ -60,9 +60,11 @@ func (e *Engine) LoadRules() error {
 
 		rule.Name = r.Name
 
-		if r.Protocol != nil {
+		if len(r.Protocol) > 0 {
 			rule.Proto = set.NewProtoSet()
-			rule.Proto.Add(*r.Protocol)
+			for _, proto := range r.Protocol {
+				rule.Proto.Add(proto)
+			}
 		}
 
 		if len(r.SrcPort) > 0 {
@@ -83,22 +85,34 @@ func (e *Engine) LoadRules() error {
 			return fmt.Errorf("invalid action %s", rule.Action)
 		}
 
-		if r.SrcNet != "" {
-			_, ipnet, err := net.ParseCIDR(r.SrcNet)
-			if err != nil {
-				return fmt.Errorf("invalid source net %s: %w", r.SrcNet, err)
+		if len(r.SrcNet) > 0 {
+			srcNets := make([]*net.IPNet, 0, len(r.SrcNet))
+			for _, srcNet := range r.SrcNet {
+				_, ipnet, err := net.ParseCIDR(srcNet)
+				if err != nil {
+					return fmt.Errorf("invalid source net %s: %w", srcNet, err)
+				}
+				srcNets = append(srcNets, ipnet)
 			}
 			rule.SrcNet = set.NewIPSet()
-			rule.SrcNet.Add(ipnet)
+			for _, ipnet := range srcNets {
+				rule.SrcNet.Add(ipnet)
+			}
 		}
 
-		if r.DstNet != "" {
-			_, ipnet, err := net.ParseCIDR(r.DstNet)
-			if err != nil {
-				return fmt.Errorf("invalid destination net %s: %w", r.DstNet, err)
+		if len(r.DstNet) > 0 {
+			dstNets := make([]*net.IPNet, 0, len(r.DstNet))
+			for _, dstNet := range r.DstNet {
+				_, ipnet, err := net.ParseCIDR(dstNet)
+				if err != nil {
+					return fmt.Errorf("invalid destination net %s: %w", dstNet, err)
+				}
+				dstNets = append(dstNets, ipnet)
 			}
 			rule.DstNet = set.NewIPSet()
-			rule.DstNet.Add(ipnet)
+			for _, ipnet := range dstNets {
+				rule.DstNet.Add(ipnet)
+			}
 		}
 
 		e.table.Rules = append(e.table.Rules, rule)
