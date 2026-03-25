@@ -59,7 +59,11 @@ func (e *Engine) LoadRules() error {
 		rule := model.NewRule()
 
 		rule.Name = r.Name
-		rule.Protocol = r.Protocol
+
+		if r.Protocol != nil {
+			rule.Proto = set.NewProtoSet()
+			rule.Proto.Add(*r.Protocol)
+		}
 
 		if len(r.SrcPort) > 0 {
 			rule.SrcPort = set.NewPortSet()

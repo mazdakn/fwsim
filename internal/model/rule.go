@@ -3,7 +3,6 @@ package model
 import (
 	"fmt"
 	"net"
-	"strconv"
 	"strings"
 
 	"github.com/mazdakn/fwsim/internal/counter"
@@ -54,7 +53,10 @@ type RuleOption func(*Rule)
 
 func WithProto(proto uint8) RuleOption {
 	return func(r *Rule) {
-		r.Protocol = &proto
+		if r.Proto == nil {
+			r.Proto = set.NewProtoSet()
+		}
+		r.Proto.Add(proto)
 	}
 }
 
@@ -117,10 +119,10 @@ func NewRule(opts ...RuleOption) *Rule {
 }
 
 type Rule struct {
-	Name     string
-	SrcNet   *set.IPSet
-	DstNet   *set.IPSet
-	Protocol *uint8
+	Name   string
+	SrcNet *set.IPSet
+	DstNet *set.IPSet
+	Proto  *set.ProtoSet
 
 	SrcPort *set.PortSet
 	DstPort *set.PortSet
@@ -131,7 +133,7 @@ type Rule struct {
 }
 
 func (r *Rule) Match(pkt *traffic.Packet) bool {
-	if r.Protocol != nil && *r.Protocol != pkt.Protocol {
+	if r.Proto != nil && !r.Proto.Match(pkt.Protocol) {
 		return false
 	}
 	if r.SrcPort != nil && !r.SrcPort.Match(pkt.SrcPort) {
@@ -164,8 +166,8 @@ func (r *Rule) String() string {
 		return r.Name
 	}
 	proto := "*"
-	if r.Protocol != nil {
-		proto = strconv.Itoa(int(*r.Protocol))
+	if r.Proto != nil {
+		proto = r.Proto.String()
 	}
 	srcPort := "*"
 	if r.SrcPort != nil {
