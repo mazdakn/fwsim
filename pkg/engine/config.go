@@ -13,13 +13,13 @@ type Config struct {
 }
 
 type Rule struct {
-	Name     string  `yaml:"name,omitempty"`
-	SrcNet   string  `yaml:"src_net,omitempty"`
-	DstNet   string  `yaml:"dst_net,omitempty"`
-	Protocol *uint8  `yaml:"proto,omitempty"`
+	Name     string   `yaml:"name,omitempty"`
+	SrcNet   []string `yaml:"src_net,omitempty"`
+	DstNet   []string `yaml:"dst_net,omitempty"`
+	Protocol []uint8  `yaml:"proto,omitempty"`
 	SrcPort  []uint16 `yaml:"src_port,omitempty"`
 	DstPort  []uint16 `yaml:"dst_port,omitempty"`
-	Action   string  `yaml:"action,omitempty"`
+	Action   string   `yaml:"action,omitempty"`
 }
 
 type Packet struct {
@@ -50,17 +50,17 @@ func (c *Config) Validate() error {
 
 func (c *Config) validateRules() error {
 	for _, r := range c.Rules {
-		if r.SrcNet != "" {
-			_, _, err := net.ParseCIDR(r.SrcNet)
+		for _, srcNet := range r.SrcNet {
+			_, _, err := net.ParseCIDR(srcNet)
 			if err != nil {
-				return fmt.Errorf("invalid src_net %s: %w", r.SrcNet, err)
+				return fmt.Errorf("invalid src_net %s: %w", srcNet, err)
 			}
 		}
 
-		if r.DstNet != "" {
-			_, _, err := net.ParseCIDR(r.DstNet)
+		for _, dstNet := range r.DstNet {
+			_, _, err := net.ParseCIDR(dstNet)
 			if err != nil {
-				return fmt.Errorf("invalid dst_net %s: %w", r.DstNet, err)
+				return fmt.Errorf("invalid dst_net %s: %w", dstNet, err)
 			}
 		}
 
