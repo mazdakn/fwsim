@@ -195,6 +195,76 @@ func (r *Rule) String() string {
 	return fmt.Sprintf("%s %s{%s:%s->%s:%s}", r.Action, proto, srcNet, srcPort, dstNet, dstPort)
 }
 
+// RuleConfig represents the YAML configuration structure for a firewall rule.
+type RuleConfig struct {
+	Name     string   `yaml:"name,omitempty"`
+	Order    uint64   `yaml:"order,omitempty"`
+	SrcNet   []string `yaml:"src_net,omitempty"`
+	DstNet   []string `yaml:"dst_net,omitempty"`
+	Protocol []uint8  `yaml:"proto,omitempty"`
+	SrcPort  []uint16 `yaml:"src_port,omitempty"`
+	DstPort  []uint16 `yaml:"dst_port,omitempty"`
+	Action   string   `yaml:"action,omitempty"`
+}
+
+// ToRule converts a RuleConfig into a Rule domain object.
+func (rc *RuleConfig) ToRule() (*Rule, error) {
+	rule := NewRule()
+	rule.Name = rc.Name
+	rule.Order = rc.Order
+
+	if len(rc.Protocol) > 0 {
+		rule.Proto = set.NewProtoSet()
+		for _, proto := range rc.Protocol {
+			rule.Proto.Add(proto)
+		}
+	}
+
+	if len(rc.SrcPort) > 0 {
+		rule.SrcPort = set.NewPortSet()
+		for _, port := range rc.SrcPort {
+			rule.SrcPort.Add(port)
+		}
+	}
+
+	if len(rc.DstPort) > 0 {
+		rule.DstPort = set.NewPortSet()
+		for _, port := range rc.DstPort {
+			rule.DstPort.Add(port)
+		}
+	}
+
+	action, err := ParseAction(rc.Action)
+	if err != nil {
+		return nil, fmt.Errorf("invalid action %s: %w", rc.Action, err)
+	}
+	rule.Action = action
+
+	if len(rc.SrcNet) > 0 {
+		rule.SrcNet = set.NewIPSet()
+		for _, srcNet := range rc.SrcNet {
+			_, ipnet, err := net.ParseCIDR(srcNet)
+			if err != nil {
+				return nil, fmt.Errorf("invalid source net %s: %w", srcNet, err)
+			}
+			rule.SrcNet.Add(ipnet)
+		}
+	}
+
+	if len(rc.DstNet) > 0 {
+		rule.DstNet = set.NewIPSet()
+		for _, dstNet := range rc.DstNet {
+			_, ipnet, err := net.ParseCIDR(dstNet)
+			if err != nil {
+				return nil, fmt.Errorf("invalid destination net %s: %w", dstNet, err)
+			}
+			rule.DstNet.Add(ipnet)
+		}
+	}
+
+	return rule, nil
+}
+
 func MustParseCIDR(cidr string) *net.IPNet {
 	_, ipnet, err := net.ParseCIDR(cidr)
 	if err != nil {
