@@ -9,19 +9,8 @@ import (
 )
 
 type Config struct {
-	Rules         []Rule `yaml:"rules,omitempty"`
-	DefaultAction string `yaml:"default_action,omitempty"`
-}
-
-type Rule struct {
-	Name     string   `yaml:"name,omitempty"`
-	Order    uint64   `yaml:"order,omitempty"`
-	SrcNet   []string `yaml:"src_net,omitempty"`
-	DstNet   []string `yaml:"dst_net,omitempty"`
-	Protocol []uint8  `yaml:"proto,omitempty"`
-	SrcPort  []uint16 `yaml:"src_port,omitempty"`
-	DstPort  []uint16 `yaml:"dst_port,omitempty"`
-	Action   string   `yaml:"action,omitempty"`
+	Rules         []model.RuleConfig `yaml:"rules,omitempty"`
+	DefaultAction string             `yaml:"default_action,omitempty"`
 }
 
 type PacketsConfig struct {

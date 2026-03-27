@@ -195,6 +195,18 @@ func (r *Rule) String() string {
 	return fmt.Sprintf("%s %s{%s:%s->%s:%s}", r.Action, proto, srcNet, srcPort, dstNet, dstPort)
 }
 
+// RuleConfig represents the YAML configuration structure for a firewall rule.
+type RuleConfig struct {
+	Name     string   `yaml:"name,omitempty"`
+	Order    uint64   `yaml:"order,omitempty"`
+	SrcNet   []string `yaml:"src_net,omitempty"`
+	DstNet   []string `yaml:"dst_net,omitempty"`
+	Protocol []uint8  `yaml:"proto,omitempty"`
+	SrcPort  []uint16 `yaml:"src_port,omitempty"`
+	DstPort  []uint16 `yaml:"dst_port,omitempty"`
+	Action   string   `yaml:"action,omitempty"`
+}
+
 func MustParseCIDR(cidr string) *net.IPNet {
 	_, ipnet, err := net.ParseCIDR(cidr)
 	if err != nil {
