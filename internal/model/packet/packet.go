@@ -1,4 +1,4 @@
-package traffic
+package packet
 
 import (
 	"fmt"

@@ -7,7 +7,7 @@ import (
 
 	"github.com/mazdakn/fwsim/internal/counter"
 	"github.com/mazdakn/fwsim/internal/set"
-	"github.com/mazdakn/fwsim/internal/traffic"
+	"github.com/mazdakn/fwsim/internal/model/packet"
 )
 
 type Action int
@@ -139,7 +139,7 @@ type Rule struct {
 	packetCount *counter.Counter
 }
 
-func (r *Rule) Match(pkt *traffic.Packet) bool {
+func (r *Rule) Match(pkt *packet.Packet) bool {
 	if r.Proto != nil && !r.Proto.Match(pkt.Protocol) {
 		return false
 	}

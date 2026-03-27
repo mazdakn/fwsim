@@ -5,7 +5,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/mazdakn/fwsim/internal/traffic"
+	"github.com/mazdakn/fwsim/internal/model/packet"
 	. "github.com/onsi/gomega"
 )
 
@@ -13,22 +13,22 @@ func TestEmptyRule(t *testing.T) {
 	RegisterTestingT(t)
 
 	rule := NewRule()
-	pkts := []*traffic.Packet{
-		traffic.NewPacket(
-			traffic.WithSrcAddr("10.10.10.1"), traffic.WithSrcPort(55555), traffic.WithProto(17),
-			traffic.WithDstAddr("1.1.1.1"), traffic.WithDstPort(53),
+	pkts := []*packet.Packet{
+		packet.NewPacket(
+			packet.WithSrcAddr("10.10.10.1"), packet.WithSrcPort(55555), packet.WithProto(17),
+			packet.WithDstAddr("1.1.1.1"), packet.WithDstPort(53),
 		),
-		traffic.NewPacket(
-			traffic.WithSrcAddr("172.16.0.1"), traffic.WithSrcPort(50000), traffic.WithProto(8),
-			traffic.WithDstAddr("2.2.2.2"), traffic.WithDstPort(9999),
+		packet.NewPacket(
+			packet.WithSrcAddr("172.16.0.1"), packet.WithSrcPort(50000), packet.WithProto(8),
+			packet.WithDstAddr("2.2.2.2"), packet.WithDstPort(9999),
 		),
-		traffic.NewPacket(
-			traffic.WithSrcAddr("dead:beef::1"), traffic.WithSrcPort(44444), traffic.WithProto(6),
-			traffic.WithDstAddr("cafe::1"), traffic.WithDstPort(80),
+		packet.NewPacket(
+			packet.WithSrcAddr("dead:beef::1"), packet.WithSrcPort(44444), packet.WithProto(6),
+			packet.WithDstAddr("cafe::1"), packet.WithDstPort(80),
 		),
-		traffic.NewPacket(
-			traffic.WithSrcAddr("dead:cafe::1"), traffic.WithSrcPort(30000), traffic.WithProto(64),
-			traffic.WithDstAddr("ffff::1"), traffic.WithDstPort(8080),
+		packet.NewPacket(
+			packet.WithSrcAddr("dead:cafe::1"), packet.WithSrcPort(30000), packet.WithProto(64),
+			packet.WithDstAddr("ffff::1"), packet.WithDstPort(8080),
 		),
 	}
 	for _, pkt := range pkts {
@@ -42,9 +42,9 @@ func TestRuleIPFamilyMismatch(t *testing.T) {
 	RegisterTestingT(t)
 
 	// IPv6 packet
-	pktV6 := traffic.NewPacket(
-		traffic.WithSrcAddr("dead:beef::1"), traffic.WithSrcPort(44444), traffic.WithProto(6),
-		traffic.WithDstAddr("cafe::1"), traffic.WithDstPort(80),
+	pktV6 := packet.NewPacket(
+		packet.WithSrcAddr("dead:beef::1"), packet.WithSrcPort(44444), packet.WithProto(6),
+		packet.WithDstAddr("cafe::1"), packet.WithDstPort(80),
 	)
 
 	// Rules with IPv4 networks should not match IPv6 packets
@@ -61,9 +61,9 @@ func TestRuleIPFamilyMismatch(t *testing.T) {
 	}
 
 	// IPv4 packet
-	pktV4 := traffic.NewPacket(
-		traffic.WithSrcAddr("10.10.10.1"), traffic.WithSrcPort(55555), traffic.WithProto(17),
-		traffic.WithDstAddr("1.1.1.1"), traffic.WithDstPort(53),
+	pktV4 := packet.NewPacket(
+		packet.WithSrcAddr("10.10.10.1"), packet.WithSrcPort(55555), packet.WithProto(17),
+		packet.WithDstAddr("1.1.1.1"), packet.WithDstPort(53),
 	)
 
 	// Rules with IPv6 networks should not match IPv4 packets
@@ -83,13 +83,13 @@ func TestRuleIPFamilyMismatch(t *testing.T) {
 func TestRuleMatch(t *testing.T) {
 	RegisterTestingT(t)
 
-	pktShouldMatch := traffic.NewPacket(
-		traffic.WithSrcAddr("10.10.10.1"), traffic.WithSrcPort(55555), traffic.WithProto(17),
-		traffic.WithDstAddr("1.1.1.1"), traffic.WithDstPort(53),
+	pktShouldMatch := packet.NewPacket(
+		packet.WithSrcAddr("10.10.10.1"), packet.WithSrcPort(55555), packet.WithProto(17),
+		packet.WithDstAddr("1.1.1.1"), packet.WithDstPort(53),
 	)
-	pktShouldNotMatch := traffic.NewPacket(
-		traffic.WithSrcAddr("172.16.0.1"), traffic.WithSrcPort(50000), traffic.WithProto(8),
-		traffic.WithDstAddr("2.2.2.2"), traffic.WithDstPort(9999),
+	pktShouldNotMatch := packet.NewPacket(
+		packet.WithSrcAddr("172.16.0.1"), packet.WithSrcPort(50000), packet.WithProto(8),
+		packet.WithDstAddr("2.2.2.2"), packet.WithDstPort(9999),
 	)
 	for _, r := range makeCommonRules("10.10.10.0/24", "1.1.1.1/32", 17, 55555, 53) {
 		t.Run(fmt.Sprintf("should match %v", r.String()), func(t *testing.T) {
@@ -104,13 +104,13 @@ func TestRuleMatch(t *testing.T) {
 func TestRuleMatchV6(t *testing.T) {
 	RegisterTestingT(t)
 
-	pktShouldMatch := traffic.NewPacket(
-		traffic.WithSrcAddr("dead:beef::1"), traffic.WithSrcPort(44444), traffic.WithProto(6),
-		traffic.WithDstAddr("cafe::1"), traffic.WithDstPort(80),
+	pktShouldMatch := packet.NewPacket(
+		packet.WithSrcAddr("dead:beef::1"), packet.WithSrcPort(44444), packet.WithProto(6),
+		packet.WithDstAddr("cafe::1"), packet.WithDstPort(80),
 	)
-	pktShouldNotMatch := traffic.NewPacket(
-		traffic.WithSrcAddr("dead:cafe::1"), traffic.WithSrcPort(30000), traffic.WithProto(64),
-		traffic.WithDstAddr("ffff::1"), traffic.WithDstPort(8080),
+	pktShouldNotMatch := packet.NewPacket(
+		packet.WithSrcAddr("dead:cafe::1"), packet.WithSrcPort(30000), packet.WithProto(64),
+		packet.WithDstAddr("ffff::1"), packet.WithDstPort(8080),
 	)
 	for _, r := range makeCommonRules("dead:beef::/64", "cafe::/112", 6, 44444, 80) {
 		t.Run(fmt.Sprintf("should match %v", r.String()), func(t *testing.T) {
@@ -253,13 +253,13 @@ func TestRulePacketCounter(t *testing.T) {
 	RegisterTestingT(t)
 
 	rule := NewRule(WithProto(17), WithDstPort(53))
-	pktMatch := traffic.NewPacket(
-		traffic.WithSrcAddr("10.10.10.1"), traffic.WithSrcPort(55555), traffic.WithProto(17),
-		traffic.WithDstAddr("1.1.1.1"), traffic.WithDstPort(53),
+	pktMatch := packet.NewPacket(
+		packet.WithSrcAddr("10.10.10.1"), packet.WithSrcPort(55555), packet.WithProto(17),
+		packet.WithDstAddr("1.1.1.1"), packet.WithDstPort(53),
 	)
-	pktNoMatch := traffic.NewPacket(
-		traffic.WithSrcAddr("10.10.10.1"), traffic.WithSrcPort(55555), traffic.WithProto(6),
-		traffic.WithDstAddr("1.1.1.1"), traffic.WithDstPort(80),
+	pktNoMatch := packet.NewPacket(
+		packet.WithSrcAddr("10.10.10.1"), packet.WithSrcPort(55555), packet.WithProto(6),
+		packet.WithDstAddr("1.1.1.1"), packet.WithDstPort(80),
 	)
 
 	// Initially, packet count should be 0
@@ -290,9 +290,9 @@ func TestRulePacketCounterConcurrency(t *testing.T) {
 	RegisterTestingT(t)
 
 	rule := NewRule(WithProto(17), WithDstPort(53))
-	pktMatch := traffic.NewPacket(
-		traffic.WithSrcAddr("10.10.10.1"), traffic.WithSrcPort(55555), traffic.WithProto(17),
-		traffic.WithDstAddr("1.1.1.1"), traffic.WithDstPort(53),
+	pktMatch := packet.NewPacket(
+		packet.WithSrcAddr("10.10.10.1"), packet.WithSrcPort(55555), packet.WithProto(17),
+		packet.WithDstAddr("1.1.1.1"), packet.WithDstPort(53),
 	)
 
 	// Concurrently match packets to test thread-safety

@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/mazdakn/fwsim/internal/model"
-	"github.com/mazdakn/fwsim/internal/traffic"
+	"github.com/mazdakn/fwsim/internal/model/packet"
 	"github.com/mazdakn/fwsim/pkg/engine"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -114,12 +114,12 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 	}
 
 	// Create packet from parameters
-	pkt := traffic.NewPacket(
-		traffic.WithSrcAddr(srcAddr),
-		traffic.WithDstAddr(dstAddr),
-		traffic.WithProto(uint8(proto)),
-		traffic.WithSrcPort(uint16(srcPort)),
-		traffic.WithDstPort(uint16(dstPort)),
+	pkt := packet.NewPacket(
+		packet.WithSrcAddr(srcAddr),
+		packet.WithDstAddr(dstAddr),
+		packet.WithProto(uint8(proto)),
+		packet.WithSrcPort(uint16(srcPort)),
+		packet.WithDstPort(uint16(dstPort)),
 	)
 
 	// Match packet against rules
@@ -161,7 +161,7 @@ func runPackets(cmd *cobra.Command, args []string) {
 	printValidations(e.Validate())
 }
 
-func printResult(pkt *traffic.Packet, res model.Result) {
+func printResult(pkt *packet.Packet, res model.Result) {
 	fmt.Printf("%s %s:\n", res.Verdict, pkt)
 	for _, r := range res.Trace {
 		fmt.Printf(" - Rule: %s Action: %s Counter: %d\n", r, r.Action, r.PacketCount())

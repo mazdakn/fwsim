@@ -5,7 +5,7 @@ import (
 	"net"
 
 	"github.com/mazdakn/fwsim/internal/model"
-	"github.com/mazdakn/fwsim/internal/traffic"
+	"github.com/mazdakn/fwsim/internal/model/packet"
 )
 
 type Config struct {
@@ -25,7 +25,7 @@ type Rule struct {
 }
 
 type PacketsConfig struct {
-	Packets []traffic.PacketConfig `yaml:"packets,omitempty"`
+	Packets []packet.PacketConfig `yaml:"packets,omitempty"`
 }
 
 func (c *Config) Validate() error {
