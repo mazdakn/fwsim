@@ -54,7 +54,7 @@ func TestTableMatchUsesAscendingOrder(t *testing.T) {
 
 	table := NewTable("test", Drop)
 
-	pkt := packet.NewPacket(
+	pkt := packet.New(
 		packet.WithSrcAddr("10.0.0.1"),
 		packet.WithDstAddr("1.1.1.1"),
 		packet.WithProto(6),

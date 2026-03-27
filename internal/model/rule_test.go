@@ -14,19 +14,19 @@ func TestEmptyRule(t *testing.T) {
 
 	rule := NewRule()
 	pkts := []*packet.Packet{
-		packet.NewPacket(
+		packet.New(
 			packet.WithSrcAddr("10.10.10.1"), packet.WithSrcPort(55555), packet.WithProto(17),
 			packet.WithDstAddr("1.1.1.1"), packet.WithDstPort(53),
 		),
-		packet.NewPacket(
+		packet.New(
 			packet.WithSrcAddr("172.16.0.1"), packet.WithSrcPort(50000), packet.WithProto(8),
 			packet.WithDstAddr("2.2.2.2"), packet.WithDstPort(9999),
 		),
-		packet.NewPacket(
+		packet.New(
 			packet.WithSrcAddr("dead:beef::1"), packet.WithSrcPort(44444), packet.WithProto(6),
 			packet.WithDstAddr("cafe::1"), packet.WithDstPort(80),
 		),
-		packet.NewPacket(
+		packet.New(
 			packet.WithSrcAddr("dead:cafe::1"), packet.WithSrcPort(30000), packet.WithProto(64),
 			packet.WithDstAddr("ffff::1"), packet.WithDstPort(8080),
 		),
@@ -42,7 +42,7 @@ func TestRuleIPFamilyMismatch(t *testing.T) {
 	RegisterTestingT(t)
 
 	// IPv6 packet
-	pktV6 := packet.NewPacket(
+	pktV6 := packet.New(
 		packet.WithSrcAddr("dead:beef::1"), packet.WithSrcPort(44444), packet.WithProto(6),
 		packet.WithDstAddr("cafe::1"), packet.WithDstPort(80),
 	)
@@ -61,7 +61,7 @@ func TestRuleIPFamilyMismatch(t *testing.T) {
 	}
 
 	// IPv4 packet
-	pktV4 := packet.NewPacket(
+	pktV4 := packet.New(
 		packet.WithSrcAddr("10.10.10.1"), packet.WithSrcPort(55555), packet.WithProto(17),
 		packet.WithDstAddr("1.1.1.1"), packet.WithDstPort(53),
 	)
@@ -83,11 +83,11 @@ func TestRuleIPFamilyMismatch(t *testing.T) {
 func TestRuleMatch(t *testing.T) {
 	RegisterTestingT(t)
 
-	pktShouldMatch := packet.NewPacket(
+	pktShouldMatch := packet.New(
 		packet.WithSrcAddr("10.10.10.1"), packet.WithSrcPort(55555), packet.WithProto(17),
 		packet.WithDstAddr("1.1.1.1"), packet.WithDstPort(53),
 	)
-	pktShouldNotMatch := packet.NewPacket(
+	pktShouldNotMatch := packet.New(
 		packet.WithSrcAddr("172.16.0.1"), packet.WithSrcPort(50000), packet.WithProto(8),
 		packet.WithDstAddr("2.2.2.2"), packet.WithDstPort(9999),
 	)
@@ -104,11 +104,11 @@ func TestRuleMatch(t *testing.T) {
 func TestRuleMatchV6(t *testing.T) {
 	RegisterTestingT(t)
 
-	pktShouldMatch := packet.NewPacket(
+	pktShouldMatch := packet.New(
 		packet.WithSrcAddr("dead:beef::1"), packet.WithSrcPort(44444), packet.WithProto(6),
 		packet.WithDstAddr("cafe::1"), packet.WithDstPort(80),
 	)
-	pktShouldNotMatch := packet.NewPacket(
+	pktShouldNotMatch := packet.New(
 		packet.WithSrcAddr("dead:cafe::1"), packet.WithSrcPort(30000), packet.WithProto(64),
 		packet.WithDstAddr("ffff::1"), packet.WithDstPort(8080),
 	)
@@ -253,11 +253,11 @@ func TestRulePacketCounter(t *testing.T) {
 	RegisterTestingT(t)
 
 	rule := NewRule(WithProto(17), WithDstPort(53))
-	pktMatch := packet.NewPacket(
+	pktMatch := packet.New(
 		packet.WithSrcAddr("10.10.10.1"), packet.WithSrcPort(55555), packet.WithProto(17),
 		packet.WithDstAddr("1.1.1.1"), packet.WithDstPort(53),
 	)
-	pktNoMatch := packet.NewPacket(
+	pktNoMatch := packet.New(
 		packet.WithSrcAddr("10.10.10.1"), packet.WithSrcPort(55555), packet.WithProto(6),
 		packet.WithDstAddr("1.1.1.1"), packet.WithDstPort(80),
 	)
@@ -290,7 +290,7 @@ func TestRulePacketCounterConcurrency(t *testing.T) {
 	RegisterTestingT(t)
 
 	rule := NewRule(WithProto(17), WithDstPort(53))
-	pktMatch := packet.NewPacket(
+	pktMatch := packet.New(
 		packet.WithSrcAddr("10.10.10.1"), packet.WithSrcPort(55555), packet.WithProto(17),
 		packet.WithDstAddr("1.1.1.1"), packet.WithDstPort(53),
 	)

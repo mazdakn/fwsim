@@ -114,7 +114,7 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 	}
 
 	// Create packet from parameters
-	pkt := packet.NewPacket(
+	pkt := packet.New(
 		packet.WithSrcAddr(srcAddr),
 		packet.WithDstAddr(dstAddr),
 		packet.WithProto(uint8(proto)),
