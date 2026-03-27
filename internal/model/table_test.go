@@ -3,7 +3,7 @@ package model
 import (
 	"testing"
 
-	"github.com/mazdakn/fwsim/internal/traffic"
+	"github.com/mazdakn/fwsim/internal/model/packet"
 	. "github.com/onsi/gomega"
 )
 
@@ -54,11 +54,11 @@ func TestTableMatchUsesAscendingOrder(t *testing.T) {
 
 	table := NewTable("test", Drop)
 
-	pkt := traffic.NewPacket(
-		traffic.WithSrcAddr("10.0.0.1"),
-		traffic.WithDstAddr("1.1.1.1"),
-		traffic.WithProto(6),
-		traffic.WithDstPort(80),
+	pkt := packet.New(
+		packet.WithSrcAddr("10.0.0.1"),
+		packet.WithDstAddr("1.1.1.1"),
+		packet.WithProto(6),
+		packet.WithDstPort(80),
 	)
 
 	// Add a high-order rule that drops traffic and a low-order rule that accepts it

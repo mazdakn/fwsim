@@ -8,7 +8,7 @@ import (
 	"github.com/goccy/go-yaml"
 	"github.com/mazdakn/fwsim/internal/model"
 	"github.com/mazdakn/fwsim/internal/set"
-	"github.com/mazdakn/fwsim/internal/traffic"
+	"github.com/mazdakn/fwsim/internal/model/packet"
 )
 
 type Engine struct {
@@ -33,7 +33,7 @@ func (e *Engine) Run() error {
 	return nil
 }
 
-func (e *Engine) Match(pkt *traffic.Packet) model.Result {
+func (e *Engine) Match(pkt *packet.Packet) model.Result {
 	return e.table.Match(pkt)
 }
 
@@ -128,7 +128,7 @@ func (e *Engine) LoadRules() error {
 	return nil
 }
 
-func (e *Engine) PacketsFromFile(file string) ([]*traffic.Packet, error) {
+func (e *Engine) PacketsFromFile(file string) ([]*packet.Packet, error) {
 	data, err := os.ReadFile(file)
 	if err != nil {
 		return nil, err
@@ -137,7 +137,7 @@ func (e *Engine) PacketsFromFile(file string) ([]*traffic.Packet, error) {
 	if err := yaml.Unmarshal(data, &conf); err != nil {
 		return nil, err
 	}
-	pkts := make([]*traffic.Packet, 0, len(conf.Packets))
+	pkts := make([]*packet.Packet, 0, len(conf.Packets))
 	for _, p := range conf.Packets {
 		pkts = append(pkts, p.ToPacket())
 	}

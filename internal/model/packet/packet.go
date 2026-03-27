@@ -1,4 +1,4 @@
-package traffic
+package packet
 
 import (
 	"fmt"
@@ -43,7 +43,7 @@ func WithDstAddr(addr string) PacketOption {
 	}
 }
 
-func NewPacket(opts ...PacketOption) *Packet {
+func New(opts ...PacketOption) *Packet {
 	var p Packet
 	for _, o := range opts {
 		o(&p)
@@ -79,7 +79,7 @@ type PacketConfig struct {
 }
 
 func (pc *PacketConfig) ToPacket() *Packet {
-	return NewPacket(
+	return New(
 		WithName(pc.Name),
 		WithSrcAddr(pc.SrcAddr),
 		WithDstAddr(pc.DstAddr),
