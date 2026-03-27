@@ -5,6 +5,7 @@ import (
 	"net"
 
 	"github.com/mazdakn/fwsim/internal/model"
+	"github.com/mazdakn/fwsim/internal/traffic"
 )
 
 type Config struct {
@@ -23,17 +24,8 @@ type Rule struct {
 	Action   string   `yaml:"action,omitempty"`
 }
 
-type Packet struct {
-	Name    string `yaml:"name,omitempty"`
-	SrcAddr string `yaml:"src_addr,omitempty"`
-	DstAddr string `yaml:"dst_addr,omitempty"`
-	Proto   uint8  `yaml:"proto,omitempty"`
-	SrcPort uint16 `yaml:"src_port,omitempty"`
-	DstPort uint16 `yaml:"dst_port,omitempty"`
-}
-
 type PacketsConfig struct {
-	Packets []Packet `yaml:"packets,omitempty"`
+	Packets []traffic.PacketConfig `yaml:"packets,omitempty"`
 }
 
 func (c *Config) Validate() error {

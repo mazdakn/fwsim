@@ -139,15 +139,7 @@ func (e *Engine) PacketsFromFile(file string) ([]*traffic.Packet, error) {
 	}
 	pkts := make([]*traffic.Packet, 0, len(conf.Packets))
 	for _, p := range conf.Packets {
-		pkt := traffic.NewPacket(
-			traffic.WithName(p.Name),
-			traffic.WithSrcAddr(p.SrcAddr),
-			traffic.WithDstAddr(p.DstAddr),
-			traffic.WithProto(p.Proto),
-			traffic.WithSrcPort(p.SrcPort),
-			traffic.WithDstPort(p.DstPort),
-		)
-		pkts = append(pkts, pkt)
+		pkts = append(pkts, p.ToPacket())
 	}
 	return pkts, nil
 }

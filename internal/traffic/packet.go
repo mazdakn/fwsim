@@ -68,3 +68,23 @@ func (p *Packet) String() string {
 	return fmt.Sprintf("%d{%s:%d->%s:%d}", p.Protocol, p.SrcAddr.String(), p.SrcPort,
 		p.DstAddr.String(), p.DstPort)
 }
+
+type PacketConfig struct {
+	Name    string `yaml:"name,omitempty"`
+	SrcAddr string `yaml:"src_addr,omitempty"`
+	DstAddr string `yaml:"dst_addr,omitempty"`
+	Proto   uint8  `yaml:"proto,omitempty"`
+	SrcPort uint16 `yaml:"src_port,omitempty"`
+	DstPort uint16 `yaml:"dst_port,omitempty"`
+}
+
+func (pc *PacketConfig) ToPacket() *Packet {
+	return NewPacket(
+		WithName(pc.Name),
+		WithSrcAddr(pc.SrcAddr),
+		WithDstAddr(pc.DstAddr),
+		WithProto(pc.Proto),
+		WithSrcPort(pc.SrcPort),
+		WithDstPort(pc.DstPort),
+	)
+}
