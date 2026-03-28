@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/mazdakn/fwsim/internal/model"
-	"github.com/mazdakn/fwsim/internal/model/packet"
+	"github.com/mazdakn/fwsim/internal"
+	"github.com/mazdakn/fwsim/internal/packet"
 )
 
 type Config struct {

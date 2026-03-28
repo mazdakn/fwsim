@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/mazdakn/fwsim/internal/counter"
-	"github.com/mazdakn/fwsim/internal/model/packet"
+	"github.com/mazdakn/fwsim/internal/packet"
 	"github.com/mazdakn/fwsim/internal/set"
 )
 

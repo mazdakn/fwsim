@@ -3,7 +3,7 @@ package engine
 import (
 	"testing"
 
-	"github.com/mazdakn/fwsim/internal/model"
+	"github.com/mazdakn/fwsim/internal"
 	. "github.com/onsi/gomega"
 )
 
