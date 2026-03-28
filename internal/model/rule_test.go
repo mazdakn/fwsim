@@ -334,3 +334,139 @@ func TestRuleWithName(t *testing.T) {
 	ruleDirectName.Name = "block-all"
 	Expect(ruleDirectName.String()).To(Equal("block-all"))
 }
+
+func TestNegatedRuleMatch(t *testing.T) {
+	RegisterTestingT(t)
+
+	// Packet that will be matched against negated rules
+	pkt := packet.New(
+		packet.WithSrcAddr("10.10.10.1"), packet.WithSrcPort(55555), packet.WithProto(17),
+		packet.WithDstAddr("1.1.1.1"), packet.WithDstPort(53),
+	)
+
+	// Negated protocol: should NOT match proto 17, but SHOULD match everything else
+	ruleNegProto := NewRule(WithNegProto(17))
+	Expect(ruleNegProto.Match(pkt)).To(BeFalse())
+
+	ruleNegProtoOther := NewRule(WithNegProto(6))
+	Expect(ruleNegProtoOther.Match(pkt)).To(BeTrue())
+
+	// Negated source port: should NOT match src port 55555
+	ruleNegSrcPort := NewRule(WithNegSrcPort(55555))
+	Expect(ruleNegSrcPort.Match(pkt)).To(BeFalse())
+
+	ruleNegSrcPortOther := NewRule(WithNegSrcPort(12345))
+	Expect(ruleNegSrcPortOther.Match(pkt)).To(BeTrue())
+
+	// Negated destination port: should NOT match dst port 53
+	ruleNegDstPort := NewRule(WithNegDstPort(53))
+	Expect(ruleNegDstPort.Match(pkt)).To(BeFalse())
+
+	ruleNegDstPortOther := NewRule(WithNegDstPort(80))
+	Expect(ruleNegDstPortOther.Match(pkt)).To(BeTrue())
+
+	// Negated source network: should NOT match 10.10.10.0/24
+	ruleNegSrcNet := NewRule(WithNegSrcNet("10.10.10.0/24"))
+	Expect(ruleNegSrcNet.Match(pkt)).To(BeFalse())
+
+	ruleNegSrcNetOther := NewRule(WithNegSrcNet("192.168.0.0/16"))
+	Expect(ruleNegSrcNetOther.Match(pkt)).To(BeTrue())
+
+	// Negated destination network: should NOT match 1.1.1.1/32
+	ruleNegDstNet := NewRule(WithNegDstNet("1.1.1.1/32"))
+	Expect(ruleNegDstNet.Match(pkt)).To(BeFalse())
+
+	ruleNegDstNetOther := NewRule(WithNegDstNet("2.2.2.2/32"))
+	Expect(ruleNegDstNetOther.Match(pkt)).To(BeTrue())
+}
+
+func TestNegatedRuleString(t *testing.T) {
+	RegisterTestingT(t)
+
+	// Negated proto should show with ! prefix
+	ruleNegProto := NewRule(WithAction(Accept), WithNegProto(6))
+	Expect(ruleNegProto.String()).To(Equal("Accept !6{*:*->*:*}"))
+
+	// Negated src port should show with ! prefix
+	ruleNegSrcPort := NewRule(WithAction(Drop), WithNegSrcPort(80))
+	Expect(ruleNegSrcPort.String()).To(Equal("Drop *{*:!80->*:*}"))
+
+	// Negated dst port should show with ! prefix
+	ruleNegDstPort := NewRule(WithAction(Accept), WithNegDstPort(53))
+	Expect(ruleNegDstPort.String()).To(Equal("Accept *{*:*->*:!53}"))
+
+	// Negated src net should show with ! prefix
+	ruleNegSrcNet := NewRule(WithAction(Drop), WithNegSrcNet("10.0.0.0/8"))
+	Expect(ruleNegSrcNet.String()).To(Equal("Drop *{!10.0.0.0/8:*->*:*}"))
+
+	// Negated dst net should show with ! prefix
+	ruleNegDstNet := NewRule(WithAction(Accept), WithNegDstNet("1.1.1.1/32"))
+	Expect(ruleNegDstNet.String()).To(Equal("Accept *{*:*->!1.1.1.1/32:*}"))
+}
+
+func TestNegatedRuleConfig(t *testing.T) {
+	RegisterTestingT(t)
+
+	// Valid negated rule config
+	rc := &RuleConfig{
+		NegProto:   []uint8{6},
+		NegSrcPort: []uint16{80},
+		NegDstPort: []uint16{443},
+		NegSrcNet:  []string{"10.0.0.0/8"},
+		NegDstNet:  []string{"192.168.0.0/16"},
+		Action:     "accept",
+	}
+	rule, err := rc.ToRule()
+	Expect(err).ToNot(HaveOccurred())
+	Expect(rule.Proto.Negated).To(BeTrue())
+	Expect(rule.SrcPort.Negated).To(BeTrue())
+	Expect(rule.DstPort.Negated).To(BeTrue())
+	Expect(rule.SrcNet.Negated).To(BeTrue())
+	Expect(rule.DstNet.Negated).To(BeTrue())
+
+	// Conflict: cannot set both proto and neg_proto
+	rcConflict := &RuleConfig{
+		Protocol: []uint8{6},
+		NegProto: []uint8{17},
+		Action:   "accept",
+	}
+	_, err = rcConflict.ToRule()
+	Expect(err).To(HaveOccurred())
+
+	// Conflict: cannot set both src_port and neg_src_port
+	rcConflictSrcPort := &RuleConfig{
+		SrcPort:    []uint16{80},
+		NegSrcPort: []uint16{443},
+		Action:     "accept",
+	}
+	_, err = rcConflictSrcPort.ToRule()
+	Expect(err).To(HaveOccurred())
+
+	// Conflict: cannot set both dst_port and neg_dst_port
+	rcConflictDstPort := &RuleConfig{
+		DstPort:    []uint16{80},
+		NegDstPort: []uint16{443},
+		Action:     "accept",
+	}
+	_, err = rcConflictDstPort.ToRule()
+	Expect(err).To(HaveOccurred())
+
+	// Conflict: cannot set both src_net and neg_src_net
+	rcConflictSrcNet := &RuleConfig{
+		SrcNet:    []string{"10.0.0.0/8"},
+		NegSrcNet: []string{"192.168.0.0/16"},
+		Action:    "accept",
+	}
+	_, err = rcConflictSrcNet.ToRule()
+	Expect(err).To(HaveOccurred())
+
+	// Conflict: cannot set both dst_net and neg_dst_net
+	rcConflictDstNet := &RuleConfig{
+		DstNet:    []string{"10.0.0.0/8"},
+		NegDstNet: []string{"192.168.0.0/16"},
+		Action:    "accept",
+	}
+	_, err = rcConflictDstNet.ToRule()
+	Expect(err).To(HaveOccurred())
+}
+
