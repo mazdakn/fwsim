@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/mazdakn/fwsim/internal/counter"
-	"github.com/mazdakn/fwsim/internal/set"
 	"github.com/mazdakn/fwsim/internal/model/packet"
+	"github.com/mazdakn/fwsim/internal/set"
 )
 
 type Action int
@@ -140,7 +140,7 @@ type Rule struct {
 }
 
 func (r *Rule) Match(pkt *packet.Packet) bool {
-	if r.Proto != nil && !r.Proto.Match(pkt.Protocol) {
+	if r.Proto != nil && !r.Proto.Match(pkt.Proto) {
 		return false
 	}
 	if r.SrcPort != nil && !r.SrcPort.Match(pkt.SrcPort) {

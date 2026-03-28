@@ -9,13 +9,13 @@ type PacketOption func(*Packet)
 
 func WithName(name string) PacketOption {
 	return func(p *Packet) {
-		p.Name = name
+		p.Metadata.Name = name
 	}
 }
 
 func WithProto(proto uint8) PacketOption {
 	return func(p *Packet) {
-		p.Protocol = proto
+		p.Proto = proto
 	}
 }
 
@@ -44,7 +44,9 @@ func WithDstAddr(addr string) PacketOption {
 }
 
 func New(opts ...PacketOption) *Packet {
-	var p Packet
+	p := Packet{
+		Metadata: NewMetadata(),
+	}
 	for _, o := range opts {
 		o(&p)
 	}
@@ -52,35 +54,38 @@ func New(opts ...PacketOption) *Packet {
 }
 
 type Packet struct {
-	Name     string
-	SrcAddr  net.IP
-	DstAddr  net.IP
-	Protocol uint8
+	SrcAddr net.IP
+	DstAddr net.IP
+
+	Proto uint8
 
 	SrcPort uint16
 	DstPort uint16
+
+	Metadata *Metadata
 }
 
 func (p *Packet) String() string {
-	if p.Name != "" {
-		return p.Name
+	if p.Metadata.Name != "" {
+		return p.Metadata.Name
 	}
-	return fmt.Sprintf("%d{%s:%d->%s:%d}", p.Protocol, p.SrcAddr.String(), p.SrcPort,
+	return fmt.Sprintf("%d{%s:%d->%s:%d}", p.Proto, p.SrcAddr.String(), p.SrcPort,
 		p.DstAddr.String(), p.DstPort)
 }
 
 type PacketConfig struct {
-	Name    string `yaml:"name,omitempty"`
 	SrcAddr string `yaml:"src_addr,omitempty"`
 	DstAddr string `yaml:"dst_addr,omitempty"`
 	Proto   uint8  `yaml:"proto,omitempty"`
 	SrcPort uint16 `yaml:"src_port,omitempty"`
 	DstPort uint16 `yaml:"dst_port,omitempty"`
+
+	Metadata Metadata `yaml:"metadata,omitempty"`
 }
 
 func (pc *PacketConfig) ToPacket() *Packet {
 	return New(
-		WithName(pc.Name),
+		WithName(pc.Metadata.Name),
 		WithSrcAddr(pc.SrcAddr),
 		WithDstAddr(pc.DstAddr),
 		WithProto(pc.Proto),
