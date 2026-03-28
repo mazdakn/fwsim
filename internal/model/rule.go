@@ -98,51 +98,46 @@ func WithDstNet(cidr string) RuleOption {
 
 func WithNegProto(proto uint8) RuleOption {
 	return func(r *Rule) {
-		if r.Proto == nil {
-			r.Proto = set.NewProtoSet()
-			r.Proto.Negated = true
+		if r.NegProto == nil {
+			r.NegProto = set.NewProtoSet()
 		}
-		r.Proto.Add(proto)
+		r.NegProto.Add(proto)
 	}
 }
 
 func WithNegSrcPort(port uint16) RuleOption {
 	return func(r *Rule) {
-		if r.SrcPort == nil {
-			r.SrcPort = set.NewPortSet()
-			r.SrcPort.Negated = true
+		if r.NegSrcPort == nil {
+			r.NegSrcPort = set.NewPortSet()
 		}
-		r.SrcPort.Add(port)
+		r.NegSrcPort.Add(port)
 	}
 }
 
 func WithNegDstPort(port uint16) RuleOption {
 	return func(r *Rule) {
-		if r.DstPort == nil {
-			r.DstPort = set.NewPortSet()
-			r.DstPort.Negated = true
+		if r.NegDstPort == nil {
+			r.NegDstPort = set.NewPortSet()
 		}
-		r.DstPort.Add(port)
+		r.NegDstPort.Add(port)
 	}
 }
 
 func WithNegSrcNet(cidr string) RuleOption {
 	return func(r *Rule) {
-		if r.SrcNet == nil {
-			r.SrcNet = set.NewIPSet()
-			r.SrcNet.Negated = true
+		if r.NegSrcNet == nil {
+			r.NegSrcNet = set.NewIPSet()
 		}
-		r.SrcNet.Add(MustParseCIDR(cidr))
+		r.NegSrcNet.Add(MustParseCIDR(cidr))
 	}
 }
 
 func WithNegDstNet(cidr string) RuleOption {
 	return func(r *Rule) {
-		if r.DstNet == nil {
-			r.DstNet = set.NewIPSet()
-			r.DstNet.Negated = true
+		if r.NegDstNet == nil {
+			r.NegDstNet = set.NewIPSet()
 		}
-		r.DstNet.Add(MustParseCIDR(cidr))
+		r.NegDstNet.Add(MustParseCIDR(cidr))
 	}
 }
 
@@ -184,6 +179,12 @@ type Rule struct {
 	SrcPort *set.PortSet
 	DstPort *set.PortSet
 
+	NegSrcNet  *set.IPSet
+	NegDstNet  *set.IPSet
+	NegProto   *set.ProtoSet
+	NegSrcPort *set.PortSet
+	NegDstPort *set.PortSet
+
 	Action Action
 
 	packetCount *counter.Counter
@@ -193,16 +194,31 @@ func (r *Rule) Match(pkt *packet.Packet) bool {
 	if r.Proto != nil && !r.Proto.Match(pkt.Protocol) {
 		return false
 	}
+	if r.NegProto != nil && r.NegProto.Match(pkt.Protocol) {
+		return false
+	}
 	if r.SrcPort != nil && !r.SrcPort.Match(pkt.SrcPort) {
+		return false
+	}
+	if r.NegSrcPort != nil && r.NegSrcPort.Match(pkt.SrcPort) {
 		return false
 	}
 	if r.DstPort != nil && !r.DstPort.Match(pkt.DstPort) {
 		return false
 	}
+	if r.NegDstPort != nil && r.NegDstPort.Match(pkt.DstPort) {
+		return false
+	}
 	if r.SrcNet != nil && !r.SrcNet.Match(pkt.SrcAddr) {
 		return false
 	}
+	if r.NegSrcNet != nil && r.NegSrcNet.Match(pkt.SrcAddr) {
+		return false
+	}
 	if r.DstNet != nil && !r.DstNet.Match(pkt.DstAddr) {
+		return false
+	}
+	if r.NegDstNet != nil && r.NegDstNet.Match(pkt.DstAddr) {
 		return false
 	}
 	// All conditions passed - increment packet counter
@@ -223,24 +239,49 @@ func (r *Rule) String() string {
 		return r.Name
 	}
 	proto := "*"
-	if r.Proto != nil {
+	switch {
+	case r.Proto != nil && r.NegProto != nil:
+		proto = r.Proto.String() + ",!" + r.NegProto.String()
+	case r.Proto != nil:
 		proto = r.Proto.String()
+	case r.NegProto != nil:
+		proto = "!" + r.NegProto.String()
 	}
 	srcPort := "*"
-	if r.SrcPort != nil {
+	switch {
+	case r.SrcPort != nil && r.NegSrcPort != nil:
+		srcPort = r.SrcPort.String() + ",!" + r.NegSrcPort.String()
+	case r.SrcPort != nil:
 		srcPort = r.SrcPort.String()
+	case r.NegSrcPort != nil:
+		srcPort = "!" + r.NegSrcPort.String()
 	}
 	dstPort := "*"
-	if r.DstPort != nil {
+	switch {
+	case r.DstPort != nil && r.NegDstPort != nil:
+		dstPort = r.DstPort.String() + ",!" + r.NegDstPort.String()
+	case r.DstPort != nil:
 		dstPort = r.DstPort.String()
+	case r.NegDstPort != nil:
+		dstPort = "!" + r.NegDstPort.String()
 	}
 	srcNet := "*"
-	if r.SrcNet != nil {
+	switch {
+	case r.SrcNet != nil && r.NegSrcNet != nil:
+		srcNet = r.SrcNet.String() + ",!" + r.NegSrcNet.String()
+	case r.SrcNet != nil:
 		srcNet = r.SrcNet.String()
+	case r.NegSrcNet != nil:
+		srcNet = "!" + r.NegSrcNet.String()
 	}
 	dstNet := "*"
-	if r.DstNet != nil {
+	switch {
+	case r.DstNet != nil && r.NegDstNet != nil:
+		dstNet = r.DstNet.String() + ",!" + r.NegDstNet.String()
+	case r.DstNet != nil:
 		dstNet = r.DstNet.String()
+	case r.NegDstNet != nil:
+		dstNet = "!" + r.NegDstNet.String()
 	}
 	return fmt.Sprintf("%s %s{%s:%s->%s:%s}", r.Action, proto, srcNet, srcPort, dstNet, dstPort)
 }
@@ -268,22 +309,6 @@ func (rc *RuleConfig) ToRule() (*Rule, error) {
 	rule.Name = rc.Name
 	rule.Order = rc.Order
 
-	if len(rc.Protocol) > 0 && len(rc.NegProto) > 0 {
-		return nil, fmt.Errorf("proto and neg_proto cannot both be set")
-	}
-	if len(rc.SrcPort) > 0 && len(rc.NegSrcPort) > 0 {
-		return nil, fmt.Errorf("src_port and neg_src_port cannot both be set")
-	}
-	if len(rc.DstPort) > 0 && len(rc.NegDstPort) > 0 {
-		return nil, fmt.Errorf("dst_port and neg_dst_port cannot both be set")
-	}
-	if len(rc.SrcNet) > 0 && len(rc.NegSrcNet) > 0 {
-		return nil, fmt.Errorf("src_net and neg_src_net cannot both be set")
-	}
-	if len(rc.DstNet) > 0 && len(rc.NegDstNet) > 0 {
-		return nil, fmt.Errorf("dst_net and neg_dst_net cannot both be set")
-	}
-
 	if len(rc.Protocol) > 0 {
 		rule.Proto = set.NewProtoSet()
 		for _, proto := range rc.Protocol {
@@ -292,10 +317,9 @@ func (rc *RuleConfig) ToRule() (*Rule, error) {
 	}
 
 	if len(rc.NegProto) > 0 {
-		rule.Proto = set.NewProtoSet()
-		rule.Proto.Negated = true
+		rule.NegProto = set.NewProtoSet()
 		for _, proto := range rc.NegProto {
-			rule.Proto.Add(proto)
+			rule.NegProto.Add(proto)
 		}
 	}
 
@@ -307,10 +331,9 @@ func (rc *RuleConfig) ToRule() (*Rule, error) {
 	}
 
 	if len(rc.NegSrcPort) > 0 {
-		rule.SrcPort = set.NewPortSet()
-		rule.SrcPort.Negated = true
+		rule.NegSrcPort = set.NewPortSet()
 		for _, port := range rc.NegSrcPort {
-			rule.SrcPort.Add(port)
+			rule.NegSrcPort.Add(port)
 		}
 	}
 
@@ -322,10 +345,9 @@ func (rc *RuleConfig) ToRule() (*Rule, error) {
 	}
 
 	if len(rc.NegDstPort) > 0 {
-		rule.DstPort = set.NewPortSet()
-		rule.DstPort.Negated = true
+		rule.NegDstPort = set.NewPortSet()
 		for _, port := range rc.NegDstPort {
-			rule.DstPort.Add(port)
+			rule.NegDstPort.Add(port)
 		}
 	}
 
@@ -347,14 +369,13 @@ func (rc *RuleConfig) ToRule() (*Rule, error) {
 	}
 
 	if len(rc.NegSrcNet) > 0 {
-		rule.SrcNet = set.NewIPSet()
-		rule.SrcNet.Negated = true
+		rule.NegSrcNet = set.NewIPSet()
 		for _, srcNet := range rc.NegSrcNet {
 			_, ipnet, err := net.ParseCIDR(srcNet)
 			if err != nil {
 				return nil, fmt.Errorf("invalid neg_src_net %s: %w", srcNet, err)
 			}
-			rule.SrcNet.Add(ipnet)
+			rule.NegSrcNet.Add(ipnet)
 		}
 	}
 
@@ -370,14 +391,13 @@ func (rc *RuleConfig) ToRule() (*Rule, error) {
 	}
 
 	if len(rc.NegDstNet) > 0 {
-		rule.DstNet = set.NewIPSet()
-		rule.DstNet.Negated = true
+		rule.NegDstNet = set.NewIPSet()
 		for _, dstNet := range rc.NegDstNet {
 			_, ipnet, err := net.ParseCIDR(dstNet)
 			if err != nil {
 				return nil, fmt.Errorf("invalid neg_dst_net %s: %w", dstNet, err)
 			}
-			rule.DstNet.Add(ipnet)
+			rule.NegDstNet.Add(ipnet)
 		}
 	}
 

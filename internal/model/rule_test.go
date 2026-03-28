@@ -407,7 +407,7 @@ func TestNegatedRuleString(t *testing.T) {
 func TestNegatedRuleConfig(t *testing.T) {
 	RegisterTestingT(t)
 
-	// Valid negated rule config
+	// Valid negated rule config — negated fields populate dedicated Rule fields
 	rc := &RuleConfig{
 		NegProto:   []uint8{6},
 		NegSrcPort: []uint16{80},
@@ -418,55 +418,83 @@ func TestNegatedRuleConfig(t *testing.T) {
 	}
 	rule, err := rc.ToRule()
 	Expect(err).ToNot(HaveOccurred())
-	Expect(rule.Proto.Negated).To(BeTrue())
-	Expect(rule.SrcPort.Negated).To(BeTrue())
-	Expect(rule.DstPort.Negated).To(BeTrue())
-	Expect(rule.SrcNet.Negated).To(BeTrue())
-	Expect(rule.DstNet.Negated).To(BeTrue())
+	Expect(rule.NegProto).ToNot(BeNil())
+	Expect(rule.NegSrcPort).ToNot(BeNil())
+	Expect(rule.NegDstPort).ToNot(BeNil())
+	Expect(rule.NegSrcNet).ToNot(BeNil())
+	Expect(rule.NegDstNet).ToNot(BeNil())
+	// Positive fields should be nil when only negated values are specified
+	Expect(rule.Proto).To(BeNil())
+	Expect(rule.SrcPort).To(BeNil())
+	Expect(rule.DstPort).To(BeNil())
+	Expect(rule.SrcNet).To(BeNil())
+	Expect(rule.DstNet).To(BeNil())
 
-	// Conflict: cannot set both proto and neg_proto
-	rcConflict := &RuleConfig{
-		Protocol: []uint8{6},
-		NegProto: []uint8{17},
-		Action:   "accept",
-	}
-	_, err = rcConflict.ToRule()
-	Expect(err).To(HaveOccurred())
-
-	// Conflict: cannot set both src_port and neg_src_port
-	rcConflictSrcPort := &RuleConfig{
-		SrcPort:    []uint16{80},
-		NegSrcPort: []uint16{443},
-		Action:     "accept",
-	}
-	_, err = rcConflictSrcPort.ToRule()
-	Expect(err).To(HaveOccurred())
-
-	// Conflict: cannot set both dst_port and neg_dst_port
-	rcConflictDstPort := &RuleConfig{
-		DstPort:    []uint16{80},
+	// Positive and negated fields can be combined on the same rule
+	rcCombined := &RuleConfig{
+		Protocol:   []uint8{17},
+		NegProto:   []uint8{6},
+		SrcPort:    []uint16{12345},
+		NegSrcPort: []uint16{80},
+		DstPort:    []uint16{53},
 		NegDstPort: []uint16{443},
+		SrcNet:     []string{"10.0.0.0/8"},
+		NegSrcNet:  []string{"10.10.0.0/16"},
+		DstNet:     []string{"1.1.1.0/24"},
+		NegDstNet:  []string{"1.1.1.100/32"},
 		Action:     "accept",
 	}
-	_, err = rcConflictDstPort.ToRule()
-	Expect(err).To(HaveOccurred())
+	ruleCombined, err := rcCombined.ToRule()
+	Expect(err).ToNot(HaveOccurred())
+	Expect(ruleCombined.Proto).ToNot(BeNil())
+	Expect(ruleCombined.NegProto).ToNot(BeNil())
+	Expect(ruleCombined.SrcPort).ToNot(BeNil())
+	Expect(ruleCombined.NegSrcPort).ToNot(BeNil())
+	Expect(ruleCombined.DstPort).ToNot(BeNil())
+	Expect(ruleCombined.NegDstPort).ToNot(BeNil())
+	Expect(ruleCombined.SrcNet).ToNot(BeNil())
+	Expect(ruleCombined.NegSrcNet).ToNot(BeNil())
+	Expect(ruleCombined.DstNet).ToNot(BeNil())
+	Expect(ruleCombined.NegDstNet).ToNot(BeNil())
+}
 
-	// Conflict: cannot set both src_net and neg_src_net
-	rcConflictSrcNet := &RuleConfig{
-		SrcNet:    []string{"10.0.0.0/8"},
-		NegSrcNet: []string{"192.168.0.0/16"},
-		Action:    "accept",
-	}
-	_, err = rcConflictSrcNet.ToRule()
-	Expect(err).To(HaveOccurred())
+func TestCombinedPositiveAndNegativeRuleMatch(t *testing.T) {
+	RegisterTestingT(t)
 
-	// Conflict: cannot set both dst_net and neg_dst_net
-	rcConflictDstNet := &RuleConfig{
-		DstNet:    []string{"10.0.0.0/8"},
-		NegDstNet: []string{"192.168.0.0/16"},
-		Action:    "accept",
-	}
-	_, err = rcConflictDstNet.ToRule()
-	Expect(err).To(HaveOccurred())
+	// Rule matches src in 10.0.0.0/8 but NOT in 10.10.0.0/16
+	rule := NewRule(WithSrcNet("10.0.0.0/8"), WithNegSrcNet("10.10.0.0/16"))
+
+	// In 10.0.0.0/8, not in 10.10.0.0/16 → should match
+	pktMatch := packet.New(packet.WithSrcAddr("10.1.2.3"))
+	Expect(rule.Match(pktMatch)).To(BeTrue())
+
+	// In 10.0.0.0/8 AND in 10.10.0.0/16 → should not match (excluded by neg)
+	pktNegHit := packet.New(packet.WithSrcAddr("10.10.0.5"))
+	Expect(rule.Match(pktNegHit)).To(BeFalse())
+
+	// Not in 10.0.0.0/8 at all → should not match (excluded by positive)
+	pktOutside := packet.New(packet.WithSrcAddr("172.16.0.1"))
+	Expect(rule.Match(pktOutside)).To(BeFalse())
+
+	// Rule matches proto 17 AND NOT proto 6 (proto 6 is excluded, proto 17 is required)
+	ruleProto := NewRule(WithProto(17), WithNegProto(6))
+	pktProto17 := packet.New(packet.WithProto(17))
+	pktProto6 := packet.New(packet.WithProto(6))
+	pktProto1 := packet.New(packet.WithProto(1))
+	Expect(ruleProto.Match(pktProto17)).To(BeTrue())
+	Expect(ruleProto.Match(pktProto6)).To(BeFalse())
+	Expect(ruleProto.Match(pktProto1)).To(BeFalse()) // not in positive set
+}
+
+func TestCombinedRuleString(t *testing.T) {
+	RegisterTestingT(t)
+
+	// Combined proto field
+	ruleBoth := NewRule(WithAction(Accept), WithProto(17), WithNegProto(6))
+	Expect(ruleBoth.String()).To(Equal("Accept 17,!6{*:*->*:*}"))
+
+	// Combined src net field
+	ruleSrcNet := NewRule(WithAction(Drop), WithSrcNet("10.0.0.0/8"), WithNegSrcNet("10.10.0.0/16"))
+	Expect(ruleSrcNet.String()).To(Equal("Drop *{10.0.0.0/8,!10.10.0.0/16:*->*:*}"))
 }
 
