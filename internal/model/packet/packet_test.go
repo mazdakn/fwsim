@@ -21,7 +21,7 @@ func TestWithName(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			pkt := New(WithName(tt.pktName))
-			Expect(pkt.Name).To(Equal(tt.pktName))
+			Expect(pkt.Metadata.Name).To(Equal(tt.pktName))
 		})
 	}
 }
@@ -58,7 +58,7 @@ func TestNewEmpty(t *testing.T) {
 	Expect(pkt).ToNot(BeNil())
 	Expect(pkt.SrcAddr).To(BeNil())
 	Expect(pkt.DstAddr).To(BeNil())
-	Expect(pkt.Protocol).To(Equal(uint8(0)))
+	Expect(pkt.Proto).To(Equal(uint8(0)))
 	Expect(pkt.SrcPort).To(Equal(uint16(0)))
 	Expect(pkt.DstPort).To(Equal(uint16(0)))
 }
@@ -80,7 +80,7 @@ func TestWithProto(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			pkt := New(WithProto(tt.proto))
-			Expect(pkt.Protocol).To(Equal(tt.proto))
+			Expect(pkt.Proto).To(Equal(tt.proto))
 		})
 	}
 }
@@ -256,7 +256,7 @@ func TestNewMultipleOptions(t *testing.T) {
 		WithDstPort(80),
 	)
 
-	Expect(pkt.Protocol).To(Equal(uint8(6)))
+	Expect(pkt.Proto).To(Equal(uint8(6)))
 	Expect(pkt.SrcAddr.String()).To(Equal("10.0.0.1"))
 	Expect(pkt.SrcPort).To(Equal(uint16(12345)))
 	Expect(pkt.DstAddr.String()).To(Equal("192.168.1.1"))
@@ -274,7 +274,7 @@ func TestNewMultipleOptionsIPv6(t *testing.T) {
 		WithDstPort(443),
 	)
 
-	Expect(pkt.Protocol).To(Equal(uint8(17)))
+	Expect(pkt.Proto).To(Equal(uint8(17)))
 	Expect(pkt.SrcAddr.String()).To(Equal("2001:db8::1"))
 	Expect(pkt.SrcPort).To(Equal(uint16(54321)))
 	Expect(pkt.DstAddr.String()).To(Equal("cafe::1"))
@@ -408,7 +408,7 @@ func TestPacketOptionsCanBeReused(t *testing.T) {
 	pkt1 := New(protoOpt, srcPortOpt, dstPortOpt)
 	pkt2 := New(protoOpt, srcPortOpt, dstPortOpt)
 
-	Expect(pkt1.Protocol).To(Equal(pkt2.Protocol))
+	Expect(pkt1.Proto).To(Equal(pkt2.Proto))
 	Expect(pkt1.SrcPort).To(Equal(pkt2.SrcPort))
 	Expect(pkt1.DstPort).To(Equal(pkt2.DstPort))
 }
@@ -432,7 +432,7 @@ func TestPacketOptionsOrderIndependent(t *testing.T) {
 		WithProto(6),
 	)
 
-	Expect(pkt1.Protocol).To(Equal(pkt2.Protocol))
+	Expect(pkt1.Proto).To(Equal(pkt2.Proto))
 	Expect(pkt1.SrcAddr.String()).To(Equal(pkt2.SrcAddr.String()))
 	Expect(pkt1.SrcPort).To(Equal(pkt2.SrcPort))
 	Expect(pkt1.DstAddr.String()).To(Equal(pkt2.DstAddr.String()))
