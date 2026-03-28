@@ -194,7 +194,7 @@ func (r *Rule) Match(pkt *packet.Packet) bool {
 	if r.Proto != nil && !r.Proto.Match(pkt.Proto) {
 		return false
 	}
-	if r.NegProto != nil && r.NegProto.Match(pkt.Protocol) {
+	if r.NegProto != nil && r.NegProto.Match(pkt.Proto) {
 		return false
 	}
 	if r.SrcPort != nil && !r.SrcPort.Match(pkt.SrcPort) {
@@ -288,19 +288,19 @@ func (r *Rule) String() string {
 
 // RuleConfig represents the YAML configuration structure for a firewall rule.
 type RuleConfig struct {
-	Name      string   `yaml:"name,omitempty"`
-	Order     uint64   `yaml:"order,omitempty"`
-	SrcNet    []string `yaml:"src_net,omitempty"`
-	DstNet    []string `yaml:"dst_net,omitempty"`
-	Protocol  []uint8  `yaml:"proto,omitempty"`
-	SrcPort   []uint16 `yaml:"src_port,omitempty"`
-	DstPort   []uint16 `yaml:"dst_port,omitempty"`
-	NegSrcNet []string `yaml:"neg_src_net,omitempty"`
-	NegDstNet []string `yaml:"neg_dst_net,omitempty"`
-	NegProto  []uint8  `yaml:"neg_proto,omitempty"`
+	Name       string   `yaml:"name,omitempty"`
+	Order      uint64   `yaml:"order,omitempty"`
+	SrcNet     []string `yaml:"src_net,omitempty"`
+	DstNet     []string `yaml:"dst_net,omitempty"`
+	Protocol   []uint8  `yaml:"proto,omitempty"`
+	SrcPort    []uint16 `yaml:"src_port,omitempty"`
+	DstPort    []uint16 `yaml:"dst_port,omitempty"`
+	NegSrcNet  []string `yaml:"neg_src_net,omitempty"`
+	NegDstNet  []string `yaml:"neg_dst_net,omitempty"`
+	NegProto   []uint8  `yaml:"neg_proto,omitempty"`
 	NegSrcPort []uint16 `yaml:"neg_src_port,omitempty"`
 	NegDstPort []uint16 `yaml:"neg_dst_port,omitempty"`
-	Action    string   `yaml:"action,omitempty"`
+	Action     string   `yaml:"action,omitempty"`
 }
 
 // ToRule converts a RuleConfig into a Rule domain object.
