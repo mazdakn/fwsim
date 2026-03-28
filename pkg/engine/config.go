@@ -46,6 +46,20 @@ func (c *Config) validateRules() error {
 			}
 		}
 
+		for _, srcNet := range r.NegSrcNet {
+			_, _, err := net.ParseCIDR(srcNet)
+			if err != nil {
+				return fmt.Errorf("invalid neg_src_net %s: %w", srcNet, err)
+			}
+		}
+
+		for _, dstNet := range r.NegDstNet {
+			_, _, err := net.ParseCIDR(dstNet)
+			if err != nil {
+				return fmt.Errorf("invalid neg_dst_net %s: %w", dstNet, err)
+			}
+		}
+
 		if _, err := model.ParseAction(r.Action); err != nil {
 			return fmt.Errorf("invalid action %s: %w", r.Action, err)
 		}
