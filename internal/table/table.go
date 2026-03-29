@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"sort"
 
-	model "github.com/mazdakn/fwsim/internal"
 	"github.com/mazdakn/fwsim/internal/packet"
 	"github.com/mazdakn/fwsim/internal/rule"
 	"github.com/sirupsen/logrus"
@@ -41,9 +40,9 @@ func (t *Table) AddRule(r *rule.Rule) {
 	t.Rules[i] = r
 }
 
-func (t *Table) Match(pkt *packet.Packet) model.Result {
+func (t *Table) Match(pkt *packet.Packet) Result {
 	t.logCtx.Debugf("Matching packet %+v", pkt)
-	var res model.Result
+	var res Result
 	for _, r := range t.Rules {
 		res.Trace = append(res.Trace, r)
 		if r.Match(pkt) {

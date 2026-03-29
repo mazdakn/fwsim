@@ -1,4 +1,4 @@
-package model
+package table
 
 import "github.com/mazdakn/fwsim/internal/rule"
 

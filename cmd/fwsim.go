@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/mazdakn/fwsim/internal"
 	"github.com/mazdakn/fwsim/internal/packet"
+	"github.com/mazdakn/fwsim/internal/table"
 	"github.com/mazdakn/fwsim/pkg/engine"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -161,7 +161,7 @@ func runPackets(cmd *cobra.Command, args []string) {
 	printValidations(e.Validate())
 }
 
-func printResult(pkt *packet.Packet, res model.Result) {
+func printResult(pkt *packet.Packet, res table.Result) {
 	fmt.Printf("%s %s:\n", res.Verdict, pkt)
 	for _, r := range res.Trace {
 		fmt.Printf(" - Rule: %s Action: %s Counter: %d\n", r, r.Action, r.PacketCount())

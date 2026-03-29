@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/goccy/go-yaml"
-	model "github.com/mazdakn/fwsim/internal"
 	"github.com/mazdakn/fwsim/internal/packet"
 	"github.com/mazdakn/fwsim/internal/rule"
 	"github.com/mazdakn/fwsim/internal/table"
@@ -34,7 +33,7 @@ func (e *Engine) Run() error {
 	return nil
 }
 
-func (e *Engine) Match(pkt *packet.Packet) model.Result {
+func (e *Engine) Match(pkt *packet.Packet) table.Result {
 	return e.table.Match(pkt)
 }
 
