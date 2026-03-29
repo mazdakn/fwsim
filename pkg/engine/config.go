@@ -17,7 +17,7 @@ type PacketsConfig struct {
 }
 
 func (c *Config) Validate() error {
-	validator, err := getValidator()
+	validator, err := newConfigValidator()
 	if err != nil {
 		return err
 	}
@@ -43,7 +43,7 @@ func (c *Config) validateRules(validator *configValidator) error {
 }
 
 func (c *PacketsConfig) Validate() error {
-	validator, err := getValidator()
+	validator, err := newConfigValidator()
 	if err != nil {
 		return err
 	}
