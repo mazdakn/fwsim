@@ -48,9 +48,10 @@ func TestConfigValidateMissingDefaultAction(t *testing.T) {
 			{SrcNet: []string{"192.168.1.0/24"}, Action: "Accept"},
 		},
 	}
+	Expect(c.DefaultAction).To(BeEmpty())
 	err := c.Validate()
 	Expect(err).ToNot(BeNil())
-	Expect(err.Error()).To(ContainSubstring("default_action is required"))
+	Expect(err.Error()).To(ContainSubstring("invalid default_action"))
 }
 
 func TestConfigValidateInvalidDefaultAction(t *testing.T) {
