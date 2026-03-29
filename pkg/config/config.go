@@ -17,38 +17,31 @@ type PacketsConfig struct {
 }
 
 func (c *Config) Validate() error {
-	validator, err := newConfigValidator()
-	if err != nil {
-		return err
-	}
-	if err := c.validateRules(validator); err != nil {
+	if err := c.validateRules(); err != nil {
 		return fmt.Errorf("failed to validate rules: %w", err)
 	}
 	if c.DefaultAction == "" {
 		return fmt.Errorf("default_action is required")
 	}
-	if !validator.validateAction(c.DefaultAction) {
+	if !c.validateAction(c.DefaultAction) {
 		return fmt.Errorf("invalid default_action %s", c.DefaultAction)
 	}
 	return nil
 }
 
-func (c *Config) validateRules(validator *configValidator) error {
+func (c *Config) validateRules() error {
 	for _, r := range c.Rules {
-		if err := validator.validateStructFields(r); err != nil {
+		if err := c.validateStructFields(r); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (c *PacketsConfig) Validate() error {
-	validator, err := newConfigValidator()
-	if err != nil {
-		return err
-	}
-	for _, p := range c.Packets {
-		if err := validator.validateStructFields(p); err != nil {
+func (p *PacketsConfig) Validate() error {
+	c := &Config{}
+	for _, pkt := range p.Packets {
+		if err := c.validateStructFields(pkt); err != nil {
 			return fmt.Errorf("invalid packet config: %w", err)
 		}
 	}

@@ -8,46 +8,36 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestNewConfigValidatorSuccess(t *testing.T) {
-	RegisterTestingT(t)
-
-	v, err := newConfigValidator()
-	Expect(err).To(BeNil())
-	Expect(v).ToNot(BeNil())
-}
-
 func TestConfigValidatorValidateCIDR(t *testing.T) {
 	RegisterTestingT(t)
 
-	v, err := newConfigValidator()
-	Expect(err).To(BeNil())
+	c := &Config{}
 
-	Expect(v.validateCIDR("192.168.1.0/24")).To(BeTrue())
-	Expect(v.validateCIDR("10.0.0.0/8")).To(BeTrue())
-	Expect(v.validateCIDR("1.1.1.1/32")).To(BeTrue())
-	Expect(v.validateCIDR("2001:db8::/32")).To(BeTrue())
+	Expect(c.validateCIDR("192.168.1.0/24")).To(BeTrue())
+	Expect(c.validateCIDR("10.0.0.0/8")).To(BeTrue())
+	Expect(c.validateCIDR("1.1.1.1/32")).To(BeTrue())
+	Expect(c.validateCIDR("2001:db8::/32")).To(BeTrue())
 
-	Expect(v.validateCIDR("not-a-cidr")).To(BeFalse())
-	Expect(v.validateCIDR("300.0.0.0/8")).To(BeFalse())
-	Expect(v.validateCIDR("")).To(BeFalse())
+	Expect(c.validateCIDR("not-a-cidr")).To(BeFalse())
+	Expect(c.validateCIDR("300.0.0.0/8")).To(BeFalse())
+	Expect(c.validateCIDR("")).To(BeFalse())
 }
 
 func TestConfigValidatorValidateAction(t *testing.T) {
 	RegisterTestingT(t)
 
-	v, err := newConfigValidator()
-	Expect(err).To(BeNil())
+	c := &Config{}
 
-	Expect(v.validateAction("accept")).To(BeTrue())
-	Expect(v.validateAction("Accept")).To(BeTrue())
-	Expect(v.validateAction("ACCEPT")).To(BeTrue())
-	Expect(v.validateAction("drop")).To(BeTrue())
-	Expect(v.validateAction("Drop")).To(BeTrue())
-	Expect(v.validateAction("DROP")).To(BeTrue())
+	Expect(c.validateAction("accept")).To(BeTrue())
+	Expect(c.validateAction("Accept")).To(BeTrue())
+	Expect(c.validateAction("ACCEPT")).To(BeTrue())
+	Expect(c.validateAction("drop")).To(BeTrue())
+	Expect(c.validateAction("Drop")).To(BeTrue())
+	Expect(c.validateAction("DROP")).To(BeTrue())
 
-	Expect(v.validateAction("")).To(BeFalse())
-	Expect(v.validateAction("deny")).To(BeFalse())
-	Expect(v.validateAction("invalid")).To(BeFalse())
+	Expect(c.validateAction("")).To(BeFalse())
+	Expect(c.validateAction("deny")).To(BeFalse())
+	Expect(c.validateAction("invalid")).To(BeFalse())
 }
 
 func TestConfigValidateMissingDefaultAction(t *testing.T) {
@@ -145,19 +135,18 @@ func TestConfigValidateInvalidRuleAction(t *testing.T) {
 func TestConfigValidatorValidateIP(t *testing.T) {
 	RegisterTestingT(t)
 
-	v, err := newConfigValidator()
-	Expect(err).To(BeNil())
+	c := &Config{}
 
-	Expect(v.validateIP("192.168.1.5")).To(BeTrue())
-	Expect(v.validateIP("10.0.0.1")).To(BeTrue())
-	Expect(v.validateIP("1.1.1.1")).To(BeTrue())
-	Expect(v.validateIP("2001:db8::1")).To(BeTrue())
-	Expect(v.validateIP("::1")).To(BeTrue())
+	Expect(c.validateIP("192.168.1.5")).To(BeTrue())
+	Expect(c.validateIP("10.0.0.1")).To(BeTrue())
+	Expect(c.validateIP("1.1.1.1")).To(BeTrue())
+	Expect(c.validateIP("2001:db8::1")).To(BeTrue())
+	Expect(c.validateIP("::1")).To(BeTrue())
 
-	Expect(v.validateIP("not-an-ip")).To(BeFalse())
-	Expect(v.validateIP("300.0.0.1")).To(BeFalse())
-	Expect(v.validateIP("192.168.1.0/24")).To(BeFalse())
-	Expect(v.validateIP("")).To(BeFalse())
+	Expect(c.validateIP("not-an-ip")).To(BeFalse())
+	Expect(c.validateIP("300.0.0.1")).To(BeFalse())
+	Expect(c.validateIP("192.168.1.0/24")).To(BeFalse())
+	Expect(c.validateIP("")).To(BeFalse())
 }
 
 func TestConfigValidateInvalidSrcAddr(t *testing.T) {
