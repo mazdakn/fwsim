@@ -146,6 +146,32 @@ func TestValidateIP(t *testing.T) {
 	Expect(validator.ValidateIP("")).To(BeFalse())
 }
 
+func TestValidateStructFieldsRecursiveSlice(t *testing.T) {
+	RegisterTestingT(t)
+
+	type Inner struct {
+		CIDR string `yaml:"cidr" validate:"isValidCIDR"`
+	}
+	type Outer struct {
+		Items []Inner `yaml:"items"`
+	}
+
+	err := validator.ValidateStructFields(Outer{
+		Items: []Inner{{CIDR: "not-a-cidr"}},
+	})
+	Expect(err).ToNot(BeNil())
+	Expect(err.Error()).To(ContainSubstring("items[0]"))
+	Expect(err.Error()).To(ContainSubstring("invalid cidr"))
+
+	err = validator.ValidateStructFields(Outer{
+		Items: []Inner{{CIDR: "192.168.1.0/24"}, {CIDR: "10.0.0.0/8"}},
+	})
+	Expect(err).To(BeNil())
+
+	err = validator.ValidateStructFields(Outer{Items: nil})
+	Expect(err).To(BeNil())
+}
+
 func TestConfigValidateInvalidSrcAddr(t *testing.T) {
 	RegisterTestingT(t)
 

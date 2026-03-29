@@ -42,15 +42,18 @@ func validateByTag(tag, value string) (bool, error) {
 	}
 }
 
-// ValidateStructFields validates all string and []string fields in s that carry a
-// "validate" struct tag. The tag value must be a function name recognised by
-// validateByTag. Field names used in error messages are taken from the "yaml" tag.
+// ValidateStructFields validates all fields in s that carry a "validate" struct
+// tag, as well as any slice-of-struct fields (validated recursively). The tag
+// value must be a function name recognised by validateByTag. Field names used
+// in error messages are taken from the "yaml" tag.
 //
 // Validation semantics:
 //   - string fields: every value is validated, including empty strings; the
 //     validator function decides whether an empty string is acceptable.
 //   - []string fields: every element is validated, including empty strings, because
 //     an empty string in a list (e.g. a CIDR slice) is never a valid value.
+//   - []struct (or []*struct) fields: ValidateStructFields is called recursively
+//     on each element regardless of whether the field carries a validate tag.
 func ValidateStructFields(s any) error {
 	t := reflect.TypeOf(s)
 	val := reflect.ValueOf(s)
@@ -61,10 +64,7 @@ func ValidateStructFields(s any) error {
 
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
-		validateTag := field.Tag.Get("validate")
-		if validateTag == "" {
-			continue
-		}
+		fieldVal := val.Field(i)
 
 		yamlTag := field.Tag.Get("yaml")
 		fieldName := strings.Split(yamlTag, ",")[0]
@@ -72,7 +72,32 @@ func ValidateStructFields(s any) error {
 			fieldName = field.Name
 		}
 
-		fieldVal := val.Field(i)
+		// Recursively validate slice-of-struct fields without requiring a tag.
+		if field.Type.Kind() == reflect.Slice {
+			elemType := field.Type.Elem()
+			isPtr := elemType.Kind() == reflect.Ptr
+			if isPtr {
+				elemType = elemType.Elem()
+			}
+			if elemType.Kind() == reflect.Struct {
+				for j := 0; j < fieldVal.Len(); j++ {
+					elem := fieldVal.Index(j)
+					if isPtr && elem.IsNil() {
+						continue
+					}
+					if err := ValidateStructFields(elem.Interface()); err != nil {
+						return fmt.Errorf("%s[%d]: %w", fieldName, j, err)
+					}
+				}
+				continue
+			}
+		}
+
+		validateTag := field.Tag.Get("validate")
+		if validateTag == "" {
+			continue
+		}
+
 		switch field.Type.Kind() {
 		case reflect.String:
 			str := fieldVal.String()
