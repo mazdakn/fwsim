@@ -3,7 +3,7 @@ package config
 import (
 	"fmt"
 
-	"github.com/mazdakn/fwsim/internal"
+	model "github.com/mazdakn/fwsim/internal"
 	"github.com/mazdakn/fwsim/internal/packet"
 	"github.com/mazdakn/fwsim/pkg/validator"
 )
@@ -13,13 +13,11 @@ type Config struct {
 	DefaultAction string             `yaml:"default_action,omitempty" validate:"isValidAction"`
 }
 
-type PacketsConfig struct {
-	Packets []packet.PacketConfig `yaml:"packets,omitempty"`
-}
-
 func (c *Config) Validate() error {
-	if err := c.validateRules(); err != nil {
-		return fmt.Errorf("failed to validate rules: %w", err)
+	for _, r := range c.Rules {
+		if err := validator.ValidateStructFields(r); err != nil {
+			return err
+		}
 	}
 	if err := validator.ValidateStructFields(c); err != nil {
 		return err
@@ -27,13 +25,8 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-func (c *Config) validateRules() error {
-	for _, r := range c.Rules {
-		if err := validator.ValidateStructFields(r); err != nil {
-			return err
-		}
-	}
-	return nil
+type PacketsConfig struct {
+	Packets []packet.PacketConfig `yaml:"packets,omitempty"`
 }
 
 func (p *PacketsConfig) Validate() error {
