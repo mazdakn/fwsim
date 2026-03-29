@@ -6,23 +6,24 @@ import (
 
 	model "github.com/mazdakn/fwsim/internal"
 	"github.com/mazdakn/fwsim/internal/packet"
+	"github.com/mazdakn/fwsim/internal/rule"
 	"github.com/sirupsen/logrus"
 )
 
 // Table holds a slice of firewall rules.
 type Table struct {
 	Name          string
-	Rules         []*model.Rule
-	DefaultAction *model.Rule
+	Rules         []*rule.Rule
+	DefaultAction *rule.Rule
 	logCtx        *logrus.Entry
 }
 
-func NewTable(name string, defaultAction model.Action) *Table {
+func NewTable(name string, defaultAction rule.Action) *Table {
 	return &Table{
 		Name: name,
-		DefaultAction: model.NewRule(
-			model.WithAction(defaultAction),
-			model.WithName(fmt.Sprintf("table %s default action", name)),
+		DefaultAction: rule.NewRule(
+			rule.WithAction(defaultAction),
+			rule.WithName(fmt.Sprintf("table %s default action", name)),
 		),
 		logCtx: logrus.WithFields(logrus.Fields{
 			"name":          name,
@@ -31,7 +32,7 @@ func NewTable(name string, defaultAction model.Action) *Table {
 	}
 }
 
-func (t *Table) AddRule(r *model.Rule) {
+func (t *Table) AddRule(r *rule.Rule) {
 	i := sort.Search(len(t.Rules), func(i int) bool {
 		return t.Rules[i].Order > r.Order
 	})

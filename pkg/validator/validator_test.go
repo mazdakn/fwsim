@@ -3,7 +3,7 @@ package validator_test
 import (
 	"testing"
 
-	"github.com/mazdakn/fwsim/internal"
+	"github.com/mazdakn/fwsim/internal/rule"
 	"github.com/mazdakn/fwsim/internal/packet"
 	"github.com/mazdakn/fwsim/pkg/config"
 	"github.com/mazdakn/fwsim/pkg/validator"
@@ -42,7 +42,7 @@ func TestConfigValidateMissingDefaultAction(t *testing.T) {
 	RegisterTestingT(t)
 
 	c := &config.Config{
-		Rules: []model.RuleConfig{
+		Rules: []rule.RuleConfig{
 			{SrcNet: []string{"192.168.1.0/24"}, Action: "Accept"},
 		},
 	}
@@ -65,7 +65,7 @@ func TestConfigValidateInvalidSrcNet(t *testing.T) {
 	RegisterTestingT(t)
 
 	c := &config.Config{
-		Rules: []model.RuleConfig{
+		Rules: []rule.RuleConfig{
 			{SrcNet: []string{"not-a-cidr"}, Action: "Accept"},
 		},
 		DefaultAction: "Accept",
@@ -79,7 +79,7 @@ func TestConfigValidateInvalidDstNet(t *testing.T) {
 	RegisterTestingT(t)
 
 	c := &config.Config{
-		Rules: []model.RuleConfig{
+		Rules: []rule.RuleConfig{
 			{DstNet: []string{"bad-cidr"}, Action: "Drop"},
 		},
 		DefaultAction: "Accept",
@@ -93,7 +93,7 @@ func TestConfigValidateInvalidNegSrcNet(t *testing.T) {
 	RegisterTestingT(t)
 
 	c := &config.Config{
-		Rules: []model.RuleConfig{
+		Rules: []rule.RuleConfig{
 			{NegSrcNet: []string{"256.0.0.0/8"}, Action: "Drop"},
 		},
 		DefaultAction: "Accept",
@@ -107,7 +107,7 @@ func TestConfigValidateInvalidNegDstNet(t *testing.T) {
 	RegisterTestingT(t)
 
 	c := &config.Config{
-		Rules: []model.RuleConfig{
+		Rules: []rule.RuleConfig{
 			{NegDstNet: []string{"abc"}, Action: "Drop"},
 		},
 		DefaultAction: "Accept",
@@ -121,7 +121,7 @@ func TestConfigValidateInvalidRuleAction(t *testing.T) {
 	RegisterTestingT(t)
 
 	c := &config.Config{
-		Rules: []model.RuleConfig{
+		Rules: []rule.RuleConfig{
 			{SrcNet: []string{"10.0.0.0/8"}, Action: "unknown"},
 		},
 		DefaultAction: "Accept",
@@ -215,7 +215,7 @@ func TestConfigValidateValid(t *testing.T) {
 	RegisterTestingT(t)
 
 	c := &config.Config{
-		Rules: []model.RuleConfig{
+		Rules: []rule.RuleConfig{
 			{
 				SrcNet:    []string{"192.168.1.0/24"},
 				DstNet:    []string{"1.1.1.1/32"},

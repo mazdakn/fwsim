@@ -1,4 +1,4 @@
-package model
+package rule
 
 import (
 	"fmt"
@@ -497,4 +497,3 @@ func TestCombinedRuleString(t *testing.T) {
 	ruleSrcNet := NewRule(WithAction(Drop), WithSrcNet("10.0.0.0/8"), WithNegSrcNet("10.10.0.0/16"))
 	Expect(ruleSrcNet.String()).To(Equal("Drop *{10.0.0.0/8,!10.10.0.0/16:*->*:*}"))
 }
-
