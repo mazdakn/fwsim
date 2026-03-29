@@ -7,10 +7,11 @@ import (
 	"github.com/goccy/go-yaml"
 	"github.com/mazdakn/fwsim/internal"
 	"github.com/mazdakn/fwsim/internal/packet"
+	"github.com/mazdakn/fwsim/pkg/config"
 )
 
 type Engine struct {
-	config *Config
+	config *config.Config
 
 	table *model.Table
 }
@@ -40,7 +41,7 @@ func (e *Engine) ConfigFromFile(file string) error {
 	if err != nil {
 		return err
 	}
-	var conf Config
+	var conf config.Config
 	if err := yaml.Unmarshal(data, &conf); err != nil {
 		return err
 	}
@@ -74,7 +75,7 @@ func (e *Engine) PacketsFromFile(file string) ([]*packet.Packet, error) {
 	if err != nil {
 		return nil, err
 	}
-	var conf PacketsConfig
+	var conf config.PacketsConfig
 	if err := yaml.Unmarshal(data, &conf); err != nil {
 		return nil, err
 	}
