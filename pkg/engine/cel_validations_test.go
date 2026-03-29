@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/mazdakn/fwsim/internal/model"
+	"github.com/mazdakn/fwsim/internal/model/packet"
 	. "github.com/onsi/gomega"
 )
 
@@ -139,6 +140,63 @@ func TestConfigValidateInvalidRuleAction(t *testing.T) {
 	err := c.Validate()
 	Expect(err).ToNot(BeNil())
 	Expect(err.Error()).To(ContainSubstring("invalid action"))
+}
+
+func TestConfigValidatorValidateIP(t *testing.T) {
+	RegisterTestingT(t)
+
+	v, err := newConfigValidator()
+	Expect(err).To(BeNil())
+
+	Expect(v.validateIP("192.168.1.5")).To(BeTrue())
+	Expect(v.validateIP("10.0.0.1")).To(BeTrue())
+	Expect(v.validateIP("1.1.1.1")).To(BeTrue())
+	Expect(v.validateIP("2001:db8::1")).To(BeTrue())
+	Expect(v.validateIP("::1")).To(BeTrue())
+
+	Expect(v.validateIP("not-an-ip")).To(BeFalse())
+	Expect(v.validateIP("300.0.0.1")).To(BeFalse())
+	Expect(v.validateIP("192.168.1.0/24")).To(BeFalse())
+	Expect(v.validateIP("")).To(BeFalse())
+}
+
+func TestConfigValidateInvalidSrcAddr(t *testing.T) {
+	RegisterTestingT(t)
+
+	pkts := &PacketsConfig{
+		Packets: []packet.PacketConfig{
+			{SrcAddr: "not-an-ip", DstAddr: "1.1.1.1"},
+		},
+	}
+	err := pkts.Validate()
+	Expect(err).ToNot(BeNil())
+	Expect(err.Error()).To(ContainSubstring("invalid src_addr"))
+}
+
+func TestConfigValidateInvalidDstAddr(t *testing.T) {
+	RegisterTestingT(t)
+
+	pkts := &PacketsConfig{
+		Packets: []packet.PacketConfig{
+			{SrcAddr: "192.168.1.1", DstAddr: "bad-ip"},
+		},
+	}
+	err := pkts.Validate()
+	Expect(err).ToNot(BeNil())
+	Expect(err.Error()).To(ContainSubstring("invalid dst_addr"))
+}
+
+func TestConfigValidateValidPackets(t *testing.T) {
+	RegisterTestingT(t)
+
+	pkts := &PacketsConfig{
+		Packets: []packet.PacketConfig{
+			{SrcAddr: "192.168.1.5", DstAddr: "1.1.1.1"},
+			{SrcAddr: "2001:db8::1", DstAddr: "2001:db8::2"},
+		},
+	}
+	err := pkts.Validate()
+	Expect(err).To(BeNil())
 }
 
 func TestConfigValidateValid(t *testing.T) {
