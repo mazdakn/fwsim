@@ -1,49 +1,47 @@
-package config
+package validator_test
 
 import (
 	"testing"
 
 	"github.com/mazdakn/fwsim/internal"
 	"github.com/mazdakn/fwsim/internal/packet"
+	"github.com/mazdakn/fwsim/pkg/config"
+	"github.com/mazdakn/fwsim/pkg/validator"
 	. "github.com/onsi/gomega"
 )
 
-func TestConfigValidatorValidateCIDR(t *testing.T) {
+func TestValidateCIDR(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &Config{}
+	Expect(validator.ValidateCIDR("192.168.1.0/24")).To(BeTrue())
+	Expect(validator.ValidateCIDR("10.0.0.0/8")).To(BeTrue())
+	Expect(validator.ValidateCIDR("1.1.1.1/32")).To(BeTrue())
+	Expect(validator.ValidateCIDR("2001:db8::/32")).To(BeTrue())
 
-	Expect(c.validateCIDR("192.168.1.0/24")).To(BeTrue())
-	Expect(c.validateCIDR("10.0.0.0/8")).To(BeTrue())
-	Expect(c.validateCIDR("1.1.1.1/32")).To(BeTrue())
-	Expect(c.validateCIDR("2001:db8::/32")).To(BeTrue())
-
-	Expect(c.validateCIDR("not-a-cidr")).To(BeFalse())
-	Expect(c.validateCIDR("300.0.0.0/8")).To(BeFalse())
-	Expect(c.validateCIDR("")).To(BeFalse())
+	Expect(validator.ValidateCIDR("not-a-cidr")).To(BeFalse())
+	Expect(validator.ValidateCIDR("300.0.0.0/8")).To(BeFalse())
+	Expect(validator.ValidateCIDR("")).To(BeFalse())
 }
 
-func TestConfigValidatorValidateAction(t *testing.T) {
+func TestValidateAction(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &Config{}
+	Expect(validator.ValidateAction("accept")).To(BeTrue())
+	Expect(validator.ValidateAction("Accept")).To(BeTrue())
+	Expect(validator.ValidateAction("ACCEPT")).To(BeTrue())
+	Expect(validator.ValidateAction("drop")).To(BeTrue())
+	Expect(validator.ValidateAction("Drop")).To(BeTrue())
+	Expect(validator.ValidateAction("DROP")).To(BeTrue())
 
-	Expect(c.validateAction("accept")).To(BeTrue())
-	Expect(c.validateAction("Accept")).To(BeTrue())
-	Expect(c.validateAction("ACCEPT")).To(BeTrue())
-	Expect(c.validateAction("drop")).To(BeTrue())
-	Expect(c.validateAction("Drop")).To(BeTrue())
-	Expect(c.validateAction("DROP")).To(BeTrue())
-
-	Expect(c.validateAction("")).To(BeFalse())
-	Expect(c.validateAction("deny")).To(BeFalse())
-	Expect(c.validateAction("invalid")).To(BeFalse())
+	Expect(validator.ValidateAction("")).To(BeFalse())
+	Expect(validator.ValidateAction("deny")).To(BeFalse())
+	Expect(validator.ValidateAction("invalid")).To(BeFalse())
 }
 
 func TestConfigValidateMissingDefaultAction(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &Config{
+	c := &config.Config{
 		Rules: []model.RuleConfig{
 			{SrcNet: []string{"192.168.1.0/24"}, Action: "Accept"},
 		},
@@ -57,7 +55,7 @@ func TestConfigValidateMissingDefaultAction(t *testing.T) {
 func TestConfigValidateInvalidDefaultAction(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &Config{DefaultAction: "badaction"}
+	c := &config.Config{DefaultAction: "badaction"}
 	err := c.Validate()
 	Expect(err).ToNot(BeNil())
 	Expect(err.Error()).To(ContainSubstring("invalid default_action"))
@@ -66,7 +64,7 @@ func TestConfigValidateInvalidDefaultAction(t *testing.T) {
 func TestConfigValidateInvalidSrcNet(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &Config{
+	c := &config.Config{
 		Rules: []model.RuleConfig{
 			{SrcNet: []string{"not-a-cidr"}, Action: "Accept"},
 		},
@@ -80,7 +78,7 @@ func TestConfigValidateInvalidSrcNet(t *testing.T) {
 func TestConfigValidateInvalidDstNet(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &Config{
+	c := &config.Config{
 		Rules: []model.RuleConfig{
 			{DstNet: []string{"bad-cidr"}, Action: "Drop"},
 		},
@@ -94,7 +92,7 @@ func TestConfigValidateInvalidDstNet(t *testing.T) {
 func TestConfigValidateInvalidNegSrcNet(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &Config{
+	c := &config.Config{
 		Rules: []model.RuleConfig{
 			{NegSrcNet: []string{"256.0.0.0/8"}, Action: "Drop"},
 		},
@@ -108,7 +106,7 @@ func TestConfigValidateInvalidNegSrcNet(t *testing.T) {
 func TestConfigValidateInvalidNegDstNet(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &Config{
+	c := &config.Config{
 		Rules: []model.RuleConfig{
 			{NegDstNet: []string{"abc"}, Action: "Drop"},
 		},
@@ -122,7 +120,7 @@ func TestConfigValidateInvalidNegDstNet(t *testing.T) {
 func TestConfigValidateInvalidRuleAction(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &Config{
+	c := &config.Config{
 		Rules: []model.RuleConfig{
 			{SrcNet: []string{"10.0.0.0/8"}, Action: "unknown"},
 		},
@@ -133,27 +131,25 @@ func TestConfigValidateInvalidRuleAction(t *testing.T) {
 	Expect(err.Error()).To(ContainSubstring("invalid action"))
 }
 
-func TestConfigValidatorValidateIP(t *testing.T) {
+func TestValidateIP(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &Config{}
+	Expect(validator.ValidateIP("192.168.1.5")).To(BeTrue())
+	Expect(validator.ValidateIP("10.0.0.1")).To(BeTrue())
+	Expect(validator.ValidateIP("1.1.1.1")).To(BeTrue())
+	Expect(validator.ValidateIP("2001:db8::1")).To(BeTrue())
+	Expect(validator.ValidateIP("::1")).To(BeTrue())
 
-	Expect(c.validateIP("192.168.1.5")).To(BeTrue())
-	Expect(c.validateIP("10.0.0.1")).To(BeTrue())
-	Expect(c.validateIP("1.1.1.1")).To(BeTrue())
-	Expect(c.validateIP("2001:db8::1")).To(BeTrue())
-	Expect(c.validateIP("::1")).To(BeTrue())
-
-	Expect(c.validateIP("not-an-ip")).To(BeFalse())
-	Expect(c.validateIP("300.0.0.1")).To(BeFalse())
-	Expect(c.validateIP("192.168.1.0/24")).To(BeFalse())
-	Expect(c.validateIP("")).To(BeFalse())
+	Expect(validator.ValidateIP("not-an-ip")).To(BeFalse())
+	Expect(validator.ValidateIP("300.0.0.1")).To(BeFalse())
+	Expect(validator.ValidateIP("192.168.1.0/24")).To(BeFalse())
+	Expect(validator.ValidateIP("")).To(BeFalse())
 }
 
 func TestConfigValidateInvalidSrcAddr(t *testing.T) {
 	RegisterTestingT(t)
 
-	pkts := &PacketsConfig{
+	pkts := &config.PacketsConfig{
 		Packets: []packet.PacketConfig{
 			{SrcAddr: "not-an-ip", DstAddr: "1.1.1.1"},
 		},
@@ -166,7 +162,7 @@ func TestConfigValidateInvalidSrcAddr(t *testing.T) {
 func TestConfigValidateInvalidDstAddr(t *testing.T) {
 	RegisterTestingT(t)
 
-	pkts := &PacketsConfig{
+	pkts := &config.PacketsConfig{
 		Packets: []packet.PacketConfig{
 			{SrcAddr: "192.168.1.1", DstAddr: "bad-ip"},
 		},
@@ -179,7 +175,7 @@ func TestConfigValidateInvalidDstAddr(t *testing.T) {
 func TestConfigValidateValidPackets(t *testing.T) {
 	RegisterTestingT(t)
 
-	pkts := &PacketsConfig{
+	pkts := &config.PacketsConfig{
 		Packets: []packet.PacketConfig{
 			{SrcAddr: "192.168.1.5", DstAddr: "1.1.1.1"},
 			{SrcAddr: "2001:db8::1", DstAddr: "2001:db8::2"},
@@ -192,7 +188,7 @@ func TestConfigValidateValidPackets(t *testing.T) {
 func TestConfigValidateValid(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &Config{
+	c := &config.Config{
 		Rules: []model.RuleConfig{
 			{
 				SrcNet:    []string{"192.168.1.0/24"},
