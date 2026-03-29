@@ -5,20 +5,21 @@ import (
 	"os"
 
 	"github.com/goccy/go-yaml"
-	"github.com/mazdakn/fwsim/internal"
+	model "github.com/mazdakn/fwsim/internal"
 	"github.com/mazdakn/fwsim/internal/packet"
+	"github.com/mazdakn/fwsim/internal/table"
 	"github.com/mazdakn/fwsim/pkg/config"
 )
 
 type Engine struct {
 	config *config.Config
 
-	table *model.Table
+	table *table.Table
 }
 
 func New() *Engine {
 	return &Engine{
-		table: model.NewTable("main", model.Drop),
+		table: table.NewTable("main", model.Drop),
 	}
 }
 

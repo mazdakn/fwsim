@@ -1,8 +1,9 @@
-package model
+package table
 
 import (
 	"testing"
 
+	model "github.com/mazdakn/fwsim/internal"
 	"github.com/mazdakn/fwsim/internal/packet"
 	. "github.com/onsi/gomega"
 )
@@ -10,12 +11,12 @@ import (
 func TestTableAddRuleSortAscending(t *testing.T) {
 	RegisterTestingT(t)
 
-	table := NewTable("test", Drop)
+	table := NewTable("test", model.Drop)
 
 	// Add rules with different orders
-	rule1 := NewRule(WithName("rule1"), WithOrder(10), WithAction(Accept))
-	rule2 := NewRule(WithName("rule2"), WithOrder(30), WithAction(Accept))
-	rule3 := NewRule(WithName("rule3"), WithOrder(20), WithAction(Accept))
+	rule1 := model.NewRule(model.WithName("rule1"), model.WithOrder(10), model.WithAction(model.Accept))
+	rule2 := model.NewRule(model.WithName("rule2"), model.WithOrder(30), model.WithAction(model.Accept))
+	rule3 := model.NewRule(model.WithName("rule3"), model.WithOrder(20), model.WithAction(model.Accept))
 
 	table.AddRule(rule1)
 	table.AddRule(rule2)
@@ -31,12 +32,12 @@ func TestTableAddRuleSortAscending(t *testing.T) {
 func TestTableAddRuleSortStableForEqualOrders(t *testing.T) {
 	RegisterTestingT(t)
 
-	table := NewTable("test", Drop)
+	table := NewTable("test", model.Drop)
 
 	// Add rules with the same order (default 0)
-	rule1 := NewRule(WithName("rule1"), WithAction(Accept))
-	rule2 := NewRule(WithName("rule2"), WithAction(Drop))
-	rule3 := NewRule(WithName("rule3"), WithAction(Accept))
+	rule1 := model.NewRule(model.WithName("rule1"), model.WithAction(model.Accept))
+	rule2 := model.NewRule(model.WithName("rule2"), model.WithAction(model.Drop))
+	rule3 := model.NewRule(model.WithName("rule3"), model.WithAction(model.Accept))
 
 	table.AddRule(rule1)
 	table.AddRule(rule2)
@@ -52,7 +53,7 @@ func TestTableAddRuleSortStableForEqualOrders(t *testing.T) {
 func TestTableMatchUsesAscendingOrder(t *testing.T) {
 	RegisterTestingT(t)
 
-	table := NewTable("test", Drop)
+	table := NewTable("test", model.Drop)
 
 	pkt := packet.New(
 		packet.WithSrcAddr("10.0.0.1"),
@@ -63,14 +64,14 @@ func TestTableMatchUsesAscendingOrder(t *testing.T) {
 
 	// Add a high-order rule that drops traffic and a low-order rule that accepts it
 	// After sorting ascending, the low-order Accept rule should match first
-	highOrderDrop := NewRule(WithName("high-drop"), WithOrder(100), WithAction(Drop),
-		WithProto(6), WithDstPort(80))
-	lowOrderAccept := NewRule(WithName("low-accept"), WithOrder(1), WithAction(Accept),
-		WithProto(6), WithDstPort(80))
+	highOrderDrop := model.NewRule(model.WithName("high-drop"), model.WithOrder(100), model.WithAction(model.Drop),
+		model.WithProto(6), model.WithDstPort(80))
+	lowOrderAccept := model.NewRule(model.WithName("low-accept"), model.WithOrder(1), model.WithAction(model.Accept),
+		model.WithProto(6), model.WithDstPort(80))
 
 	table.AddRule(highOrderDrop)
 	table.AddRule(lowOrderAccept)
 
 	res := table.Match(pkt)
-	Expect(res.Verdict).To(Equal(Accept))
+	Expect(res.Verdict).To(Equal(model.Accept))
 }

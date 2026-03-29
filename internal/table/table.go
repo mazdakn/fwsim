@@ -1,9 +1,10 @@
-package model
+package table
 
 import (
 	"fmt"
 	"sort"
 
+	model "github.com/mazdakn/fwsim/internal"
 	"github.com/mazdakn/fwsim/internal/packet"
 	"github.com/sirupsen/logrus"
 )
@@ -11,17 +12,17 @@ import (
 // Table holds a slice of firewall rules.
 type Table struct {
 	Name          string
-	Rules         []*Rule
-	DefaultAction *Rule
+	Rules         []*model.Rule
+	DefaultAction *model.Rule
 	logCtx        *logrus.Entry
 }
 
-func NewTable(name string, defaultAction Action) *Table {
+func NewTable(name string, defaultAction model.Action) *Table {
 	return &Table{
 		Name: name,
-		DefaultAction: NewRule(
-			WithAction(defaultAction),
-			WithName(fmt.Sprintf("table %s default action", name)),
+		DefaultAction: model.NewRule(
+			model.WithAction(defaultAction),
+			model.WithName(fmt.Sprintf("table %s default action", name)),
 		),
 		logCtx: logrus.WithFields(logrus.Fields{
 			"name":          name,
@@ -30,7 +31,7 @@ func NewTable(name string, defaultAction Action) *Table {
 	}
 }
 
-func (t *Table) AddRule(r *Rule) {
+func (t *Table) AddRule(r *model.Rule) {
 	i := sort.Search(len(t.Rules), func(i int) bool {
 		return t.Rules[i].Order > r.Order
 	})
@@ -39,9 +40,9 @@ func (t *Table) AddRule(r *Rule) {
 	t.Rules[i] = r
 }
 
-func (t *Table) Match(pkt *packet.Packet) Result {
+func (t *Table) Match(pkt *packet.Packet) model.Result {
 	t.logCtx.Debugf("Matching packet %+v", pkt)
-	var res Result
+	var res model.Result
 	for _, r := range t.Rules {
 		res.Trace = append(res.Trace, r)
 		if r.Match(pkt) {
@@ -55,7 +56,7 @@ func (t *Table) Match(pkt *packet.Packet) Result {
 		return res
 	}
 	t.logCtx.Debugf("No rule matched, using default action %s", t.DefaultAction.Action.String())
-	t.DefaultAction.packetCount.Increment()
+	t.DefaultAction.IncrementPacketCount()
 	res.Trace = append(res.Trace, t.DefaultAction)
 	res.Verdict = t.DefaultAction.Action
 	return res
