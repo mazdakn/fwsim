@@ -35,34 +35,22 @@ func (c *Config) Validate() error {
 
 func (c *Config) validateRules(validator *configValidator) error {
 	for _, r := range c.Rules {
-		for _, srcNet := range r.SrcNet {
-			if !validator.validateCIDR(srcNet) {
-				return fmt.Errorf("invalid src_net %s", srcNet)
-			}
-		}
-
-		for _, dstNet := range r.DstNet {
-			if !validator.validateCIDR(dstNet) {
-				return fmt.Errorf("invalid dst_net %s", dstNet)
-			}
-		}
-
-		for _, srcNet := range r.NegSrcNet {
-			if !validator.validateCIDR(srcNet) {
-				return fmt.Errorf("invalid neg_src_net %s", srcNet)
-			}
-		}
-
-		for _, dstNet := range r.NegDstNet {
-			if !validator.validateCIDR(dstNet) {
-				return fmt.Errorf("invalid neg_dst_net %s", dstNet)
-			}
-		}
-
-		if !validator.validateAction(r.Action) {
-			return fmt.Errorf("invalid action %s", r.Action)
+		if err := validator.validateStructFields(r); err != nil {
+			return err
 		}
 	}
+	return nil
+}
 
+func (c *PacketsConfig) Validate() error {
+	validator, err := getValidator()
+	if err != nil {
+		return err
+	}
+	for _, p := range c.Packets {
+		if err := validator.validateStructFields(p); err != nil {
+			return fmt.Errorf("invalid packet config: %w", err)
+		}
+	}
 	return nil
 }
