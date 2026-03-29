@@ -3,7 +3,7 @@ package engine
 import (
 	"testing"
 
-	"github.com/mazdakn/fwsim/internal"
+	"github.com/mazdakn/fwsim/internal/rule"
 	. "github.com/onsi/gomega"
 )
 
@@ -62,15 +62,15 @@ func TestPacketsFromFileAndMatch(t *testing.T) {
 
 	// First packet: src 192.168.1.5 -> dst 1.1.1.1:80 proto 7, src_port 30000 — matches rule 1 (Accept)
 	res := engine.Match(pkts[0])
-	Expect(res.Verdict).To(Equal(model.Accept))
+	Expect(res.Verdict).To(Equal(rule.Accept))
 
 	// Second packet: src 10.0.0.1 -> dst 2.2.2.2:8080 proto 7 — matches rule 3 (Drop)
 	res = engine.Match(pkts[1])
-	Expect(res.Verdict).To(Equal(model.Drop))
+	Expect(res.Verdict).To(Equal(rule.Drop))
 
 	// Third packet: proto 17, no matching rule — default action Accept
 	res = engine.Match(pkts[2])
-	Expect(res.Verdict).To(Equal(model.Accept))
+	Expect(res.Verdict).To(Equal(rule.Accept))
 }
 
 func TestLoadRulesFromConfig(t *testing.T) {

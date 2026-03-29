@@ -7,6 +7,7 @@ import (
 	"github.com/goccy/go-yaml"
 	model "github.com/mazdakn/fwsim/internal"
 	"github.com/mazdakn/fwsim/internal/packet"
+	"github.com/mazdakn/fwsim/internal/rule"
 	"github.com/mazdakn/fwsim/internal/table"
 	"github.com/mazdakn/fwsim/pkg/config"
 )
@@ -19,7 +20,7 @@ type Engine struct {
 
 func New() *Engine {
 	return &Engine{
-		table: table.NewTable("main", model.Drop),
+		table: table.NewTable("main", rule.Drop),
 	}
 }
 
@@ -62,7 +63,7 @@ func (e *Engine) LoadRules() error {
 		e.table.AddRule(rule)
 	}
 
-	action, err := model.ParseAction(e.config.DefaultAction)
+	action, err := rule.ParseAction(e.config.DefaultAction)
 	if err != nil {
 		return fmt.Errorf("invalid default action %s: %w", e.config.DefaultAction, err)
 	}

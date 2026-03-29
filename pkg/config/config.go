@@ -1,13 +1,13 @@
 package config
 
 import (
-	model "github.com/mazdakn/fwsim/internal"
+	"github.com/mazdakn/fwsim/internal/rule"
 	"github.com/mazdakn/fwsim/internal/packet"
 	"github.com/mazdakn/fwsim/pkg/validator"
 )
 
 type Config struct {
-	Rules         []model.RuleConfig `yaml:"rules,omitempty"`
+	Rules         []rule.RuleConfig `yaml:"rules,omitempty"`
 	DefaultAction string             `yaml:"default_action,omitempty" validate:"isValidAction"`
 }
 

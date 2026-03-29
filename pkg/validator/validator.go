@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/mazdakn/fwsim/internal"
+	"github.com/mazdakn/fwsim/internal/rule"
 )
 
 // ValidateCIDR returns true if cidr is valid CIDR notation.
@@ -17,7 +17,7 @@ func ValidateCIDR(cidr string) bool {
 
 // ValidateAction returns true if action is a non-empty, recognised action string.
 func ValidateAction(action string) bool {
-	_, err := model.ParseAction(action)
+	_, err := rule.ParseAction(action)
 	return err == nil
 }
 
