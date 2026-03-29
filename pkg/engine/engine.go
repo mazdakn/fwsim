@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/goccy/go-yaml"
-	"github.com/mazdakn/fwsim/internal/model"
-	"github.com/mazdakn/fwsim/internal/model/packet"
+	"github.com/mazdakn/fwsim/internal"
+	"github.com/mazdakn/fwsim/internal/packet"
 	"github.com/mazdakn/fwsim/pkg/config"
 )
 

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/mazdakn/fwsim/internal/model/packet"
+	"github.com/mazdakn/fwsim/internal/packet"
 	"github.com/sirupsen/logrus"
 )
 

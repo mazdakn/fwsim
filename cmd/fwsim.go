@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/mazdakn/fwsim/internal/model"
-	"github.com/mazdakn/fwsim/internal/model/packet"
+	"github.com/mazdakn/fwsim/internal"
+	"github.com/mazdakn/fwsim/internal/packet"
 	"github.com/mazdakn/fwsim/pkg/engine"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
