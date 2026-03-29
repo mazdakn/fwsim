@@ -290,17 +290,17 @@ func (r *Rule) String() string {
 type RuleConfig struct {
 	Name       string   `yaml:"name,omitempty"`
 	Order      uint64   `yaml:"order,omitempty"`
-	SrcNet     []string `yaml:"src_net,omitempty"     cel:"isValidCIDR"`
-	DstNet     []string `yaml:"dst_net,omitempty"     cel:"isValidCIDR"`
+	SrcNet     []string `yaml:"src_net,omitempty"     validate:"isValidCIDR"`
+	DstNet     []string `yaml:"dst_net,omitempty"     validate:"isValidCIDR"`
 	Protocol   []uint8  `yaml:"proto,omitempty"`
 	SrcPort    []uint16 `yaml:"src_port,omitempty"`
 	DstPort    []uint16 `yaml:"dst_port,omitempty"`
-	NegSrcNet  []string `yaml:"neg_src_net,omitempty" cel:"isValidCIDR"`
-	NegDstNet  []string `yaml:"neg_dst_net,omitempty" cel:"isValidCIDR"`
+	NegSrcNet  []string `yaml:"neg_src_net,omitempty" validate:"isValidCIDR"`
+	NegDstNet  []string `yaml:"neg_dst_net,omitempty" validate:"isValidCIDR"`
 	NegProto   []uint8  `yaml:"neg_proto,omitempty"`
 	NegSrcPort []uint16 `yaml:"neg_src_port,omitempty"`
 	NegDstPort []uint16 `yaml:"neg_dst_port,omitempty"`
-	Action     string   `yaml:"action,omitempty"      cel:"isValidAction"`
+	Action     string   `yaml:"action,omitempty"      validate:"isValidAction"`
 }
 
 // ToRule converts a RuleConfig into a Rule domain object.
