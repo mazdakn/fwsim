@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/mazdakn/fwsim/internal/model"
+	"github.com/mazdakn/fwsim/internal"
 )
 
 // configValidator validates firewall configuration values using native Go functions.
