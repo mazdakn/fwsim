@@ -78,6 +78,9 @@ func (e *Engine) PacketsFromFile(file string) ([]*packet.Packet, error) {
 	if err := yaml.Unmarshal(data, &conf); err != nil {
 		return nil, err
 	}
+	if err := conf.Validate(); err != nil {
+		return nil, err
+	}
 	pkts := make([]*packet.Packet, 0, len(conf.Packets))
 	for _, p := range conf.Packets {
 		pkts = append(pkts, p.ToPacket())
