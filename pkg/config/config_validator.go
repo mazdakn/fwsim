@@ -47,7 +47,8 @@ func (c *Config) validateByTag(tag, value string) (bool, error) {
 // validateByTag. Field names used in error messages are taken from the "yaml" tag.
 //
 // Validation semantics:
-//   - string fields: empty values are skipped (field is treated as optional).
+//   - string fields: every value is validated, including empty strings; the
+//     validator function decides whether an empty string is acceptable.
 //   - []string fields: every element is validated, including empty strings, because
 //     an empty string in a list (e.g. a CIDR slice) is never a valid value.
 func (c *Config) validateStructFields(s any) error {
@@ -75,9 +76,6 @@ func (c *Config) validateStructFields(s any) error {
 		switch field.Type.Kind() {
 		case reflect.String:
 			str := fieldVal.String()
-			if str == "" {
-				continue
-			}
 			ok, err := c.validateByTag(validateTag, str)
 			if err != nil {
 				return err
