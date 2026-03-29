@@ -5,6 +5,7 @@ import (
 
 	"github.com/mazdakn/fwsim/internal"
 	"github.com/mazdakn/fwsim/internal/packet"
+	"github.com/mazdakn/fwsim/pkg/validator"
 )
 
 type Config struct {
@@ -20,7 +21,7 @@ func (c *Config) Validate() error {
 	if err := c.validateRules(); err != nil {
 		return fmt.Errorf("failed to validate rules: %w", err)
 	}
-	if err := c.validateStructFields(c); err != nil {
+	if err := validator.ValidateStructFields(c); err != nil {
 		return err
 	}
 	return nil
@@ -28,7 +29,7 @@ func (c *Config) Validate() error {
 
 func (c *Config) validateRules() error {
 	for _, r := range c.Rules {
-		if err := c.validateStructFields(r); err != nil {
+		if err := validator.ValidateStructFields(r); err != nil {
 			return err
 		}
 	}
@@ -36,9 +37,8 @@ func (c *Config) validateRules() error {
 }
 
 func (p *PacketsConfig) Validate() error {
-	c := &Config{}
 	for _, pkt := range p.Packets {
-		if err := c.validateStructFields(pkt); err != nil {
+		if err := validator.ValidateStructFields(pkt); err != nil {
 			return fmt.Errorf("invalid packet config: %w", err)
 		}
 	}

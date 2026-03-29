@@ -1,4 +1,4 @@
-package config
+package validator
 
 import (
 	"fmt"
@@ -9,40 +9,40 @@ import (
 	"github.com/mazdakn/fwsim/internal"
 )
 
-// validateCIDR returns true if cidr is valid CIDR notation.
-func (c *Config) validateCIDR(cidr string) bool {
+// ValidateCIDR returns true if cidr is valid CIDR notation.
+func ValidateCIDR(cidr string) bool {
 	_, _, err := net.ParseCIDR(cidr)
 	return err == nil
 }
 
-// validateAction returns true if action is a non-empty, recognised action string.
-func (c *Config) validateAction(action string) bool {
+// ValidateAction returns true if action is a non-empty, recognised action string.
+func ValidateAction(action string) bool {
 	_, err := model.ParseAction(action)
 	return err == nil
 }
 
-// validateIP returns true if ip is a valid IP address.
-func (c *Config) validateIP(ip string) bool {
+// ValidateIP returns true if ip is a valid IP address.
+func ValidateIP(ip string) bool {
 	return net.ParseIP(ip) != nil
 }
 
 // validateByTag validates value using the function identified by tag.
 // It returns an error if tag is not a recognised function name, so that
 // a typo in a struct tag is surfaced immediately rather than silently failing.
-func (c *Config) validateByTag(tag, value string) (bool, error) {
+func validateByTag(tag, value string) (bool, error) {
 	switch tag {
 	case "isValidCIDR":
-		return c.validateCIDR(value), nil
+		return ValidateCIDR(value), nil
 	case "isValidAction":
-		return c.validateAction(value), nil
+		return ValidateAction(value), nil
 	case "isValidIP":
-		return c.validateIP(value), nil
+		return ValidateIP(value), nil
 	default:
 		return false, fmt.Errorf("unknown validation tag: %s", tag)
 	}
 }
 
-// validateStructFields validates all string and []string fields in s that carry a
+// ValidateStructFields validates all string and []string fields in s that carry a
 // "validate" struct tag. The tag value must be a function name recognised by
 // validateByTag. Field names used in error messages are taken from the "yaml" tag.
 //
@@ -51,7 +51,7 @@ func (c *Config) validateByTag(tag, value string) (bool, error) {
 //     validator function decides whether an empty string is acceptable.
 //   - []string fields: every element is validated, including empty strings, because
 //     an empty string in a list (e.g. a CIDR slice) is never a valid value.
-func (c *Config) validateStructFields(s any) error {
+func ValidateStructFields(s any) error {
 	t := reflect.TypeOf(s)
 	val := reflect.ValueOf(s)
 	if t.Kind() == reflect.Ptr {
@@ -76,7 +76,7 @@ func (c *Config) validateStructFields(s any) error {
 		switch field.Type.Kind() {
 		case reflect.String:
 			str := fieldVal.String()
-			ok, err := c.validateByTag(validateTag, str)
+			ok, err := validateByTag(validateTag, str)
 			if err != nil {
 				return err
 			}
@@ -87,7 +87,7 @@ func (c *Config) validateStructFields(s any) error {
 			if field.Type.Elem().Kind() == reflect.String {
 				for j := 0; j < fieldVal.Len(); j++ {
 					str := fieldVal.Index(j).String()
-					ok, err := c.validateByTag(validateTag, str)
+					ok, err := validateByTag(validateTag, str)
 					if err != nil {
 						return err
 					}
