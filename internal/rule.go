@@ -230,6 +230,10 @@ func (r *Rule) PacketCount() uint64 {
 	return r.packetCount.Get()
 }
 
+func (r *Rule) IncrementPacketCount() {
+	r.packetCount.Increment()
+}
+
 func (r *Rule) ResetPacketCount() {
 	r.packetCount.Reset()
 }
