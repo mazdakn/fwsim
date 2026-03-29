@@ -9,42 +9,34 @@ import (
 	"github.com/mazdakn/fwsim/internal"
 )
 
-// configValidator validates firewall configuration values using native Go functions.
-type configValidator struct{}
-
-// newConfigValidator returns a configValidator ready for use.
-func newConfigValidator() (*configValidator, error) {
-	return &configValidator{}, nil
-}
-
 // validateCIDR returns true if cidr is valid CIDR notation.
-func (v *configValidator) validateCIDR(cidr string) bool {
+func (c *Config) validateCIDR(cidr string) bool {
 	_, _, err := net.ParseCIDR(cidr)
 	return err == nil
 }
 
 // validateAction returns true if action is a non-empty, recognised action string.
-func (v *configValidator) validateAction(action string) bool {
+func (c *Config) validateAction(action string) bool {
 	_, err := model.ParseAction(action)
 	return err == nil
 }
 
 // validateIP returns true if ip is a valid IP address.
-func (v *configValidator) validateIP(ip string) bool {
+func (c *Config) validateIP(ip string) bool {
 	return net.ParseIP(ip) != nil
 }
 
 // validateByTag validates value using the function identified by tag.
 // It returns an error if tag is not a recognised function name, so that
 // a typo in a struct tag is surfaced immediately rather than silently failing.
-func (v *configValidator) validateByTag(tag, value string) (bool, error) {
+func (c *Config) validateByTag(tag, value string) (bool, error) {
 	switch tag {
 	case "isValidCIDR":
-		return v.validateCIDR(value), nil
+		return c.validateCIDR(value), nil
 	case "isValidAction":
-		return v.validateAction(value), nil
+		return c.validateAction(value), nil
 	case "isValidIP":
-		return v.validateIP(value), nil
+		return c.validateIP(value), nil
 	default:
 		return false, fmt.Errorf("unknown validation tag: %s", tag)
 	}
@@ -58,7 +50,7 @@ func (v *configValidator) validateByTag(tag, value string) (bool, error) {
 //   - string fields: empty values are skipped (field is treated as optional).
 //   - []string fields: every element is validated, including empty strings, because
 //     an empty string in a list (e.g. a CIDR slice) is never a valid value.
-func (v *configValidator) validateStructFields(s any) error {
+func (c *Config) validateStructFields(s any) error {
 	t := reflect.TypeOf(s)
 	val := reflect.ValueOf(s)
 	if t.Kind() == reflect.Ptr {
@@ -86,7 +78,7 @@ func (v *configValidator) validateStructFields(s any) error {
 			if str == "" {
 				continue
 			}
-			ok, err := v.validateByTag(validateTag, str)
+			ok, err := c.validateByTag(validateTag, str)
 			if err != nil {
 				return err
 			}
@@ -97,7 +89,7 @@ func (v *configValidator) validateStructFields(s any) error {
 			if field.Type.Elem().Kind() == reflect.String {
 				for j := 0; j < fieldVal.Len(); j++ {
 					str := fieldVal.Index(j).String()
-					ok, err := v.validateByTag(validateTag, str)
+					ok, err := c.validateByTag(validateTag, str)
 					if err != nil {
 						return err
 					}
