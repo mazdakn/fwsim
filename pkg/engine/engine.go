@@ -20,7 +20,7 @@ type Engine struct {
 
 func New() *Engine {
 	return &Engine{
-		table: table.NewTable("main", rule.Drop),
+		table: table.New("main", rule.Drop),
 	}
 }
 

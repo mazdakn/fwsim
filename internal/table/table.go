@@ -18,10 +18,10 @@ type Table struct {
 	logCtx        *logrus.Entry
 }
 
-func NewTable(name string, defaultAction rule.Action) *Table {
+func New(name string, defaultAction rule.Action) *Table {
 	return &Table{
 		Name: name,
-		DefaultAction: rule.NewRule(
+		DefaultAction: rule.New(
 			rule.WithAction(defaultAction),
 			rule.WithName(fmt.Sprintf("table %s default action", name)),
 		),

@@ -12,7 +12,7 @@ import (
 func TestEmptyRule(t *testing.T) {
 	RegisterTestingT(t)
 
-	rule := NewRule()
+	rule := New()
 	pkts := []*packet.Packet{
 		packet.New(
 			packet.WithSrcAddr("10.10.10.1"), packet.WithSrcPort(55555), packet.WithProto(17),
@@ -49,10 +49,10 @@ func TestRuleIPFamilyMismatch(t *testing.T) {
 
 	// Rules with IPv4 networks should not match IPv6 packets
 	ipv4Rules := []*Rule{
-		NewRule(WithSrcNet("10.10.10.0/24")),
-		NewRule(WithDstNet("1.1.1.1/32")),
-		NewRule(WithSrcNet("10.10.10.0/24"), WithDstNet("1.1.1.1/32")),
-		NewRule(WithProto(17), WithSrcNet("10.10.10.0/24"), WithDstNet("1.1.1.1/32")),
+		New(WithSrcNet("10.10.10.0/24")),
+		New(WithDstNet("1.1.1.1/32")),
+		New(WithSrcNet("10.10.10.0/24"), WithDstNet("1.1.1.1/32")),
+		New(WithProto(17), WithSrcNet("10.10.10.0/24"), WithDstNet("1.1.1.1/32")),
 	}
 	for _, r := range ipv4Rules {
 		t.Run(fmt.Sprintf("IPv4 rule %v should not match IPv6 packet", r.String()), func(t *testing.T) {
@@ -68,10 +68,10 @@ func TestRuleIPFamilyMismatch(t *testing.T) {
 
 	// Rules with IPv6 networks should not match IPv4 packets
 	ipv6Rules := []*Rule{
-		NewRule(WithSrcNet("dead:beef::/64")),
-		NewRule(WithDstNet("cafe::/112")),
-		NewRule(WithSrcNet("dead:beef::/64"), WithDstNet("cafe::/112")),
-		NewRule(WithProto(6), WithSrcNet("dead:beef::/64"), WithDstNet("cafe::/112")),
+		New(WithSrcNet("dead:beef::/64")),
+		New(WithDstNet("cafe::/112")),
+		New(WithSrcNet("dead:beef::/64"), WithDstNet("cafe::/112")),
+		New(WithProto(6), WithSrcNet("dead:beef::/64"), WithDstNet("cafe::/112")),
 	}
 	for _, r := range ipv6Rules {
 		t.Run(fmt.Sprintf("IPv6 rule %v should not match IPv4 packet", r.String()), func(t *testing.T) {
@@ -186,34 +186,34 @@ func TestMustParseCIDRPanic(t *testing.T) {
 
 func makeCommonRules(srcNet, dstNet string, proto uint8, srcPort, dstPort uint16) []*Rule {
 	return []*Rule{
-		NewRule(WithProto(proto)),
-		NewRule(WithSrcPort(srcPort)),
-		NewRule(WithDstPort(dstPort)),
-		NewRule(WithSrcNet(srcNet)),
-		NewRule(WithDstNet(dstNet)),
+		New(WithProto(proto)),
+		New(WithSrcPort(srcPort)),
+		New(WithDstPort(dstPort)),
+		New(WithSrcNet(srcNet)),
+		New(WithDstNet(dstNet)),
 
-		NewRule(WithProto(proto), WithSrcPort(srcPort)),
-		NewRule(WithProto(proto), WithDstPort(dstPort)),
-		NewRule(WithProto(proto), WithSrcNet(srcNet)),
-		NewRule(WithProto(proto), WithDstNet(dstNet)),
+		New(WithProto(proto), WithSrcPort(srcPort)),
+		New(WithProto(proto), WithDstPort(dstPort)),
+		New(WithProto(proto), WithSrcNet(srcNet)),
+		New(WithProto(proto), WithDstNet(dstNet)),
 
-		NewRule(WithSrcPort(srcPort), WithDstPort(dstPort)),
-		NewRule(WithSrcPort(srcPort), WithSrcNet(srcNet)),
-		NewRule(WithSrcPort(srcPort), WithDstNet(dstNet)),
+		New(WithSrcPort(srcPort), WithDstPort(dstPort)),
+		New(WithSrcPort(srcPort), WithSrcNet(srcNet)),
+		New(WithSrcPort(srcPort), WithDstNet(dstNet)),
 
-		NewRule(WithDstPort(dstPort), WithSrcNet(srcNet)),
-		NewRule(WithDstPort(dstPort), WithDstNet(dstNet)),
+		New(WithDstPort(dstPort), WithSrcNet(srcNet)),
+		New(WithDstPort(dstPort), WithDstNet(dstNet)),
 
-		NewRule(WithSrcNet(srcNet), WithDstNet(dstNet)),
+		New(WithSrcNet(srcNet), WithDstNet(dstNet)),
 
-		NewRule(WithProto(proto), WithDstPort(dstPort), WithDstNet(dstNet)),
-		NewRule(WithSrcPort(srcPort), WithDstPort(dstPort), WithSrcNet(srcNet)),
-		NewRule(WithDstPort(dstPort), WithSrcNet(srcNet), WithDstNet(dstNet)),
+		New(WithProto(proto), WithDstPort(dstPort), WithDstNet(dstNet)),
+		New(WithSrcPort(srcPort), WithDstPort(dstPort), WithSrcNet(srcNet)),
+		New(WithDstPort(dstPort), WithSrcNet(srcNet), WithDstNet(dstNet)),
 
-		NewRule(WithProto(proto), WithSrcPort(srcPort), WithDstPort(dstPort), WithDstNet(dstNet)),
-		NewRule(WithProto(proto), WithDstPort(dstPort), WithSrcNet(srcNet), WithDstNet(dstNet)),
+		New(WithProto(proto), WithSrcPort(srcPort), WithDstPort(dstPort), WithDstNet(dstNet)),
+		New(WithProto(proto), WithDstPort(dstPort), WithSrcNet(srcNet), WithDstNet(dstNet)),
 
-		NewRule(WithProto(proto), WithSrcPort(srcPort), WithDstPort(dstPort), WithSrcNet(srcNet), WithDstNet(dstNet)),
+		New(WithProto(proto), WithSrcPort(srcPort), WithDstPort(dstPort), WithSrcNet(srcNet), WithDstNet(dstNet)),
 	}
 }
 
@@ -252,7 +252,7 @@ func TestParseAction(t *testing.T) {
 func TestRulePacketCounter(t *testing.T) {
 	RegisterTestingT(t)
 
-	rule := NewRule(WithProto(17), WithDstPort(53))
+	rule := New(WithProto(17), WithDstPort(53))
 	pktMatch := packet.New(
 		packet.WithSrcAddr("10.10.10.1"), packet.WithSrcPort(55555), packet.WithProto(17),
 		packet.WithDstAddr("1.1.1.1"), packet.WithDstPort(53),
@@ -289,7 +289,7 @@ func TestRulePacketCounter(t *testing.T) {
 func TestRulePacketCounterConcurrency(t *testing.T) {
 	RegisterTestingT(t)
 
-	rule := NewRule(WithProto(17), WithDstPort(53))
+	rule := New(WithProto(17), WithDstPort(53))
 	pktMatch := packet.New(
 		packet.WithSrcAddr("10.10.10.1"), packet.WithSrcPort(55555), packet.WithProto(17),
 		packet.WithDstAddr("1.1.1.1"), packet.WithDstPort(53),
@@ -322,15 +322,15 @@ func TestRuleWithName(t *testing.T) {
 	RegisterTestingT(t)
 
 	// Rule without name should use the full rule representation
-	ruleNoName := NewRule(WithAction(Accept), WithProto(6), WithDstPort(80))
+	ruleNoName := New(WithAction(Accept), WithProto(6), WithDstPort(80))
 	Expect(ruleNoName.String()).To(Equal("Accept 6{*:*->*:80}"))
 
 	// Rule with name should use the name for output
-	ruleWithName := NewRule(WithAction(Accept), WithProto(6), WithDstPort(80), WithName("allow-http"))
+	ruleWithName := New(WithAction(Accept), WithProto(6), WithDstPort(80), WithName("allow-http"))
 	Expect(ruleWithName.String()).To(Equal("allow-http"))
 
 	// Setting Name directly should also work
-	ruleDirectName := NewRule(WithAction(Drop))
+	ruleDirectName := New(WithAction(Drop))
 	ruleDirectName.Name = "block-all"
 	Expect(ruleDirectName.String()).To(Equal("block-all"))
 }
@@ -345,38 +345,38 @@ func TestNegatedRuleMatch(t *testing.T) {
 	)
 
 	// Negated protocol: should NOT match proto 17, but SHOULD match everything else
-	ruleNegProto := NewRule(WithNegProto(17))
+	ruleNegProto := New(WithNegProto(17))
 	Expect(ruleNegProto.Match(pkt)).To(BeFalse())
 
-	ruleNegProtoOther := NewRule(WithNegProto(6))
+	ruleNegProtoOther := New(WithNegProto(6))
 	Expect(ruleNegProtoOther.Match(pkt)).To(BeTrue())
 
 	// Negated source port: should NOT match src port 55555
-	ruleNegSrcPort := NewRule(WithNegSrcPort(55555))
+	ruleNegSrcPort := New(WithNegSrcPort(55555))
 	Expect(ruleNegSrcPort.Match(pkt)).To(BeFalse())
 
-	ruleNegSrcPortOther := NewRule(WithNegSrcPort(12345))
+	ruleNegSrcPortOther := New(WithNegSrcPort(12345))
 	Expect(ruleNegSrcPortOther.Match(pkt)).To(BeTrue())
 
 	// Negated destination port: should NOT match dst port 53
-	ruleNegDstPort := NewRule(WithNegDstPort(53))
+	ruleNegDstPort := New(WithNegDstPort(53))
 	Expect(ruleNegDstPort.Match(pkt)).To(BeFalse())
 
-	ruleNegDstPortOther := NewRule(WithNegDstPort(80))
+	ruleNegDstPortOther := New(WithNegDstPort(80))
 	Expect(ruleNegDstPortOther.Match(pkt)).To(BeTrue())
 
 	// Negated source network: should NOT match 10.10.10.0/24
-	ruleNegSrcNet := NewRule(WithNegSrcNet("10.10.10.0/24"))
+	ruleNegSrcNet := New(WithNegSrcNet("10.10.10.0/24"))
 	Expect(ruleNegSrcNet.Match(pkt)).To(BeFalse())
 
-	ruleNegSrcNetOther := NewRule(WithNegSrcNet("192.168.0.0/16"))
+	ruleNegSrcNetOther := New(WithNegSrcNet("192.168.0.0/16"))
 	Expect(ruleNegSrcNetOther.Match(pkt)).To(BeTrue())
 
 	// Negated destination network: should NOT match 1.1.1.1/32
-	ruleNegDstNet := NewRule(WithNegDstNet("1.1.1.1/32"))
+	ruleNegDstNet := New(WithNegDstNet("1.1.1.1/32"))
 	Expect(ruleNegDstNet.Match(pkt)).To(BeFalse())
 
-	ruleNegDstNetOther := NewRule(WithNegDstNet("2.2.2.2/32"))
+	ruleNegDstNetOther := New(WithNegDstNet("2.2.2.2/32"))
 	Expect(ruleNegDstNetOther.Match(pkt)).To(BeTrue())
 }
 
@@ -384,23 +384,23 @@ func TestNegatedRuleString(t *testing.T) {
 	RegisterTestingT(t)
 
 	// Negated proto should show with ! prefix
-	ruleNegProto := NewRule(WithAction(Accept), WithNegProto(6))
+	ruleNegProto := New(WithAction(Accept), WithNegProto(6))
 	Expect(ruleNegProto.String()).To(Equal("Accept !6{*:*->*:*}"))
 
 	// Negated src port should show with ! prefix
-	ruleNegSrcPort := NewRule(WithAction(Drop), WithNegSrcPort(80))
+	ruleNegSrcPort := New(WithAction(Drop), WithNegSrcPort(80))
 	Expect(ruleNegSrcPort.String()).To(Equal("Drop *{*:!80->*:*}"))
 
 	// Negated dst port should show with ! prefix
-	ruleNegDstPort := NewRule(WithAction(Accept), WithNegDstPort(53))
+	ruleNegDstPort := New(WithAction(Accept), WithNegDstPort(53))
 	Expect(ruleNegDstPort.String()).To(Equal("Accept *{*:*->*:!53}"))
 
 	// Negated src net should show with ! prefix
-	ruleNegSrcNet := NewRule(WithAction(Drop), WithNegSrcNet("10.0.0.0/8"))
+	ruleNegSrcNet := New(WithAction(Drop), WithNegSrcNet("10.0.0.0/8"))
 	Expect(ruleNegSrcNet.String()).To(Equal("Drop *{!10.0.0.0/8:*->*:*}"))
 
 	// Negated dst net should show with ! prefix
-	ruleNegDstNet := NewRule(WithAction(Accept), WithNegDstNet("1.1.1.1/32"))
+	ruleNegDstNet := New(WithAction(Accept), WithNegDstNet("1.1.1.1/32"))
 	Expect(ruleNegDstNet.String()).To(Equal("Accept *{*:*->!1.1.1.1/32:*}"))
 }
 
@@ -462,7 +462,7 @@ func TestCombinedPositiveAndNegativeRuleMatch(t *testing.T) {
 	RegisterTestingT(t)
 
 	// Rule matches src in 10.0.0.0/8 but NOT in 10.10.0.0/16
-	rule := NewRule(WithSrcNet("10.0.0.0/8"), WithNegSrcNet("10.10.0.0/16"))
+	rule := New(WithSrcNet("10.0.0.0/8"), WithNegSrcNet("10.10.0.0/16"))
 
 	// In 10.0.0.0/8, not in 10.10.0.0/16 → should match
 	pktMatch := packet.New(packet.WithSrcAddr("10.1.2.3"))
@@ -477,7 +477,7 @@ func TestCombinedPositiveAndNegativeRuleMatch(t *testing.T) {
 	Expect(rule.Match(pktOutside)).To(BeFalse())
 
 	// Rule matches proto 17 AND NOT proto 6 (proto 6 is excluded, proto 17 is required)
-	ruleProto := NewRule(WithProto(17), WithNegProto(6))
+	ruleProto := New(WithProto(17), WithNegProto(6))
 	pktProto17 := packet.New(packet.WithProto(17))
 	pktProto6 := packet.New(packet.WithProto(6))
 	pktProto1 := packet.New(packet.WithProto(1))
@@ -490,10 +490,10 @@ func TestCombinedRuleString(t *testing.T) {
 	RegisterTestingT(t)
 
 	// Combined proto field
-	ruleBoth := NewRule(WithAction(Accept), WithProto(17), WithNegProto(6))
+	ruleBoth := New(WithAction(Accept), WithProto(17), WithNegProto(6))
 	Expect(ruleBoth.String()).To(Equal("Accept 17,!6{*:*->*:*}"))
 
 	// Combined src net field
-	ruleSrcNet := NewRule(WithAction(Drop), WithSrcNet("10.0.0.0/8"), WithNegSrcNet("10.10.0.0/16"))
+	ruleSrcNet := New(WithAction(Drop), WithSrcNet("10.0.0.0/8"), WithNegSrcNet("10.10.0.0/16"))
 	Expect(ruleSrcNet.String()).To(Equal("Drop *{10.0.0.0/8,!10.10.0.0/16:*->*:*}"))
 }
