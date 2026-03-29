@@ -159,7 +159,7 @@ func WithOrder(order uint64) RuleOption {
 	}
 }
 
-func NewRule(opts ...RuleOption) *Rule {
+func New(opts ...RuleOption) *Rule {
 	r := Rule{
 		packetCount: counter.New(),
 	}
@@ -309,7 +309,7 @@ type RuleConfig struct {
 
 // ToRule converts a RuleConfig into a Rule domain object.
 func (rc *RuleConfig) ToRule() (*Rule, error) {
-	rule := NewRule()
+	rule := New()
 	rule.Name = rc.Name
 	rule.Order = rc.Order
 

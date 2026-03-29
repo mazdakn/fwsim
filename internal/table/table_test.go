@@ -11,12 +11,12 @@ import (
 func TestTableAddRuleSortAscending(t *testing.T) {
 	RegisterTestingT(t)
 
-	table := NewTable("test", rule.Drop)
+	table := New("test", rule.Drop)
 
 	// Add rules with different orders
-	rule1 := rule.NewRule(rule.WithName("rule1"), rule.WithOrder(10), rule.WithAction(rule.Accept))
-	rule2 := rule.NewRule(rule.WithName("rule2"), rule.WithOrder(30), rule.WithAction(rule.Accept))
-	rule3 := rule.NewRule(rule.WithName("rule3"), rule.WithOrder(20), rule.WithAction(rule.Accept))
+	rule1 := rule.New(rule.WithName("rule1"), rule.WithOrder(10), rule.WithAction(rule.Accept))
+	rule2 := rule.New(rule.WithName("rule2"), rule.WithOrder(30), rule.WithAction(rule.Accept))
+	rule3 := rule.New(rule.WithName("rule3"), rule.WithOrder(20), rule.WithAction(rule.Accept))
 
 	table.AddRule(rule1)
 	table.AddRule(rule2)
@@ -32,12 +32,12 @@ func TestTableAddRuleSortAscending(t *testing.T) {
 func TestTableAddRuleSortStableForEqualOrders(t *testing.T) {
 	RegisterTestingT(t)
 
-	table := NewTable("test", rule.Drop)
+	table := New("test", rule.Drop)
 
 	// Add rules with the same order (default 0)
-	rule1 := rule.NewRule(rule.WithName("rule1"), rule.WithAction(rule.Accept))
-	rule2 := rule.NewRule(rule.WithName("rule2"), rule.WithAction(rule.Drop))
-	rule3 := rule.NewRule(rule.WithName("rule3"), rule.WithAction(rule.Accept))
+	rule1 := rule.New(rule.WithName("rule1"), rule.WithAction(rule.Accept))
+	rule2 := rule.New(rule.WithName("rule2"), rule.WithAction(rule.Drop))
+	rule3 := rule.New(rule.WithName("rule3"), rule.WithAction(rule.Accept))
 
 	table.AddRule(rule1)
 	table.AddRule(rule2)
@@ -53,7 +53,7 @@ func TestTableAddRuleSortStableForEqualOrders(t *testing.T) {
 func TestTableMatchUsesAscendingOrder(t *testing.T) {
 	RegisterTestingT(t)
 
-	table := NewTable("test", rule.Drop)
+	table := New("test", rule.Drop)
 
 	pkt := packet.New(
 		packet.WithSrcAddr("10.0.0.1"),
@@ -64,9 +64,9 @@ func TestTableMatchUsesAscendingOrder(t *testing.T) {
 
 	// Add a high-order rule that drops traffic and a low-order rule that accepts it
 	// After sorting ascending, the low-order Accept rule should match first
-	highOrderDrop := rule.NewRule(rule.WithName("high-drop"), rule.WithOrder(100), rule.WithAction(rule.Drop),
+	highOrderDrop := rule.New(rule.WithName("high-drop"), rule.WithOrder(100), rule.WithAction(rule.Drop),
 		rule.WithProto(6), rule.WithDstPort(80))
-	lowOrderAccept := rule.NewRule(rule.WithName("low-accept"), rule.WithOrder(1), rule.WithAction(rule.Accept),
+	lowOrderAccept := rule.New(rule.WithName("low-accept"), rule.WithOrder(1), rule.WithAction(rule.Accept),
 		rule.WithProto(6), rule.WithDstPort(80))
 
 	table.AddRule(highOrderDrop)
