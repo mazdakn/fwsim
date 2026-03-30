@@ -76,9 +76,9 @@ func (p *Packet) String() string {
 type PacketConfig struct {
 	SrcAddr string `yaml:"src_addr,omitempty" validate:"isValidIP"`
 	DstAddr string `yaml:"dst_addr,omitempty" validate:"isValidIP"`
-	Proto   uint8  `yaml:"proto,omitempty"`
-	SrcPort uint16 `yaml:"src_port,omitempty"`
-	DstPort uint16 `yaml:"dst_port,omitempty"`
+	Proto   uint8  `yaml:"proto,omitempty"    validate:"isProtoValid"`
+	SrcPort uint16 `yaml:"src_port,omitempty" validate:"isPortValid"`
+	DstPort uint16 `yaml:"dst_port,omitempty" validate:"isPortValid"`
 
 	Metadata Metadata `yaml:"metadata,omitempty"`
 }

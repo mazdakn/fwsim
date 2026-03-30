@@ -253,3 +253,98 @@ func TestConfigValidateValid(t *testing.T) {
 	err := c.Validate()
 	Expect(err).To(BeNil())
 }
+
+func TestConfigValidateInvalidPortTag(t *testing.T) {
+	RegisterTestingT(t)
+
+	type testStruct struct {
+		Port uint `yaml:"port" validate:"isPortValid"`
+	}
+
+	err := validator.ValidateStructFields(testStruct{Port: 65535})
+	Expect(err).To(BeNil())
+
+	err = validator.ValidateStructFields(testStruct{Port: 65536})
+	Expect(err).ToNot(BeNil())
+	Expect(err.Error()).To(ContainSubstring("invalid port"))
+}
+
+func TestConfigValidateInvalidProtoTag(t *testing.T) {
+	RegisterTestingT(t)
+
+	type testStruct struct {
+		Proto uint `yaml:"proto" validate:"isProtoValid"`
+	}
+
+	err := validator.ValidateStructFields(testStruct{Proto: 255})
+	Expect(err).To(BeNil())
+
+	err = validator.ValidateStructFields(testStruct{Proto: 256})
+	Expect(err).ToNot(BeNil())
+	Expect(err.Error()).To(ContainSubstring("invalid proto"))
+}
+
+func TestConfigValidatePortSliceTag(t *testing.T) {
+	RegisterTestingT(t)
+
+	type testStruct struct {
+		Ports []uint `yaml:"ports" validate:"isPortValid"`
+	}
+
+	err := validator.ValidateStructFields(testStruct{Ports: []uint{80, 443, 65535}})
+	Expect(err).To(BeNil())
+
+	err = validator.ValidateStructFields(testStruct{Ports: []uint{80, 65536}})
+	Expect(err).ToNot(BeNil())
+	Expect(err.Error()).To(ContainSubstring("invalid ports"))
+}
+
+func TestConfigValidateProtoSliceTag(t *testing.T) {
+	RegisterTestingT(t)
+
+	type testStruct struct {
+		Protos []uint `yaml:"protos" validate:"isProtoValid"`
+	}
+
+	err := validator.ValidateStructFields(testStruct{Protos: []uint{6, 17, 255}})
+	Expect(err).To(BeNil())
+
+	err = validator.ValidateStructFields(testStruct{Protos: []uint{6, 256}})
+	Expect(err).ToNot(BeNil())
+	Expect(err.Error()).To(ContainSubstring("invalid protos"))
+}
+
+func TestConfigValidateValidRuleWithPortsAndProto(t *testing.T) {
+	RegisterTestingT(t)
+
+	c := &config.Config{
+		Rules: []rule.RuleConfig{
+			{
+				SrcNet:     []string{"192.168.1.0/24"},
+				DstNet:     []string{"1.1.1.1/32"},
+				Protocol:   []uint8{6, 17},
+				SrcPort:    []uint16{30000},
+				DstPort:    []uint16{80, 443},
+				NegProto:   []uint8{1},
+				NegSrcPort: []uint16{22},
+				NegDstPort: []uint16{8080},
+				Action:     "Accept",
+			},
+		},
+		DefaultAction: "Drop",
+	}
+	err := c.Validate()
+	Expect(err).To(BeNil())
+}
+
+func TestConfigValidateValidPacketWithPortAndProto(t *testing.T) {
+	RegisterTestingT(t)
+
+	pkts := &config.PacketsConfig{
+		Packets: []packet.PacketConfig{
+			{SrcAddr: "192.168.1.5", DstAddr: "1.1.1.1", Proto: 6, SrcPort: 30000, DstPort: 80},
+		},
+	}
+	err := pkts.Validate()
+	Expect(err).To(BeNil())
+}
