@@ -84,29 +84,16 @@ func init() {
 }
 
 func runEvaluate(cmd *cobra.Command, args []string) {
-	// Validate IP addresses
-	if !validator.ValidateIP(srcAddr) {
-		logrus.Errorf("Source address must be a valid IPv4 or IPv6 address, got: %s", srcAddr)
-		os.Exit(1)
-	}
-	if !validator.ValidateIP(dstAddr) {
-		logrus.Errorf("Destination address must be a valid IPv4 or IPv6 address, got: %s", dstAddr)
-		os.Exit(1)
+	pktCfg := packet.PacketConfig{
+		SrcAddr: srcAddr,
+		DstAddr: dstAddr,
+		Proto:   uint8(proto),
+		SrcPort: uint16(srcPort),
+		DstPort: uint16(dstPort),
 	}
 
-	// Validate protocol value
-	if !validator.ValidateProtocol(proto) {
-		logrus.Errorf("Protocol must be between 0 and 255")
-		os.Exit(1)
-	}
-
-	// Validate port values
-	if !validator.ValidatePort(srcPort) {
-		logrus.Errorf("Source port must be between 0 and 65535")
-		os.Exit(1)
-	}
-	if !validator.ValidatePort(dstPort) {
-		logrus.Errorf("Destination port must be between 0 and 65535")
+	if err := validator.ValidateStructFields(pktCfg); err != nil {
+		logrus.WithError(err).Errorf("invalid packet configuration")
 		os.Exit(1)
 	}
 
@@ -125,13 +112,7 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 	}
 
 	// Create packet from parameters
-	pkt := packet.New(
-		packet.WithSrcAddr(srcAddr),
-		packet.WithDstAddr(dstAddr),
-		packet.WithProto(uint8(proto)),
-		packet.WithSrcPort(uint16(srcPort)),
-		packet.WithDstPort(uint16(dstPort)),
-	)
+	pkt := pktCfg.ToPacket()
 
 	// Match packet against rules
 	res := e.Match(pkt)
