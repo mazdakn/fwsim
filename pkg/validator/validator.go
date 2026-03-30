@@ -26,6 +26,16 @@ func ValidateIP(ip string) bool {
 	return net.ParseIP(ip) != nil
 }
 
+// ValidatePort returns true if port is a valid port number (0–65535).
+func ValidatePort(port uint) bool {
+	return port <= 65535
+}
+
+// ValidateProtocol returns true if proto is a valid IP protocol number (0–255).
+func ValidateProtocol(proto uint) bool {
+	return proto <= 255
+}
+
 // validateByTag validates value using the function identified by tag.
 // It returns an error if tag is not a recognised function name, so that
 // a typo in a struct tag is surfaced immediately rather than silently failing.

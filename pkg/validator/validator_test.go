@@ -146,6 +146,30 @@ func TestValidateIP(t *testing.T) {
 	Expect(validator.ValidateIP("")).To(BeFalse())
 }
 
+func TestValidatePort(t *testing.T) {
+	RegisterTestingT(t)
+
+	Expect(validator.ValidatePort(0)).To(BeTrue())
+	Expect(validator.ValidatePort(80)).To(BeTrue())
+	Expect(validator.ValidatePort(443)).To(BeTrue())
+	Expect(validator.ValidatePort(65535)).To(BeTrue())
+
+	Expect(validator.ValidatePort(65536)).To(BeFalse())
+	Expect(validator.ValidatePort(100000)).To(BeFalse())
+}
+
+func TestValidateProtocol(t *testing.T) {
+	RegisterTestingT(t)
+
+	Expect(validator.ValidateProtocol(0)).To(BeTrue())
+	Expect(validator.ValidateProtocol(6)).To(BeTrue())   // TCP
+	Expect(validator.ValidateProtocol(17)).To(BeTrue())  // UDP
+	Expect(validator.ValidateProtocol(255)).To(BeTrue())
+
+	Expect(validator.ValidateProtocol(256)).To(BeFalse())
+	Expect(validator.ValidateProtocol(1000)).To(BeFalse())
+}
+
 func TestValidateStructFieldsRecursiveSlice(t *testing.T) {
 	RegisterTestingT(t)
 
