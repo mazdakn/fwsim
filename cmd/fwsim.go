@@ -7,6 +7,7 @@ import (
 	"github.com/mazdakn/fwsim/internal/packet"
 	"github.com/mazdakn/fwsim/internal/table"
 	"github.com/mazdakn/fwsim/pkg/engine"
+	"github.com/mazdakn/fwsim/pkg/validator"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -83,6 +84,16 @@ func init() {
 }
 
 func runEvaluate(cmd *cobra.Command, args []string) {
+	// Validate IP addresses
+	if !validator.ValidateIP(srcAddr) {
+		logrus.Errorf("Source address must be a valid IPv4 or IPv6 address, got: %s", srcAddr)
+		os.Exit(1)
+	}
+	if !validator.ValidateIP(dstAddr) {
+		logrus.Errorf("Destination address must be a valid IPv4 or IPv6 address, got: %s", dstAddr)
+		os.Exit(1)
+	}
+
 	// Validate protocol value
 	if proto > 255 {
 		logrus.Errorf("Protocol must be between 0 and 255")
