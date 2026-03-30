@@ -95,17 +95,17 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 	}
 
 	// Validate protocol value
-	if proto > 255 {
+	if !validator.ValidateProtocol(proto) {
 		logrus.Errorf("Protocol must be between 0 and 255")
 		os.Exit(1)
 	}
 
 	// Validate port values
-	if srcPort > 65535 {
+	if !validator.ValidatePort(srcPort) {
 		logrus.Errorf("Source port must be between 0 and 65535")
 		os.Exit(1)
 	}
-	if dstPort > 65535 {
+	if !validator.ValidatePort(dstPort) {
 		logrus.Errorf("Destination port must be between 0 and 65535")
 		os.Exit(1)
 	}
