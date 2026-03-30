@@ -52,6 +52,19 @@ func validateByTag(tag, value string) (bool, error) {
 	}
 }
 
+// validateUintByTag validates a uint value using the function identified by tag.
+// It returns an error if tag is not a recognised function name.
+func validateUintByTag(tag string, value uint64) (bool, error) {
+	switch tag {
+	case "isPortValid":
+		return value <= 65535, nil
+	case "isProtoValid":
+		return value <= 255, nil
+	default:
+		return false, fmt.Errorf("unknown validation tag: %s", tag)
+	}
+}
+
 // ValidateStructFields validates all fields in s that carry a "validate" struct
 // tag, as well as any slice-of-struct fields (validated recursively). The tag
 // value must be a function name recognised by validateByTag. Field names used
@@ -118,8 +131,18 @@ func ValidateStructFields(s any) error {
 			if !ok {
 				return fmt.Errorf("invalid %s: %s", fieldName, str)
 			}
+		case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint:
+			v := fieldVal.Uint()
+			ok, err := validateUintByTag(validateTag, v)
+			if err != nil {
+				return err
+			}
+			if !ok {
+				return fmt.Errorf("invalid %s: %d", fieldName, v)
+			}
 		case reflect.Slice:
-			if field.Type.Elem().Kind() == reflect.String {
+			switch field.Type.Elem().Kind() {
+			case reflect.String:
 				for j := 0; j < fieldVal.Len(); j++ {
 					str := fieldVal.Index(j).String()
 					ok, err := validateByTag(validateTag, str)
@@ -128,6 +151,17 @@ func ValidateStructFields(s any) error {
 					}
 					if !ok {
 						return fmt.Errorf("invalid %s: %s", fieldName, str)
+					}
+				}
+			case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint:
+				for j := 0; j < fieldVal.Len(); j++ {
+					v := fieldVal.Index(j).Uint()
+					ok, err := validateUintByTag(validateTag, v)
+					if err != nil {
+						return err
+					}
+					if !ok {
+						return fmt.Errorf("invalid %s: %d", fieldName, v)
 					}
 				}
 			}
