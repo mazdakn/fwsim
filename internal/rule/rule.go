@@ -49,6 +49,18 @@ func ParseAction(s string) (Action, error) {
 	}
 }
 
+// ParseAction parses an action string into an Action type
+func MustParseAction(s string) Action {
+	switch strings.ToLower(s) {
+	case "accept":
+		return Accept
+	case "drop":
+		return Drop
+	default:
+		panic(fmt.Sprintf("unknown action: %s", s))
+	}
+}
+
 type RuleOption func(*Rule)
 
 func WithProto(proto uint8) RuleOption {
@@ -288,124 +300,6 @@ func (r *Rule) String() string {
 		dstNet = "!" + r.NegDstNet.String()
 	}
 	return fmt.Sprintf("%s %s{%s:%s->%s:%s}", r.Action, proto, srcNet, srcPort, dstNet, dstPort)
-}
-
-// RuleConfig represents the YAML configuration structure for a firewall rule.
-type RuleConfig struct {
-	Name       string   `yaml:"name,omitempty"`
-	Order      uint64   `yaml:"order,omitempty"`
-	SrcNet     []string `yaml:"src_net,omitempty"     validate:"isValidCIDR"`
-	DstNet     []string `yaml:"dst_net,omitempty"     validate:"isValidCIDR"`
-	Protocol   []uint8  `yaml:"proto,omitempty"       validate:"isProtoValid"`
-	SrcPort    []uint16 `yaml:"src_port,omitempty"    validate:"isPortValid"`
-	DstPort    []uint16 `yaml:"dst_port,omitempty"    validate:"isPortValid"`
-	NegSrcNet  []string `yaml:"neg_src_net,omitempty" validate:"isValidCIDR"`
-	NegDstNet  []string `yaml:"neg_dst_net,omitempty" validate:"isValidCIDR"`
-	NegProto   []uint8  `yaml:"neg_proto,omitempty"   validate:"isProtoValid"`
-	NegSrcPort []uint16 `yaml:"neg_src_port,omitempty" validate:"isPortValid"`
-	NegDstPort []uint16 `yaml:"neg_dst_port,omitempty" validate:"isPortValid"`
-	Action     string   `yaml:"action,omitempty"      validate:"isValidAction"`
-}
-
-// ToRule converts a RuleConfig into a Rule domain object.
-func (rc *RuleConfig) ToRule() (*Rule, error) {
-	rule := New()
-	rule.Name = rc.Name
-	rule.Order = rc.Order
-
-	if len(rc.Protocol) > 0 {
-		rule.Proto = set.NewProtoSet()
-		for _, proto := range rc.Protocol {
-			rule.Proto.Add(proto)
-		}
-	}
-
-	if len(rc.NegProto) > 0 {
-		rule.NegProto = set.NewProtoSet()
-		for _, proto := range rc.NegProto {
-			rule.NegProto.Add(proto)
-		}
-	}
-
-	if len(rc.SrcPort) > 0 {
-		rule.SrcPort = set.NewPortSet()
-		for _, port := range rc.SrcPort {
-			rule.SrcPort.Add(port)
-		}
-	}
-
-	if len(rc.NegSrcPort) > 0 {
-		rule.NegSrcPort = set.NewPortSet()
-		for _, port := range rc.NegSrcPort {
-			rule.NegSrcPort.Add(port)
-		}
-	}
-
-	if len(rc.DstPort) > 0 {
-		rule.DstPort = set.NewPortSet()
-		for _, port := range rc.DstPort {
-			rule.DstPort.Add(port)
-		}
-	}
-
-	if len(rc.NegDstPort) > 0 {
-		rule.NegDstPort = set.NewPortSet()
-		for _, port := range rc.NegDstPort {
-			rule.NegDstPort.Add(port)
-		}
-	}
-
-	action, err := ParseAction(rc.Action)
-	if err != nil {
-		return nil, fmt.Errorf("invalid action %s: %w", rc.Action, err)
-	}
-	rule.Action = action
-
-	if len(rc.SrcNet) > 0 {
-		rule.SrcNet = set.NewIPSet()
-		for _, srcNet := range rc.SrcNet {
-			_, ipnet, err := net.ParseCIDR(srcNet)
-			if err != nil {
-				return nil, fmt.Errorf("invalid source net %s: %w", srcNet, err)
-			}
-			rule.SrcNet.Add(ipnet)
-		}
-	}
-
-	if len(rc.NegSrcNet) > 0 {
-		rule.NegSrcNet = set.NewIPSet()
-		for _, srcNet := range rc.NegSrcNet {
-			_, ipnet, err := net.ParseCIDR(srcNet)
-			if err != nil {
-				return nil, fmt.Errorf("invalid neg_src_net %s: %w", srcNet, err)
-			}
-			rule.NegSrcNet.Add(ipnet)
-		}
-	}
-
-	if len(rc.DstNet) > 0 {
-		rule.DstNet = set.NewIPSet()
-		for _, dstNet := range rc.DstNet {
-			_, ipnet, err := net.ParseCIDR(dstNet)
-			if err != nil {
-				return nil, fmt.Errorf("invalid destination net %s: %w", dstNet, err)
-			}
-			rule.DstNet.Add(ipnet)
-		}
-	}
-
-	if len(rc.NegDstNet) > 0 {
-		rule.NegDstNet = set.NewIPSet()
-		for _, dstNet := range rc.NegDstNet {
-			_, ipnet, err := net.ParseCIDR(dstNet)
-			if err != nil {
-				return nil, fmt.Errorf("invalid neg_dst_net %s: %w", dstNet, err)
-			}
-			rule.NegDstNet.Add(ipnet)
-		}
-	}
-
-	return rule, nil
 }
 
 func MustParseCIDR(cidr string) *net.IPNet {

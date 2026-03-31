@@ -72,24 +72,3 @@ func (p *Packet) String() string {
 	return fmt.Sprintf("%d{%s:%d->%s:%d}", p.Proto, p.SrcAddr.String(), p.SrcPort,
 		p.DstAddr.String(), p.DstPort)
 }
-
-type PacketConfig struct {
-	SrcAddr string `yaml:"src_addr,omitempty" validate:"isValidIP"`
-	DstAddr string `yaml:"dst_addr,omitempty" validate:"isValidIP"`
-	Proto   uint8  `yaml:"proto,omitempty"    validate:"isProtoValid"`
-	SrcPort uint16 `yaml:"src_port,omitempty" validate:"isPortValid"`
-	DstPort uint16 `yaml:"dst_port,omitempty" validate:"isPortValid"`
-
-	Metadata Metadata `yaml:"metadata,omitempty"`
-}
-
-func (pc *PacketConfig) ToPacket() *Packet {
-	return New(
-		WithName(pc.Metadata.Name),
-		WithSrcAddr(pc.SrcAddr),
-		WithDstAddr(pc.DstAddr),
-		WithProto(pc.Proto),
-		WithSrcPort(pc.SrcPort),
-		WithDstPort(pc.DstPort),
-	)
-}

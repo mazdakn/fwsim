@@ -6,6 +6,7 @@ import (
 
 	"github.com/mazdakn/fwsim/internal/packet"
 	"github.com/mazdakn/fwsim/internal/table"
+	"github.com/mazdakn/fwsim/pkg/config"
 	"github.com/mazdakn/fwsim/pkg/engine"
 	"github.com/mazdakn/fwsim/pkg/validator"
 	"github.com/sirupsen/logrus"
@@ -84,7 +85,7 @@ func init() {
 }
 
 func runEvaluate(cmd *cobra.Command, args []string) {
-	pktCfg := packet.PacketConfig{
+	pkt := &config.Packet{
 		SrcAddr: srcAddr,
 		DstAddr: dstAddr,
 		Proto:   uint8(proto),
@@ -92,31 +93,24 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 		DstPort: uint16(dstPort),
 	}
 
-	if err := validator.ValidateStructFields(pktCfg); err != nil {
+	if err := validator.ValidateStructFields(pkt); err != nil {
 		logrus.WithError(err).Errorf("invalid packet configuration")
 		os.Exit(1)
 	}
 
 	// Create engine and load rules
 	e := engine.New()
-	err := e.ConfigFromFile(inputFile)
+
+	ruleConfig, err := config.RuleConfigFromFile(inputFile)
 	if err != nil {
 		logrus.WithError(err).Errorf("failed to load rules from %s", inputFile)
 		os.Exit(1)
 	}
-
-	// Load rules into engine
-	if err := e.LoadRules(); err != nil {
-		logrus.WithError(err).Errorf("failed to load rules")
-		os.Exit(1)
-	}
-
-	// Create packet from parameters
-	pkt := pktCfg.ToPacket()
+	e.RuleConfig = ruleConfig
 
 	// Match packet against rules
-	res := e.Match(pkt)
-	printResult(pkt, res)
+	res := e.Match(pkt.ToPacket())
+	printResult(pkt.ToPacket(), res)
 	fmt.Println()
 
 	// Run and print validations.
@@ -126,17 +120,15 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 func runPackets(cmd *cobra.Command, args []string) {
 	// Create engine and load rules
 	e := engine.New()
-	if err := e.ConfigFromFile(inputFile); err != nil {
+	rc, err := config.RuleConfigFromFile(inputFile)
+	if err != nil {
 		logrus.WithError(err).Errorf("failed to load rules from %s", inputFile)
 		os.Exit(1)
 	}
-	if err := e.LoadRules(); err != nil {
-		logrus.WithError(err).Errorf("failed to load rules")
-		os.Exit(1)
-	}
+	e.RuleConfig = rc
 
 	// Load packets from file
-	pkts, err := e.PacketsFromFile(packetsFile)
+	pkts, err := config.PacketsFromFile(packetsFile)
 	if err != nil {
 		logrus.WithError(err).Errorf("failed to load packets from %s", packetsFile)
 		os.Exit(1)
