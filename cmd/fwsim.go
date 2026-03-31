@@ -6,7 +6,6 @@ import (
 
 	"github.com/mazdakn/fwsim/internal/packet"
 	"github.com/mazdakn/fwsim/internal/table"
-	"github.com/mazdakn/fwsim/pkg/config"
 	"github.com/mazdakn/fwsim/pkg/engine"
 	"github.com/mazdakn/fwsim/pkg/validator"
 	"github.com/sirupsen/logrus"
@@ -85,7 +84,7 @@ func init() {
 }
 
 func runEvaluate(cmd *cobra.Command, args []string) {
-	pkt := &config.Packet{
+	pkt := &packet.PacketConfig{
 		SrcAddr: srcAddr,
 		DstAddr: dstAddr,
 		Proto:   uint8(proto),
@@ -101,12 +100,14 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 	// Create engine and load rules
 	e := engine.New()
 
-	ruleConfig, err := config.RuleConfigFromFile(inputFile)
-	if err != nil {
+	if err := e.ConfigFromFile(inputFile); err != nil {
 		logrus.WithError(err).Errorf("failed to load rules from %s", inputFile)
 		os.Exit(1)
 	}
-	e.RuleConfig = ruleConfig
+	if err := e.LoadRules(); err != nil {
+		logrus.WithError(err).Errorf("failed to load rules")
+		os.Exit(1)
+	}
 
 	// Match packet against rules
 	res := e.Match(pkt.ToPacket())
@@ -120,15 +121,17 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 func runPackets(cmd *cobra.Command, args []string) {
 	// Create engine and load rules
 	e := engine.New()
-	rc, err := config.RuleConfigFromFile(inputFile)
-	if err != nil {
+	if err := e.ConfigFromFile(inputFile); err != nil {
 		logrus.WithError(err).Errorf("failed to load rules from %s", inputFile)
 		os.Exit(1)
 	}
-	e.RuleConfig = rc
+	if err := e.LoadRules(); err != nil {
+		logrus.WithError(err).Errorf("failed to load rules")
+		os.Exit(1)
+	}
 
 	// Load packets from file
-	pkts, err := config.PacketsFromFile(packetsFile)
+	pkts, err := e.PacketsFromFile(packetsFile)
 	if err != nil {
 		logrus.WithError(err).Errorf("failed to load packets from %s", packetsFile)
 		os.Exit(1)

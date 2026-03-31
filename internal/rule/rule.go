@@ -302,6 +302,63 @@ func (r *Rule) String() string {
 	return fmt.Sprintf("%s %s{%s:%s->%s:%s}", r.Action, proto, srcNet, srcPort, dstNet, dstPort)
 }
 
+// RuleConfig is the YAML configuration structure for a single firewall rule.
+type RuleConfig struct {
+	Name       string   `yaml:"name,omitempty"`
+	Order      uint64   `yaml:"order,omitempty"`
+	SrcNet     []string `yaml:"src_net,omitempty"      validate:"isValidCIDR"`
+	DstNet     []string `yaml:"dst_net,omitempty"      validate:"isValidCIDR"`
+	Protocol   []uint8  `yaml:"proto,omitempty"        validate:"isProtoValid"`
+	SrcPort    []uint16 `yaml:"src_port,omitempty"     validate:"isPortValid"`
+	DstPort    []uint16 `yaml:"dst_port,omitempty"     validate:"isPortValid"`
+	NegSrcNet  []string `yaml:"neg_src_net,omitempty"  validate:"isValidCIDR"`
+	NegDstNet  []string `yaml:"neg_dst_net,omitempty"  validate:"isValidCIDR"`
+	NegProto   []uint8  `yaml:"neg_proto,omitempty"    validate:"isProtoValid"`
+	NegSrcPort []uint16 `yaml:"neg_src_port,omitempty" validate:"isPortValid"`
+	NegDstPort []uint16 `yaml:"neg_dst_port,omitempty" validate:"isPortValid"`
+	Action     string   `yaml:"action,omitempty"       validate:"isValidAction"`
+}
+
+// ToRule converts a RuleConfig into a Rule domain object.
+func (rc *RuleConfig) ToRule() (*Rule, error) {
+	action, err := ParseAction(rc.Action)
+	if err != nil {
+		return nil, err
+	}
+	opts := []RuleOption{WithAction(action), WithName(rc.Name), WithOrder(rc.Order)}
+	for _, proto := range rc.Protocol {
+		opts = append(opts, WithProto(proto))
+	}
+	for _, proto := range rc.NegProto {
+		opts = append(opts, WithNegProto(proto))
+	}
+	for _, port := range rc.SrcPort {
+		opts = append(opts, WithSrcPort(port))
+	}
+	for _, port := range rc.NegSrcPort {
+		opts = append(opts, WithNegSrcPort(port))
+	}
+	for _, port := range rc.DstPort {
+		opts = append(opts, WithDstPort(port))
+	}
+	for _, port := range rc.NegDstPort {
+		opts = append(opts, WithNegDstPort(port))
+	}
+	for _, net := range rc.SrcNet {
+		opts = append(opts, WithSrcNet(net))
+	}
+	for _, net := range rc.NegSrcNet {
+		opts = append(opts, WithNegSrcNet(net))
+	}
+	for _, net := range rc.DstNet {
+		opts = append(opts, WithDstNet(net))
+	}
+	for _, net := range rc.NegDstNet {
+		opts = append(opts, WithNegDstNet(net))
+	}
+	return New(opts...), nil
+}
+
 func MustParseCIDR(cidr string) *net.IPNet {
 	_, ipnet, err := net.ParseCIDR(cidr)
 	if err != nil {
