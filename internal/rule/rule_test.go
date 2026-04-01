@@ -407,17 +407,15 @@ func TestNegatedRuleString(t *testing.T) {
 func TestNegatedRuleConfig(t *testing.T) {
 	RegisterTestingT(t)
 
-	// Valid negated rule config — negated fields populate dedicated Rule fields
-	rc := &RuleConfig{
-		NegProto:   []uint8{6},
-		NegSrcPort: []uint16{80},
-		NegDstPort: []uint16{443},
-		NegSrcNet:  []string{"10.0.0.0/8"},
-		NegDstNet:  []string{"192.168.0.0/16"},
-		Action:     "accept",
-	}
-	rule, err := rc.ToRule()
-	Expect(err).ToNot(HaveOccurred())
+	// Valid negated rule — negated fields populate dedicated Rule fields
+	rule := New(
+		WithAction(Accept),
+		WithNegProto(6),
+		WithNegSrcPort(80),
+		WithNegDstPort(443),
+		WithNegSrcNet("10.0.0.0/8"),
+		WithNegDstNet("192.168.0.0/16"),
+	)
 	Expect(rule.NegProto).ToNot(BeNil())
 	Expect(rule.NegSrcPort).ToNot(BeNil())
 	Expect(rule.NegDstPort).ToNot(BeNil())
@@ -431,21 +429,19 @@ func TestNegatedRuleConfig(t *testing.T) {
 	Expect(rule.DstNet).To(BeNil())
 
 	// Positive and negated fields can be combined on the same rule
-	rcCombined := &RuleConfig{
-		Protocol:   []uint8{17},
-		NegProto:   []uint8{6},
-		SrcPort:    []uint16{12345},
-		NegSrcPort: []uint16{80},
-		DstPort:    []uint16{53},
-		NegDstPort: []uint16{443},
-		SrcNet:     []string{"10.0.0.0/8"},
-		NegSrcNet:  []string{"10.10.0.0/16"},
-		DstNet:     []string{"1.1.1.0/24"},
-		NegDstNet:  []string{"1.1.1.100/32"},
-		Action:     "accept",
-	}
-	ruleCombined, err := rcCombined.ToRule()
-	Expect(err).ToNot(HaveOccurred())
+	ruleCombined := New(
+		WithAction(Accept),
+		WithProto(17),
+		WithNegProto(6),
+		WithSrcPort(12345),
+		WithNegSrcPort(80),
+		WithDstPort(53),
+		WithNegDstPort(443),
+		WithSrcNet("10.0.0.0/8"),
+		WithNegSrcNet("10.10.0.0/16"),
+		WithDstNet("1.1.1.0/24"),
+		WithNegDstNet("1.1.1.100/32"),
+	)
 	Expect(ruleCombined.Proto).ToNot(BeNil())
 	Expect(ruleCombined.NegProto).ToNot(BeNil())
 	Expect(ruleCombined.SrcPort).ToNot(BeNil())

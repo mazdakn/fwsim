@@ -1,6 +1,8 @@
 package engine
 
 import (
+	"fmt"
+
 	"github.com/mazdakn/fwsim/internal/packet"
 	"github.com/mazdakn/fwsim/internal/rule"
 	"github.com/mazdakn/fwsim/internal/table"
@@ -24,10 +26,29 @@ func (e *Engine) Match(pkt *packet.Packet) table.Result {
 }
 
 func (e *Engine) LoadConfigs() {
-	// TODO: Fix me
-	//rules := make([]*rule.Rule, 0, len(rc.Rules))
+	_ = e.LoadRules()
+}
+
+func (e *Engine) ConfigFromFile(file string) error {
+	rc, err := config.RuleConfigFromFile(file)
+	if err != nil {
+		return err
+	}
+	e.RuleConfig = rc
+	return nil
+}
+
+func (e *Engine) LoadRules() error {
+	if e.RuleConfig == nil {
+		return fmt.Errorf("no rule config loaded")
+	}
 	for _, r := range e.RuleConfig.Rules {
 		e.table.AddRule(r.ToRule())
 	}
 	e.table.DefaultAction.Action = rule.MustParseAction(e.RuleConfig.DefaultAction)
+	return nil
+}
+
+func (e *Engine) PacketsFromFile(file string) ([]*packet.Packet, error) {
+	return config.PacketsFromFile(file)
 }

@@ -3,8 +3,6 @@ package validator_test
 import (
 	"testing"
 
-	"github.com/mazdakn/fwsim/internal/packet"
-	"github.com/mazdakn/fwsim/internal/rule"
 	"github.com/mazdakn/fwsim/pkg/config"
 	"github.com/mazdakn/fwsim/pkg/validator"
 	. "github.com/onsi/gomega"
@@ -78,8 +76,8 @@ func TestConfigValidateInvalidSrcNet(t *testing.T) {
 func TestConfigValidateInvalidDstNet(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &config.Config{
-		Rules: []rule.RuleConfig{
+	c := &config.RuleConfig{
+		Rules: []config.Rule{
 			{DstNet: []string{"bad-cidr"}, Action: "Drop"},
 		},
 		DefaultAction: "Accept",
@@ -92,8 +90,8 @@ func TestConfigValidateInvalidDstNet(t *testing.T) {
 func TestConfigValidateInvalidNegSrcNet(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &config.Config{
-		Rules: []rule.RuleConfig{
+	c := &config.RuleConfig{
+		Rules: []config.Rule{
 			{NegSrcNet: []string{"256.0.0.0/8"}, Action: "Drop"},
 		},
 		DefaultAction: "Accept",
@@ -106,8 +104,8 @@ func TestConfigValidateInvalidNegSrcNet(t *testing.T) {
 func TestConfigValidateInvalidNegDstNet(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &config.Config{
-		Rules: []rule.RuleConfig{
+	c := &config.RuleConfig{
+		Rules: []config.Rule{
 			{NegDstNet: []string{"abc"}, Action: "Drop"},
 		},
 		DefaultAction: "Accept",
@@ -120,8 +118,8 @@ func TestConfigValidateInvalidNegDstNet(t *testing.T) {
 func TestConfigValidateInvalidRuleAction(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &config.Config{
-		Rules: []rule.RuleConfig{
+	c := &config.RuleConfig{
+		Rules: []config.Rule{
 			{SrcNet: []string{"10.0.0.0/8"}, Action: "unknown"},
 		},
 		DefaultAction: "Accept",
@@ -199,8 +197,8 @@ func TestValidateStructFieldsRecursiveSlice(t *testing.T) {
 func TestConfigValidateInvalidSrcAddr(t *testing.T) {
 	RegisterTestingT(t)
 
-	pkts := &config.PacketsConfig{
-		Packets: []packet.PacketConfig{
+	pkts := &config.PacketConfig{
+		Packets: []config.Packet{
 			{SrcAddr: "not-an-ip", DstAddr: "1.1.1.1"},
 		},
 	}
@@ -212,8 +210,8 @@ func TestConfigValidateInvalidSrcAddr(t *testing.T) {
 func TestConfigValidateInvalidDstAddr(t *testing.T) {
 	RegisterTestingT(t)
 
-	pkts := &config.PacketsConfig{
-		Packets: []packet.PacketConfig{
+	pkts := &config.PacketConfig{
+		Packets: []config.Packet{
 			{SrcAddr: "192.168.1.1", DstAddr: "bad-ip"},
 		},
 	}
@@ -225,8 +223,8 @@ func TestConfigValidateInvalidDstAddr(t *testing.T) {
 func TestConfigValidateValidPackets(t *testing.T) {
 	RegisterTestingT(t)
 
-	pkts := &config.PacketsConfig{
-		Packets: []packet.PacketConfig{
+	pkts := &config.PacketConfig{
+		Packets: []config.Packet{
 			{SrcAddr: "192.168.1.5", DstAddr: "1.1.1.1"},
 			{SrcAddr: "2001:db8::1", DstAddr: "2001:db8::2"},
 		},
@@ -238,8 +236,8 @@ func TestConfigValidateValidPackets(t *testing.T) {
 func TestConfigValidateValid(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &config.Config{
-		Rules: []rule.RuleConfig{
+	c := &config.RuleConfig{
+		Rules: []config.Rule{
 			{
 				SrcNet:    []string{"192.168.1.0/24"},
 				DstNet:    []string{"1.1.1.1/32"},
@@ -317,8 +315,8 @@ func TestConfigValidateProtoSliceTag(t *testing.T) {
 func TestConfigValidateValidRuleWithPortsAndProto(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &config.Config{
-		Rules: []rule.RuleConfig{
+	c := &config.RuleConfig{
+		Rules: []config.Rule{
 			{
 				SrcNet:     []string{"192.168.1.0/24"},
 				DstNet:     []string{"1.1.1.1/32"},
@@ -340,8 +338,8 @@ func TestConfigValidateValidRuleWithPortsAndProto(t *testing.T) {
 func TestConfigValidateValidPacketWithPortAndProto(t *testing.T) {
 	RegisterTestingT(t)
 
-	pkts := &config.PacketsConfig{
-		Packets: []packet.PacketConfig{
+	pkts := &config.PacketConfig{
+		Packets: []config.Packet{
 			{SrcAddr: "192.168.1.5", DstAddr: "1.1.1.1", Proto: 6, SrcPort: 30000, DstPort: 80},
 		},
 	}
