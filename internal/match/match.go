@@ -1,4 +1,4 @@
-package table
+package match
 
 import (
 	"github.com/mazdakn/fwsim/internal/packet"

@@ -3,6 +3,7 @@ package table
 import (
 	"testing"
 
+	"github.com/mazdakn/fwsim/internal/match"
 	"github.com/mazdakn/fwsim/internal/packet"
 	"github.com/mazdakn/fwsim/internal/rule"
 	. "github.com/onsi/gomega"
@@ -72,7 +73,7 @@ func TestTableMatchUsesAscendingOrder(t *testing.T) {
 	table.AddRule(highOrderDrop)
 	table.AddRule(lowOrderAccept)
 
-	match := Match{Packet: pkt}
-	table.Match(&match)
-	Expect(match.Result.Verdict).To(Equal(rule.Accept))
+	m := match.Match{Packet: pkt}
+	table.Match(&m)
+	Expect(m.Result.Verdict).To(Equal(rule.Accept))
 }

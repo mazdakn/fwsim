@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 
+	"github.com/mazdakn/fwsim/internal/match"
 	"github.com/mazdakn/fwsim/internal/packet"
 	"github.com/mazdakn/fwsim/internal/rule"
 	"github.com/mazdakn/fwsim/internal/table"
@@ -32,12 +33,8 @@ func New(conf Config) *Engine {
 	}
 }
 
-func (e *Engine) Match(pkt *packet.Packet) table.Result {
-	match := table.Match{
-		Packet: pkt,
-	}
-	e.table.Match(&match)
-	return match.Result
+func (e *Engine) Match(match *match.Match) {
+	e.table.Match(match)
 }
 
 func (e *Engine) ConfigFromFile() error {

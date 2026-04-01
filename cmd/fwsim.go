@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/mazdakn/fwsim/internal/packet"
-	"github.com/mazdakn/fwsim/internal/table"
+	"github.com/mazdakn/fwsim/internal/match"
 	"github.com/mazdakn/fwsim/pkg/config"
 	"github.com/mazdakn/fwsim/pkg/engine"
 	"github.com/mazdakn/fwsim/pkg/validator"
@@ -110,8 +109,9 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 	}
 
 	// Match packet against rules
-	res := e.Match(pkt.ToPacket())
-	printResult(pkt.ToPacket(), res)
+	m := &match.Match{Packet: pkt.ToPacket()}
+	e.Match(m)
+	printResult(m)
 	fmt.Println()
 
 	// Run and print validations.
@@ -138,8 +138,9 @@ func runPackets(cmd *cobra.Command, args []string) {
 
 	// Evaluate each packet
 	for _, pkt := range pkts {
-		res := e.Match(pkt)
-		printResult(pkt, res)
+		m := &match.Match{Packet: pkt}
+		e.Match(m)
+		printResult(m)
 		fmt.Println()
 	}
 
@@ -147,17 +148,21 @@ func runPackets(cmd *cobra.Command, args []string) {
 	printValidations(e.Validate())
 }
 
-func printResult(pkt *packet.Packet, res table.Result) {
-	fmt.Printf("Packet: %s  Verdict: %s\n", pkt, res.Verdict)
-	if len(res.Trace) == 0 {
+func printResult(m *match.Match) {
+	fmt.Printf("Packet: %s  Verdict: %s\n", m.Packet, m.Result.Verdict)
+	if len(m.Result.Trace) == 0 {
 		return
 	}
 	t := tablewriter.NewWriter(os.Stdout)
 	t.SetHeader([]string{"Rule", "Action", "Hit Count"})
 	t.SetBorder(true)
 	t.SetRowLine(true)
-	for _, r := range res.Trace {
-		t.Append([]string{r.String(), r.Action.String(), fmt.Sprintf("%d", r.PacketCount())})
+	for _, r := range m.Result.Trace {
+		t.Append([]string{
+			r.String(),
+			r.Action.String(),
+			fmt.Sprintf("%d", r.PacketCount()),
+		})
 	}
 	t.Render()
 }
