@@ -4,13 +4,14 @@ import (
 	"testing"
 
 	"github.com/mazdakn/fwsim/internal/rule"
+	"github.com/mazdakn/fwsim/pkg/config"
 	. "github.com/onsi/gomega"
 )
 
 func TestNew(t *testing.T) {
 	RegisterTestingT(t)
 
-	engine := New()
+	engine := New(Config{})
 	Expect(engine).ToNot(BeNil())
 	Expect(engine.table.Rules).To(BeEmpty())
 }
@@ -18,11 +19,14 @@ func TestNew(t *testing.T) {
 func TestPacketsFromFileAndMatch(t *testing.T) {
 	RegisterTestingT(t)
 
-	engine := New()
-	err := engine.ConfigFromFile("../../hack/simple.yaml")
+	engine := New(Config{
+		RulesFile:   "../../hack/simple.yaml",
+		PacketsFile: "../../hack/packets.yaml",
+	})
+	err := engine.ConfigFromFile()
 	Expect(err).To(BeNil())
 
-	pkts, err := engine.PacketsFromFile("../../hack/packets.yaml")
+	pkts, err := config.PacketsFromFile("../../hack/packets.yaml")
 	Expect(err).To(BeNil())
 	Expect(len(pkts)).To(Equal(5))
 
@@ -42,8 +46,8 @@ func TestPacketsFromFileAndMatch(t *testing.T) {
 func TestLoadRulesFromConfig(t *testing.T) {
 	RegisterTestingT(t)
 
-	engine := New()
-	err := engine.ConfigFromFile("../../hack/simple.yaml")
+	engine := New(Config{RulesFile: "../../hack/simple.yaml"})
+	err := engine.ConfigRulesFromFile()
 	Expect(err).To(BeNil())
 
 	Expect(len(engine.table.Rules)).To(Equal(3))
