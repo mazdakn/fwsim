@@ -34,7 +34,11 @@ func New(conf Config) *Engine {
 }
 
 func (e *Engine) Match(pkt *packet.Packet) table.Result {
-	return e.table.Match(pkt)
+	match := table.Match{
+		Packet: pkt,
+	}
+	e.table.Match(match)
+	return match.Result
 }
 
 func (e *Engine) ConfigFromFile() error {

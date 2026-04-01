@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/mazdakn/fwsim/internal/packet"
 	"github.com/mazdakn/fwsim/internal/rule"
 	"github.com/sirupsen/logrus"
 )
@@ -40,24 +39,22 @@ func (t *Table) AddRule(r *rule.Rule) {
 	t.Rules[i] = r
 }
 
-func (t *Table) Match(pkt *packet.Packet) Result {
-	t.logCtx.Debugf("Matching packet %+v", pkt)
-	var res Result
+func (t *Table) Match(match Match) {
+	t.logCtx.Debugf("Matching packet %+v", match.Packet)
 	for _, r := range t.Rules {
-		res.Trace = append(res.Trace, r)
-		if r.Match(pkt) {
+		match.Result.Trace = append(match.Result.Trace, r)
+		if r.Match(match.Packet) {
 			t.logCtx.Debugf("Rule %+v matched", r)
-			res.Verdict = r.Action
-			return res
+			match.Result.Verdict = r.Action
+			return
 		}
 	}
 	if t.DefaultAction == nil {
-		t.logCtx.Warn("No rule matched and no default action is set")
-		return res
+		panic("No rule matched and no default action is set")
 	}
 	t.logCtx.Debugf("No rule matched, using default action %s", t.DefaultAction.Action.String())
 	t.DefaultAction.IncrementPacketCount()
-	res.Trace = append(res.Trace, t.DefaultAction)
-	res.Verdict = t.DefaultAction.Action
-	return res
+	match.Result.Trace = append(match.Result.Trace, t.DefaultAction)
+	match.Result.Verdict = t.DefaultAction.Action
+	return
 }
