@@ -85,6 +85,7 @@ func init() {
 }
 
 func runEvaluate(cmd *cobra.Command, args []string) {
+	// TODO: fix validation. Need to validate before initing the struct
 	pkt := &config.Packet{
 		SrcAddr: srcAddr,
 		DstAddr: dstAddr,
@@ -99,14 +100,13 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 	}
 
 	// Create engine and load rules
-	e := engine.New()
-
-	ruleConfig, err := config.RuleConfigFromFile(inputFile)
-	if err != nil {
+	e := engine.New(engine.Config{
+		RulesFile: inputFile,
+	})
+	if err := e.ConfigRulesFromFile(); err != nil {
 		logrus.WithError(err).Errorf("failed to load rules from %s", inputFile)
 		os.Exit(1)
 	}
-	e.RuleConfig = ruleConfig
 
 	// Match packet against rules
 	res := e.Match(pkt.ToPacket())
@@ -119,13 +119,14 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 
 func runPackets(cmd *cobra.Command, args []string) {
 	// Create engine and load rules
-	e := engine.New()
-	rc, err := config.RuleConfigFromFile(inputFile)
-	if err != nil {
+	e := engine.New(engine.Config{
+		RulesFile:   inputFile,
+		PacketsFile: packetsFile,
+	})
+	if err := e.ConfigFromFile(); err != nil {
 		logrus.WithError(err).Errorf("failed to load rules from %s", inputFile)
 		os.Exit(1)
 	}
-	e.RuleConfig = rc
 
 	// Load packets from file
 	pkts, err := config.PacketsFromFile(packetsFile)
@@ -133,8 +134,6 @@ func runPackets(cmd *cobra.Command, args []string) {
 		logrus.WithError(err).Errorf("failed to load packets from %s", packetsFile)
 		os.Exit(1)
 	}
-
-	e.LoadConfigs()
 
 	// Evaluate each packet
 	for _, pkt := range pkts {

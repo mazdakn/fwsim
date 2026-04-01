@@ -21,8 +21,6 @@ func TestPacketsFromFileAndMatch(t *testing.T) {
 	engine := New()
 	err := engine.ConfigFromFile("../../hack/simple.yaml")
 	Expect(err).To(BeNil())
-	err = engine.LoadRules()
-	Expect(err).To(BeNil())
 
 	pkts, err := engine.PacketsFromFile("../../hack/packets.yaml")
 	Expect(err).To(BeNil())
@@ -48,8 +46,6 @@ func TestLoadRulesFromConfig(t *testing.T) {
 	err := engine.ConfigFromFile("../../hack/simple.yaml")
 	Expect(err).To(BeNil())
 
-	err = engine.LoadRules()
-	Expect(err).To(BeNil())
 	Expect(len(engine.table.Rules)).To(Equal(3))
 
 	// Verify first rule

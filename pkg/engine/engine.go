@@ -9,15 +9,27 @@ import (
 	"github.com/mazdakn/fwsim/pkg/config"
 )
 
-type Engine struct {
-	RuleConfig *config.RuleConfig
+type Config struct {
+	// Rule input
+	RulesFile string
 
-	table *table.Table
+	// Packet input
+	PacketsFile string
+	Packet      *config.Packet
 }
 
-func New() *Engine {
+type Engine struct {
+	Config     Config
+	RuleConfig *config.RuleConfig
+
+	table   *table.Table
+	packets []*packet.Packet
+}
+
+func New(conf Config) *Engine {
 	return &Engine{
-		table: table.New("main", rule.Drop),
+		Config: conf,
+		table:  table.New("main", rule.Drop),
 	}
 }
 
@@ -25,23 +37,23 @@ func (e *Engine) Match(pkt *packet.Packet) table.Result {
 	return e.table.Match(pkt)
 }
 
-func (e *Engine) LoadConfigs() {
-	_ = e.LoadRules()
-}
-
-func (e *Engine) ConfigFromFile(file string) error {
-	rc, err := config.RuleConfigFromFile(file)
-	if err != nil {
+func (e *Engine) ConfigFromFile() error {
+	if err := e.ConfigRulesFromFile(); err != nil {
 		return err
 	}
-	e.RuleConfig = rc
+	if err := e.ConfigPacketsFromFile(); err != nil {
+		return err
+	}
 	return nil
 }
 
-func (e *Engine) LoadRules() error {
-	if e.RuleConfig == nil {
-		return fmt.Errorf("no rule config loaded")
+func (e *Engine) ConfigRulesFromFile() error {
+	file := e.Config.RulesFile
+	rc, err := config.RuleConfigFromFile(file)
+	if err != nil {
+		return fmt.Errorf("failed to read rules from %s: %w", file, err)
 	}
+	e.RuleConfig = rc
 	for _, r := range e.RuleConfig.Rules {
 		e.table.AddRule(r.ToRule())
 	}
@@ -49,6 +61,12 @@ func (e *Engine) LoadRules() error {
 	return nil
 }
 
-func (e *Engine) PacketsFromFile(file string) ([]*packet.Packet, error) {
-	return config.PacketsFromFile(file)
+func (e *Engine) ConfigPacketsFromFile() error {
+	file := e.Config.PacketsFile
+	pkts, err := config.PacketsFromFile(e.Config.PacketsFile)
+	if err != nil {
+		return fmt.Errorf("failed to read packets from %s: %w", file, err)
+	}
+	e.packets = pkts
+	return nil
 }
