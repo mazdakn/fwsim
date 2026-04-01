@@ -39,7 +39,7 @@ func (t *Table) AddRule(r *rule.Rule) {
 	t.Rules[i] = r
 }
 
-func (t *Table) Match(match Match) {
+func (t *Table) Match(match *Match) {
 	t.logCtx.Infof("Matching packet %+v", match.Packet)
 	for _, r := range t.Rules {
 		match.Result.Trace = append(match.Result.Trace, r)

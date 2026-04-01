@@ -37,7 +37,7 @@ func (e *Engine) Match(pkt *packet.Packet) table.Result {
 	match := table.Match{
 		Packet: pkt,
 	}
-	e.table.Match(match)
+	e.table.Match(&match)
 	return match.Result
 }
 
