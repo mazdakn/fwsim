@@ -100,10 +100,8 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 	}
 
 	// Create engine and load rules
-	e := engine.New(engine.Config{
-		RulesFile: inputFile,
-	})
-	if err := e.ConfigRulesFromFile(); err != nil {
+	e := engine.New()
+	if err := e.ConfigFromFile(inputFile); err != nil {
 		logrus.WithError(err).Errorf("failed to load rules from %s", inputFile)
 		os.Exit(1)
 	}
@@ -119,17 +117,14 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 
 func runPackets(cmd *cobra.Command, args []string) {
 	// Create engine and load rules
-	e := engine.New(engine.Config{
-		RulesFile:   inputFile,
-		PacketsFile: packetsFile,
-	})
-	if err := e.ConfigFromFile(); err != nil {
+	e := engine.New()
+	if err := e.ConfigFromFile(inputFile); err != nil {
 		logrus.WithError(err).Errorf("failed to load rules from %s", inputFile)
 		os.Exit(1)
 	}
 
 	// Load packets from file
-	pkts, err := config.PacketsFromFile(packetsFile)
+	pkts, err := e.PacketsFromFile(packetsFile)
 	if err != nil {
 		logrus.WithError(err).Errorf("failed to load packets from %s", packetsFile)
 		os.Exit(1)

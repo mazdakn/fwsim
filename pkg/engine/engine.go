@@ -9,27 +9,15 @@ import (
 	"github.com/mazdakn/fwsim/pkg/config"
 )
 
-type Config struct {
-	// Rule input
-	RulesFile string
-
-	// Packet input
-	PacketsFile string
-	Packet      *config.Packet
-}
-
 type Engine struct {
-	Config     Config
 	RuleConfig *config.RuleConfig
 
-	table   *table.Table
-	packets []*packet.Packet
+	table *table.Table
 }
 
-func New(conf Config) *Engine {
+func New() *Engine {
 	return &Engine{
-		Config: conf,
-		table:  table.New("main", rule.Drop),
+		table: table.New("main", rule.Drop),
 	}
 }
 
@@ -37,18 +25,7 @@ func (e *Engine) Match(pkt *packet.Packet) table.Result {
 	return e.table.Match(pkt)
 }
 
-func (e *Engine) ConfigFromFile() error {
-	if err := e.ConfigRulesFromFile(); err != nil {
-		return err
-	}
-	if err := e.ConfigPacketsFromFile(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (e *Engine) ConfigRulesFromFile() error {
-	file := e.Config.RulesFile
+func (e *Engine) ConfigFromFile(file string) error {
 	rc, err := config.RuleConfigFromFile(file)
 	if err != nil {
 		return fmt.Errorf("failed to read rules from %s: %w", file, err)
@@ -61,12 +38,10 @@ func (e *Engine) ConfigRulesFromFile() error {
 	return nil
 }
 
-func (e *Engine) ConfigPacketsFromFile() error {
-	file := e.Config.PacketsFile
-	pkts, err := config.PacketsFromFile(e.Config.PacketsFile)
+func (e *Engine) PacketsFromFile(file string) ([]*packet.Packet, error) {
+	pkts, err := config.PacketsFromFile(file)
 	if err != nil {
-		return fmt.Errorf("failed to read packets from %s: %w", file, err)
+		return nil, fmt.Errorf("failed to read packets from %s: %w", file, err)
 	}
-	e.packets = pkts
-	return nil
+	return pkts, nil
 }
