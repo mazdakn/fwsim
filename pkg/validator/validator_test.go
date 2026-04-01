@@ -3,8 +3,8 @@ package validator_test
 import (
 	"testing"
 
-	"github.com/mazdakn/fwsim/internal/rule"
 	"github.com/mazdakn/fwsim/internal/packet"
+	"github.com/mazdakn/fwsim/internal/rule"
 	"github.com/mazdakn/fwsim/pkg/config"
 	"github.com/mazdakn/fwsim/pkg/validator"
 	. "github.com/onsi/gomega"
@@ -41,8 +41,8 @@ func TestValidateAction(t *testing.T) {
 func TestConfigValidateMissingDefaultAction(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &config.Config{
-		Rules: []rule.RuleConfig{
+	c := &config.RuleConfig{
+		Rules: []config.Rule{
 			{SrcNet: []string{"192.168.1.0/24"}, Action: "Accept"},
 		},
 	}
@@ -55,7 +55,7 @@ func TestConfigValidateMissingDefaultAction(t *testing.T) {
 func TestConfigValidateInvalidDefaultAction(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &config.Config{DefaultAction: "badaction"}
+	c := &config.RuleConfig{DefaultAction: "badaction"}
 	err := c.Validate()
 	Expect(err).ToNot(BeNil())
 	Expect(err.Error()).To(ContainSubstring("invalid default_action"))
@@ -64,8 +64,8 @@ func TestConfigValidateInvalidDefaultAction(t *testing.T) {
 func TestConfigValidateInvalidSrcNet(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &config.Config{
-		Rules: []rule.RuleConfig{
+	c := &config.RuleConfig{
+		Rules: []config.Rule{
 			{SrcNet: []string{"not-a-cidr"}, Action: "Accept"},
 		},
 		DefaultAction: "Accept",
@@ -162,8 +162,8 @@ func TestValidateProtocol(t *testing.T) {
 	RegisterTestingT(t)
 
 	Expect(validator.ValidateProtocol(0)).To(BeTrue())
-	Expect(validator.ValidateProtocol(6)).To(BeTrue())   // TCP
-	Expect(validator.ValidateProtocol(17)).To(BeTrue())  // UDP
+	Expect(validator.ValidateProtocol(6)).To(BeTrue())  // TCP
+	Expect(validator.ValidateProtocol(17)).To(BeTrue()) // UDP
 	Expect(validator.ValidateProtocol(255)).To(BeTrue())
 
 	Expect(validator.ValidateProtocol(256)).To(BeFalse())

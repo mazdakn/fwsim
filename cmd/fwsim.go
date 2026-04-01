@@ -134,6 +134,8 @@ func runPackets(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
+	e.LoadConfigs()
+
 	// Evaluate each packet
 	for _, pkt := range pkts {
 		res := e.Match(pkt)
