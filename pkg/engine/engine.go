@@ -19,8 +19,7 @@ type Config struct {
 }
 
 type Engine struct {
-	Config     Config
-	RuleConfig *config.RuleConfig
+	Config Config
 
 	table   *table.Table
 	packets []*packet.Packet
@@ -57,11 +56,10 @@ func (e *Engine) ConfigRulesFromFile() error {
 	if err != nil {
 		return fmt.Errorf("failed to read rules from %s: %w", file, err)
 	}
-	e.RuleConfig = rc
-	for _, r := range e.RuleConfig.Rules {
+	for _, r := range rc.Rules {
 		e.table.AddRule(r.ToRule())
 	}
-	e.table.DefaultAction.Action = rule.MustParseAction(e.RuleConfig.DefaultAction)
+	e.table.DefaultAction.Action = rule.MustParseAction(rc.DefaultAction)
 	return nil
 }
 

@@ -40,11 +40,11 @@ func (t *Table) AddRule(r *rule.Rule) {
 }
 
 func (t *Table) Match(match *Match) {
-	t.logCtx.Infof("Matching packet %+v", match.Packet)
+	t.logCtx.Debugf("Matching packet %+v", match.Packet)
 	for _, r := range t.Rules {
 		match.Result.Trace = append(match.Result.Trace, r)
 		if r.Match(match.Packet) {
-			t.logCtx.Infof("Rule %+v matched", r)
+			t.logCtx.Debugf("Rule %+v matched", r)
 			match.Result.Verdict = r.Action
 			return
 		}
