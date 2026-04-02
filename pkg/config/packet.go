@@ -18,11 +18,11 @@ func (pc *PacketConfig) Validate() error {
 }
 
 type Packet struct {
-	SrcAddr string `yaml:"src_addr,omitempty" validate:"isValidIP"`
-	DstAddr string `yaml:"dst_addr,omitempty" validate:"isValidIP"`
+	SrcAddr string      `yaml:"src_addr,omitempty" validate:"isValidIP"`
+	DstAddr string      `yaml:"dst_addr,omitempty" validate:"isValidIP"`
 	Proto   proto.Proto `yaml:"proto,omitempty"    validate:"isProtoValid"`
-	SrcPort uint16 `yaml:"src_port,omitempty" validate:"isPortValid"`
-	DstPort uint16 `yaml:"dst_port,omitempty" validate:"isPortValid"`
+	SrcPort uint16      `yaml:"src_port,omitempty" validate:"isPortValid"`
+	DstPort uint16      `yaml:"dst_port,omitempty" validate:"isPortValid"`
 
 	Metadata packet.Metadata `yaml:"metadata,omitempty"`
 }

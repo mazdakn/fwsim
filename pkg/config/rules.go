@@ -21,10 +21,10 @@ func (rc *RuleConfig) Validate() error {
 
 // Rule represents the YAML configuration structure for a firewall rule.
 type Rule struct {
-	Name       string   `yaml:"name,omitempty"`
-	Order      uint64   `yaml:"order,omitempty"`
-	SrcNet     []string `yaml:"src_net,omitempty"     validate:"isValidCIDR"`
-	DstNet     []string `yaml:"dst_net,omitempty"     validate:"isValidCIDR"`
+	Name       string        `yaml:"name,omitempty"`
+	Order      uint64        `yaml:"order,omitempty"`
+	SrcNet     []string      `yaml:"src_net,omitempty"     validate:"isValidCIDR"`
+	DstNet     []string      `yaml:"dst_net,omitempty"     validate:"isValidCIDR"`
 	Protocol   []proto.Proto `yaml:"proto,omitempty"       validate:"isProtoValid"`
 	SrcPort    []uint16      `yaml:"src_port,omitempty"    validate:"isPortValid"`
 	DstPort    []uint16      `yaml:"dst_port,omitempty"    validate:"isPortValid"`
@@ -33,7 +33,7 @@ type Rule struct {
 	NegProto   []proto.Proto `yaml:"neg_proto,omitempty"   validate:"isProtoValid"`
 	NegSrcPort []uint16      `yaml:"neg_src_port,omitempty" validate:"isPortValid"`
 	NegDstPort []uint16      `yaml:"neg_dst_port,omitempty" validate:"isPortValid"`
-	Action     string   `yaml:"action,omitempty"      validate:"isValidAction"`
+	Action     string        `yaml:"action,omitempty"      validate:"isValidAction"`
 }
 
 // ToRule converts a RuleConfig into a Rule domain object.

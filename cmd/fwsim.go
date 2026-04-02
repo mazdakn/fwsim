@@ -117,7 +117,7 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 
 	// Match packet against rules
 	m := &match.Match{Packet: pkt.ToPacket()}
-	e.Match(m)
+	e.RunTest(m)
 	printResult(m)
 	fmt.Println()
 
@@ -136,17 +136,8 @@ func runPackets(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	// Load packets from file
-	pkts, err := config.PacketsFromFile(packetsFile)
-	if err != nil {
-		logrus.WithError(err).Errorf("failed to load packets from %s", packetsFile)
-		os.Exit(1)
-	}
-
 	// Evaluate each packet
-	for _, pkt := range pkts {
-		m := &match.Match{Packet: pkt}
-		e.Match(m)
+	for _, m := range e.RunTests() {
 		printResult(m)
 		fmt.Println()
 	}

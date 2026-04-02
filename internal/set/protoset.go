@@ -45,4 +45,3 @@ func (ps *ProtoSet) String() string {
 	sb.WriteByte('}')
 	return sb.String()
 }
-

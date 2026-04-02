@@ -74,4 +74,3 @@ func (p *Packet) String() string {
 	return fmt.Sprintf("%s{%s:%d->%s:%d}", p.Proto, p.SrcAddr.String(), p.SrcPort,
 		p.DstAddr.String(), p.DstPort)
 }
-

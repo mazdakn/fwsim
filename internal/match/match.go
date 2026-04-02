@@ -15,3 +15,7 @@ type Match struct {
 	Packet *packet.Packet
 	Result Result
 }
+
+func New() *Match {
+	return &Match{}
+}
