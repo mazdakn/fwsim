@@ -31,21 +31,25 @@ func (p Proto) String() string {
 }
 
 // Parse parses a protocol from a string, accepting names ("tcp", "udp", "icmp")
-// or numeric values in the range 0–255.
-func Parse(s string) (Proto, error) {
+// or numeric values in the range 0–255. It returns nil on failure.
+func Parse(s string) (*Proto, error) {
 	switch strings.ToLower(s) {
 	case "tcp":
-		return TCP, nil
+		p := TCP
+		return &p, nil
 	case "udp":
-		return UDP, nil
+		p := UDP
+		return &p, nil
 	case "icmp":
-		return ICMP, nil
+		p := ICMP
+		return &p, nil
 	default:
 		n, err := strconv.ParseUint(s, 10, 8)
 		if err != nil {
-			return 0, fmt.Errorf("unknown protocol: %s", s)
+			return nil, fmt.Errorf("unknown protocol: %s", s)
 		}
-		return Proto(n), nil
+		p := Proto(n)
+		return &p, nil
 	}
 }
 
@@ -65,6 +69,6 @@ func (p *Proto) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	*p = parsed
+	*p = *parsed
 	return nil
 }

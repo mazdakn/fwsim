@@ -96,7 +96,7 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 	pkt := &config.Packet{
 		SrcAddr: srcAddr,
 		DstAddr: dstAddr,
-		Proto:   p,
+		Proto:   *p,
 		SrcPort: uint16(srcPort),
 		DstPort: uint16(dstPort),
 	}

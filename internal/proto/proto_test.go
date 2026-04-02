@@ -42,23 +42,23 @@ func TestProtoParse(t *testing.T) {
 
 	tests := []struct {
 		input     string
-		expected  Proto
+		expected  *Proto
 		shouldErr bool
 	}{
-		{"tcp", TCP, false},
-		{"TCP", TCP, false},
-		{"udp", UDP, false},
-		{"UDP", UDP, false},
-		{"icmp", ICMP, false},
-		{"ICMP", ICMP, false},
-		{"6", TCP, false},
-		{"17", UDP, false},
-		{"1", ICMP, false},
-		{"0", Proto(0), false},
-		{"255", Proto(255), false},
-		{"256", Proto(0), true},
-		{"invalid", Proto(0), true},
-		{"-1", Proto(0), true},
+		{"tcp", func() *Proto { p := TCP; return &p }(), false},
+		{"TCP", func() *Proto { p := TCP; return &p }(), false},
+		{"udp", func() *Proto { p := UDP; return &p }(), false},
+		{"UDP", func() *Proto { p := UDP; return &p }(), false},
+		{"icmp", func() *Proto { p := ICMP; return &p }(), false},
+		{"ICMP", func() *Proto { p := ICMP; return &p }(), false},
+		{"6", func() *Proto { p := TCP; return &p }(), false},
+		{"17", func() *Proto { p := UDP; return &p }(), false},
+		{"1", func() *Proto { p := ICMP; return &p }(), false},
+		{"0", func() *Proto { p := Proto(0); return &p }(), false},
+		{"255", func() *Proto { p := Proto(255); return &p }(), false},
+		{"256", nil, true},
+		{"invalid", nil, true},
+		{"-1", nil, true},
 	}
 
 	for _, tt := range tests {
@@ -66,9 +66,11 @@ func TestProtoParse(t *testing.T) {
 			p, err := Parse(tt.input)
 			if tt.shouldErr {
 				Expect(err).To(HaveOccurred())
+				Expect(p).To(BeNil())
 			} else {
 				Expect(err).ToNot(HaveOccurred())
-				Expect(p).To(Equal(tt.expected))
+				Expect(p).ToNot(BeNil())
+				Expect(*p).To(Equal(*tt.expected))
 			}
 		})
 	}
