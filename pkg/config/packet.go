@@ -5,6 +5,7 @@ import (
 
 	"github.com/goccy/go-yaml"
 	"github.com/mazdakn/fwsim/internal/packet"
+	"github.com/mazdakn/fwsim/internal/proto"
 	"github.com/mazdakn/fwsim/pkg/validator"
 )
 
@@ -19,7 +20,7 @@ func (pc *PacketConfig) Validate() error {
 type Packet struct {
 	SrcAddr string `yaml:"src_addr,omitempty" validate:"isValidIP"`
 	DstAddr string `yaml:"dst_addr,omitempty" validate:"isValidIP"`
-	Proto   uint8  `yaml:"proto,omitempty"    validate:"isProtoValid"`
+	Proto   proto.Proto `yaml:"proto,omitempty"    validate:"isProtoValid"`
 	SrcPort uint16 `yaml:"src_port,omitempty" validate:"isPortValid"`
 	DstPort uint16 `yaml:"dst_port,omitempty" validate:"isPortValid"`
 

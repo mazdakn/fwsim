@@ -7,6 +7,7 @@ import (
 
 	"github.com/mazdakn/fwsim/internal/counter"
 	"github.com/mazdakn/fwsim/internal/packet"
+	"github.com/mazdakn/fwsim/internal/proto"
 	"github.com/mazdakn/fwsim/internal/set"
 )
 
@@ -63,12 +64,12 @@ func MustParseAction(s string) Action {
 
 type RuleOption func(*Rule)
 
-func WithProto(proto uint8) RuleOption {
+func WithProto(p proto.Proto) RuleOption {
 	return func(r *Rule) {
 		if r.Proto == nil {
 			r.Proto = set.NewProtoSet()
 		}
-		r.Proto.Add(proto)
+		r.Proto.Add(p)
 	}
 }
 
@@ -108,12 +109,12 @@ func WithDstNet(cidr string) RuleOption {
 	}
 }
 
-func WithNegProto(proto uint8) RuleOption {
+func WithNegProto(p proto.Proto) RuleOption {
 	return func(r *Rule) {
 		if r.NegProto == nil {
 			r.NegProto = set.NewProtoSet()
 		}
-		r.NegProto.Add(proto)
+		r.NegProto.Add(p)
 	}
 }
 

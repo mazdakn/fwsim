@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/goccy/go-yaml"
+	"github.com/mazdakn/fwsim/internal/proto"
 	"github.com/mazdakn/fwsim/internal/rule"
 	"github.com/mazdakn/fwsim/internal/set"
 	"github.com/mazdakn/fwsim/pkg/validator"
@@ -24,14 +25,14 @@ type Rule struct {
 	Order      uint64   `yaml:"order,omitempty"`
 	SrcNet     []string `yaml:"src_net,omitempty"     validate:"isValidCIDR"`
 	DstNet     []string `yaml:"dst_net,omitempty"     validate:"isValidCIDR"`
-	Protocol   []uint8  `yaml:"proto,omitempty"       validate:"isProtoValid"`
-	SrcPort    []uint16 `yaml:"src_port,omitempty"    validate:"isPortValid"`
-	DstPort    []uint16 `yaml:"dst_port,omitempty"    validate:"isPortValid"`
-	NegSrcNet  []string `yaml:"neg_src_net,omitempty" validate:"isValidCIDR"`
-	NegDstNet  []string `yaml:"neg_dst_net,omitempty" validate:"isValidCIDR"`
-	NegProto   []uint8  `yaml:"neg_proto,omitempty"   validate:"isProtoValid"`
-	NegSrcPort []uint16 `yaml:"neg_src_port,omitempty" validate:"isPortValid"`
-	NegDstPort []uint16 `yaml:"neg_dst_port,omitempty" validate:"isPortValid"`
+	Protocol   []proto.Proto `yaml:"proto,omitempty"       validate:"isProtoValid"`
+	SrcPort    []uint16      `yaml:"src_port,omitempty"    validate:"isPortValid"`
+	DstPort    []uint16      `yaml:"dst_port,omitempty"    validate:"isPortValid"`
+	NegSrcNet  []string      `yaml:"neg_src_net,omitempty" validate:"isValidCIDR"`
+	NegDstNet  []string      `yaml:"neg_dst_net,omitempty" validate:"isValidCIDR"`
+	NegProto   []proto.Proto `yaml:"neg_proto,omitempty"   validate:"isProtoValid"`
+	NegSrcPort []uint16      `yaml:"neg_src_port,omitempty" validate:"isPortValid"`
+	NegDstPort []uint16      `yaml:"neg_dst_port,omitempty" validate:"isPortValid"`
 	Action     string   `yaml:"action,omitempty"      validate:"isValidAction"`
 }
 

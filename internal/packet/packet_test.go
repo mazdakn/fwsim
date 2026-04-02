@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
+
+	"github.com/mazdakn/fwsim/internal/proto"
 )
 
 func TestWithName(t *testing.T) {
@@ -48,7 +50,7 @@ func TestPacketStringWithName(t *testing.T) {
 		WithDstAddr("192.168.1.1"),
 		WithDstPort(80),
 	)
-	Expect(pkt2.String()).To(Equal("6{10.0.0.1:12345->192.168.1.1:80}"))
+	Expect(pkt2.String()).To(Equal("tcp{10.0.0.1:12345->192.168.1.1:80}"))
 }
 
 func TestNewEmpty(t *testing.T) {
@@ -58,7 +60,7 @@ func TestNewEmpty(t *testing.T) {
 	Expect(pkt).ToNot(BeNil())
 	Expect(pkt.SrcAddr).To(BeNil())
 	Expect(pkt.DstAddr).To(BeNil())
-	Expect(pkt.Proto).To(Equal(uint8(0)))
+	Expect(pkt.Proto).To(Equal(proto.Proto(0)))
 	Expect(pkt.SrcPort).To(Equal(uint16(0)))
 	Expect(pkt.DstPort).To(Equal(uint16(0)))
 }
@@ -68,13 +70,13 @@ func TestWithProto(t *testing.T) {
 
 	tests := []struct {
 		name  string
-		proto uint8
+		proto proto.Proto
 	}{
-		{"TCP", 6},
-		{"UDP", 17},
-		{"ICMP", 1},
-		{"Custom", 255},
-		{"Zero", 0},
+		{"TCP", proto.TCP},
+		{"UDP", proto.UDP},
+		{"ICMP", proto.ICMP},
+		{"Custom", proto.Proto(255)},
+		{"Zero", proto.Proto(0)},
 	}
 
 	for _, tt := range tests {
@@ -256,7 +258,7 @@ func TestNewMultipleOptions(t *testing.T) {
 		WithDstPort(80),
 	)
 
-	Expect(pkt.Proto).To(Equal(uint8(6)))
+	Expect(pkt.Proto).To(Equal(proto.TCP))
 	Expect(pkt.SrcAddr.String()).To(Equal("10.0.0.1"))
 	Expect(pkt.SrcPort).To(Equal(uint16(12345)))
 	Expect(pkt.DstAddr.String()).To(Equal("192.168.1.1"))
@@ -274,7 +276,7 @@ func TestNewMultipleOptionsIPv6(t *testing.T) {
 		WithDstPort(443),
 	)
 
-	Expect(pkt.Proto).To(Equal(uint8(17)))
+	Expect(pkt.Proto).To(Equal(proto.UDP))
 	Expect(pkt.SrcAddr.String()).To(Equal("2001:db8::1"))
 	Expect(pkt.SrcPort).To(Equal(uint16(54321)))
 	Expect(pkt.DstAddr.String()).To(Equal("cafe::1"))
@@ -292,35 +294,35 @@ func TestPacketStringIPv4(t *testing.T) {
 		{
 			name: "FullPacket",
 			packet: New(
-				WithProto(6),
+				WithProto(proto.TCP),
 				WithSrcAddr("10.0.0.1"),
 				WithSrcPort(12345),
 				WithDstAddr("192.168.1.1"),
 				WithDstPort(80),
 			),
-			expected: "6{10.0.0.1:12345->192.168.1.1:80}",
+			expected: "tcp{10.0.0.1:12345->192.168.1.1:80}",
 		},
 		{
 			name: "TCPPacket",
 			packet: New(
-				WithProto(6),
+				WithProto(proto.TCP),
 				WithSrcAddr("172.16.0.1"),
 				WithSrcPort(50000),
 				WithDstAddr("1.1.1.1"),
 				WithDstPort(443),
 			),
-			expected: "6{172.16.0.1:50000->1.1.1.1:443}",
+			expected: "tcp{172.16.0.1:50000->1.1.1.1:443}",
 		},
 		{
 			name: "UDPPacket",
 			packet: New(
-				WithProto(17),
+				WithProto(proto.UDP),
 				WithSrcAddr("192.168.0.1"),
 				WithSrcPort(55555),
 				WithDstAddr("8.8.8.8"),
 				WithDstPort(53),
 			),
-			expected: "17{192.168.0.1:55555->8.8.8.8:53}",
+			expected: "udp{192.168.0.1:55555->8.8.8.8:53}",
 		},
 	}
 
@@ -342,24 +344,24 @@ func TestPacketStringIPv6(t *testing.T) {
 		{
 			name: "FullPacket",
 			packet: New(
-				WithProto(6),
+				WithProto(proto.TCP),
 				WithSrcAddr("2001:db8::1"),
 				WithSrcPort(12345),
 				WithDstAddr("cafe::1"),
 				WithDstPort(80),
 			),
-			expected: "6{2001:db8::1:12345->cafe::1:80}",
+			expected: "tcp{2001:db8::1:12345->cafe::1:80}",
 		},
 		{
 			name: "TCPPacket",
 			packet: New(
-				WithProto(6),
+				WithProto(proto.TCP),
 				WithSrcAddr("dead:beef::1"),
 				WithSrcPort(44444),
 				WithDstAddr("fe80::1"),
 				WithDstPort(443),
 			),
-			expected: "6{dead:beef::1:44444->fe80::1:443}",
+			expected: "tcp{dead:beef::1:44444->fe80::1:443}",
 		},
 	}
 
@@ -383,9 +385,9 @@ func TestPacketStringPartialPacket(t *testing.T) {
 	RegisterTestingT(t)
 
 	// Only protocol
-	pkt1 := New(WithProto(6))
+	pkt1 := New(WithProto(proto.TCP))
 	result1 := pkt1.String()
-	Expect(result1).To(Equal("6{<nil>:0-><nil>:0}"))
+	Expect(result1).To(Equal("tcp{<nil>:0-><nil>:0}"))
 
 	// Only ports
 	pkt2 := New(WithSrcPort(1234), WithDstPort(5678))
@@ -401,7 +403,7 @@ func TestPacketStringPartialPacket(t *testing.T) {
 func TestPacketOptionsCanBeReused(t *testing.T) {
 	RegisterTestingT(t)
 
-	protoOpt := WithProto(6)
+	protoOpt := WithProto(proto.TCP)
 	srcPortOpt := WithSrcPort(80)
 	dstPortOpt := WithDstPort(443)
 
@@ -417,7 +419,7 @@ func TestPacketOptionsOrderIndependent(t *testing.T) {
 	RegisterTestingT(t)
 
 	pkt1 := New(
-		WithProto(6),
+		WithProto(proto.TCP),
 		WithSrcAddr("10.0.0.1"),
 		WithSrcPort(80),
 		WithDstAddr("192.168.1.1"),
@@ -429,7 +431,7 @@ func TestPacketOptionsOrderIndependent(t *testing.T) {
 		WithDstAddr("192.168.1.1"),
 		WithSrcPort(80),
 		WithSrcAddr("10.0.0.1"),
-		WithProto(6),
+		WithProto(proto.TCP),
 	)
 
 	Expect(pkt1.Proto).To(Equal(pkt2.Proto))
