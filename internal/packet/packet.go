@@ -3,6 +3,8 @@ package packet
 import (
 	"fmt"
 	"net"
+
+	"github.com/mazdakn/fwsim/internal/proto"
 )
 
 type PacketOption func(*Packet)
@@ -13,9 +15,9 @@ func WithName(name string) PacketOption {
 	}
 }
 
-func WithProto(proto uint8) PacketOption {
-	return func(p *Packet) {
-		p.Proto = proto
+func WithProto(p proto.Proto) PacketOption {
+	return func(pkt *Packet) {
+		pkt.Proto = p
 	}
 }
 
@@ -57,7 +59,7 @@ type Packet struct {
 	SrcAddr net.IP
 	DstAddr net.IP
 
-	Proto uint8
+	Proto proto.Proto
 
 	SrcPort uint16
 	DstPort uint16
@@ -69,6 +71,7 @@ func (p *Packet) String() string {
 	if p.Metadata.Name != "" {
 		return p.Metadata.Name
 	}
-	return fmt.Sprintf("%d{%s:%d->%s:%d}", p.Proto, p.SrcAddr.String(), p.SrcPort,
+	return fmt.Sprintf("%s{%s:%d->%s:%d}", p.Proto, p.SrcAddr.String(), p.SrcPort,
 		p.DstAddr.String(), p.DstPort)
 }
+

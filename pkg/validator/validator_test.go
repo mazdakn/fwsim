@@ -3,6 +3,7 @@ package validator_test
 import (
 	"testing"
 
+	"github.com/mazdakn/fwsim/internal/proto"
 	"github.com/mazdakn/fwsim/pkg/config"
 	"github.com/mazdakn/fwsim/pkg/validator"
 	. "github.com/onsi/gomega"
@@ -320,10 +321,10 @@ func TestConfigValidateValidRuleWithPortsAndProto(t *testing.T) {
 			{
 				SrcNet:     []string{"192.168.1.0/24"},
 				DstNet:     []string{"1.1.1.1/32"},
-				Protocol:   []uint8{6, 17},
+				Protocol:   []proto.Proto{proto.TCP, proto.UDP},
 				SrcPort:    []uint16{30000},
 				DstPort:    []uint16{80, 443},
-				NegProto:   []uint8{1},
+				NegProto:   []proto.Proto{proto.ICMP},
 				NegSrcPort: []uint16{22},
 				NegDstPort: []uint16{8080},
 				Action:     "Accept",
@@ -340,7 +341,7 @@ func TestConfigValidateValidPacketWithPortAndProto(t *testing.T) {
 
 	pkts := &config.PacketConfig{
 		Packets: []config.Packet{
-			{SrcAddr: "192.168.1.5", DstAddr: "1.1.1.1", Proto: 6, SrcPort: 30000, DstPort: 80},
+			{SrcAddr: "192.168.1.5", DstAddr: "1.1.1.1", Proto: proto.TCP, SrcPort: 30000, DstPort: 80},
 		},
 	}
 	err := pkts.Validate()

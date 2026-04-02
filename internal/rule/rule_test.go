@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/mazdakn/fwsim/internal/packet"
+	"github.com/mazdakn/fwsim/internal/proto"
 	. "github.com/onsi/gomega"
 )
 
@@ -15,19 +16,19 @@ func TestEmptyRule(t *testing.T) {
 	rule := New()
 	pkts := []*packet.Packet{
 		packet.New(
-			packet.WithSrcAddr("10.10.10.1"), packet.WithSrcPort(55555), packet.WithProto(17),
+			packet.WithSrcAddr("10.10.10.1"), packet.WithSrcPort(55555), packet.WithProto(proto.UDP),
 			packet.WithDstAddr("1.1.1.1"), packet.WithDstPort(53),
 		),
 		packet.New(
-			packet.WithSrcAddr("172.16.0.1"), packet.WithSrcPort(50000), packet.WithProto(8),
+			packet.WithSrcAddr("172.16.0.1"), packet.WithSrcPort(50000), packet.WithProto(proto.Proto(8)),
 			packet.WithDstAddr("2.2.2.2"), packet.WithDstPort(9999),
 		),
 		packet.New(
-			packet.WithSrcAddr("dead:beef::1"), packet.WithSrcPort(44444), packet.WithProto(6),
+			packet.WithSrcAddr("dead:beef::1"), packet.WithSrcPort(44444), packet.WithProto(proto.TCP),
 			packet.WithDstAddr("cafe::1"), packet.WithDstPort(80),
 		),
 		packet.New(
-			packet.WithSrcAddr("dead:cafe::1"), packet.WithSrcPort(30000), packet.WithProto(64),
+			packet.WithSrcAddr("dead:cafe::1"), packet.WithSrcPort(30000), packet.WithProto(proto.Proto(64)),
 			packet.WithDstAddr("ffff::1"), packet.WithDstPort(8080),
 		),
 	}
@@ -43,7 +44,7 @@ func TestRuleIPFamilyMismatch(t *testing.T) {
 
 	// IPv6 packet
 	pktV6 := packet.New(
-		packet.WithSrcAddr("dead:beef::1"), packet.WithSrcPort(44444), packet.WithProto(6),
+		packet.WithSrcAddr("dead:beef::1"), packet.WithSrcPort(44444), packet.WithProto(proto.TCP),
 		packet.WithDstAddr("cafe::1"), packet.WithDstPort(80),
 	)
 
@@ -52,7 +53,7 @@ func TestRuleIPFamilyMismatch(t *testing.T) {
 		New(WithSrcNet("10.10.10.0/24")),
 		New(WithDstNet("1.1.1.1/32")),
 		New(WithSrcNet("10.10.10.0/24"), WithDstNet("1.1.1.1/32")),
-		New(WithProto(17), WithSrcNet("10.10.10.0/24"), WithDstNet("1.1.1.1/32")),
+		New(WithProto(proto.UDP), WithSrcNet("10.10.10.0/24"), WithDstNet("1.1.1.1/32")),
 	}
 	for _, r := range ipv4Rules {
 		t.Run(fmt.Sprintf("IPv4 rule %v should not match IPv6 packet", r.String()), func(t *testing.T) {
@@ -62,7 +63,7 @@ func TestRuleIPFamilyMismatch(t *testing.T) {
 
 	// IPv4 packet
 	pktV4 := packet.New(
-		packet.WithSrcAddr("10.10.10.1"), packet.WithSrcPort(55555), packet.WithProto(17),
+		packet.WithSrcAddr("10.10.10.1"), packet.WithSrcPort(55555), packet.WithProto(proto.UDP),
 		packet.WithDstAddr("1.1.1.1"), packet.WithDstPort(53),
 	)
 
@@ -71,7 +72,7 @@ func TestRuleIPFamilyMismatch(t *testing.T) {
 		New(WithSrcNet("dead:beef::/64")),
 		New(WithDstNet("cafe::/112")),
 		New(WithSrcNet("dead:beef::/64"), WithDstNet("cafe::/112")),
-		New(WithProto(6), WithSrcNet("dead:beef::/64"), WithDstNet("cafe::/112")),
+		New(WithProto(proto.TCP), WithSrcNet("dead:beef::/64"), WithDstNet("cafe::/112")),
 	}
 	for _, r := range ipv6Rules {
 		t.Run(fmt.Sprintf("IPv6 rule %v should not match IPv4 packet", r.String()), func(t *testing.T) {
@@ -84,14 +85,14 @@ func TestRuleMatch(t *testing.T) {
 	RegisterTestingT(t)
 
 	pktShouldMatch := packet.New(
-		packet.WithSrcAddr("10.10.10.1"), packet.WithSrcPort(55555), packet.WithProto(17),
+		packet.WithSrcAddr("10.10.10.1"), packet.WithSrcPort(55555), packet.WithProto(proto.UDP),
 		packet.WithDstAddr("1.1.1.1"), packet.WithDstPort(53),
 	)
 	pktShouldNotMatch := packet.New(
-		packet.WithSrcAddr("172.16.0.1"), packet.WithSrcPort(50000), packet.WithProto(8),
+		packet.WithSrcAddr("172.16.0.1"), packet.WithSrcPort(50000), packet.WithProto(proto.Proto(8)),
 		packet.WithDstAddr("2.2.2.2"), packet.WithDstPort(9999),
 	)
-	for _, r := range makeCommonRules("10.10.10.0/24", "1.1.1.1/32", 17, 55555, 53) {
+	for _, r := range makeCommonRules("10.10.10.0/24", "1.1.1.1/32", proto.UDP, 55555, 53) {
 		t.Run(fmt.Sprintf("should match %v", r.String()), func(t *testing.T) {
 			Expect(r.Match(pktShouldMatch)).To(BeTrue())
 		})
@@ -105,14 +106,14 @@ func TestRuleMatchV6(t *testing.T) {
 	RegisterTestingT(t)
 
 	pktShouldMatch := packet.New(
-		packet.WithSrcAddr("dead:beef::1"), packet.WithSrcPort(44444), packet.WithProto(6),
+		packet.WithSrcAddr("dead:beef::1"), packet.WithSrcPort(44444), packet.WithProto(proto.TCP),
 		packet.WithDstAddr("cafe::1"), packet.WithDstPort(80),
 	)
 	pktShouldNotMatch := packet.New(
-		packet.WithSrcAddr("dead:cafe::1"), packet.WithSrcPort(30000), packet.WithProto(64),
+		packet.WithSrcAddr("dead:cafe::1"), packet.WithSrcPort(30000), packet.WithProto(proto.Proto(64)),
 		packet.WithDstAddr("ffff::1"), packet.WithDstPort(8080),
 	)
-	for _, r := range makeCommonRules("dead:beef::/64", "cafe::/112", 6, 44444, 80) {
+	for _, r := range makeCommonRules("dead:beef::/64", "cafe::/112", proto.TCP, 44444, 80) {
 		t.Run(fmt.Sprintf("should match %v", r.String()), func(t *testing.T) {
 			Expect(r.Match(pktShouldMatch)).To(BeTrue())
 		})
@@ -184,18 +185,18 @@ func TestMustParseCIDRPanic(t *testing.T) {
 	}
 }
 
-func makeCommonRules(srcNet, dstNet string, proto uint8, srcPort, dstPort uint16) []*Rule {
+func makeCommonRules(srcNet, dstNet string, p proto.Proto, srcPort, dstPort uint16) []*Rule {
 	return []*Rule{
-		New(WithProto(proto)),
+		New(WithProto(p)),
 		New(WithSrcPort(srcPort)),
 		New(WithDstPort(dstPort)),
 		New(WithSrcNet(srcNet)),
 		New(WithDstNet(dstNet)),
 
-		New(WithProto(proto), WithSrcPort(srcPort)),
-		New(WithProto(proto), WithDstPort(dstPort)),
-		New(WithProto(proto), WithSrcNet(srcNet)),
-		New(WithProto(proto), WithDstNet(dstNet)),
+		New(WithProto(p), WithSrcPort(srcPort)),
+		New(WithProto(p), WithDstPort(dstPort)),
+		New(WithProto(p), WithSrcNet(srcNet)),
+		New(WithProto(p), WithDstNet(dstNet)),
 
 		New(WithSrcPort(srcPort), WithDstPort(dstPort)),
 		New(WithSrcPort(srcPort), WithSrcNet(srcNet)),
@@ -206,14 +207,14 @@ func makeCommonRules(srcNet, dstNet string, proto uint8, srcPort, dstPort uint16
 
 		New(WithSrcNet(srcNet), WithDstNet(dstNet)),
 
-		New(WithProto(proto), WithDstPort(dstPort), WithDstNet(dstNet)),
+		New(WithProto(p), WithDstPort(dstPort), WithDstNet(dstNet)),
 		New(WithSrcPort(srcPort), WithDstPort(dstPort), WithSrcNet(srcNet)),
 		New(WithDstPort(dstPort), WithSrcNet(srcNet), WithDstNet(dstNet)),
 
-		New(WithProto(proto), WithSrcPort(srcPort), WithDstPort(dstPort), WithDstNet(dstNet)),
-		New(WithProto(proto), WithDstPort(dstPort), WithSrcNet(srcNet), WithDstNet(dstNet)),
+		New(WithProto(p), WithSrcPort(srcPort), WithDstPort(dstPort), WithDstNet(dstNet)),
+		New(WithProto(p), WithDstPort(dstPort), WithSrcNet(srcNet), WithDstNet(dstNet)),
 
-		New(WithProto(proto), WithSrcPort(srcPort), WithDstPort(dstPort), WithSrcNet(srcNet), WithDstNet(dstNet)),
+		New(WithProto(p), WithSrcPort(srcPort), WithDstPort(dstPort), WithSrcNet(srcNet), WithDstNet(dstNet)),
 	}
 }
 
@@ -252,13 +253,13 @@ func TestParseAction(t *testing.T) {
 func TestRulePacketCounter(t *testing.T) {
 	RegisterTestingT(t)
 
-	rule := New(WithProto(17), WithDstPort(53))
+	rule := New(WithProto(proto.UDP), WithDstPort(53))
 	pktMatch := packet.New(
-		packet.WithSrcAddr("10.10.10.1"), packet.WithSrcPort(55555), packet.WithProto(17),
+		packet.WithSrcAddr("10.10.10.1"), packet.WithSrcPort(55555), packet.WithProto(proto.UDP),
 		packet.WithDstAddr("1.1.1.1"), packet.WithDstPort(53),
 	)
 	pktNoMatch := packet.New(
-		packet.WithSrcAddr("10.10.10.1"), packet.WithSrcPort(55555), packet.WithProto(6),
+		packet.WithSrcAddr("10.10.10.1"), packet.WithSrcPort(55555), packet.WithProto(proto.TCP),
 		packet.WithDstAddr("1.1.1.1"), packet.WithDstPort(80),
 	)
 
@@ -289,9 +290,9 @@ func TestRulePacketCounter(t *testing.T) {
 func TestRulePacketCounterConcurrency(t *testing.T) {
 	RegisterTestingT(t)
 
-	rule := New(WithProto(17), WithDstPort(53))
+	rule := New(WithProto(proto.UDP), WithDstPort(53))
 	pktMatch := packet.New(
-		packet.WithSrcAddr("10.10.10.1"), packet.WithSrcPort(55555), packet.WithProto(17),
+		packet.WithSrcAddr("10.10.10.1"), packet.WithSrcPort(55555), packet.WithProto(proto.UDP),
 		packet.WithDstAddr("1.1.1.1"), packet.WithDstPort(53),
 	)
 
@@ -322,11 +323,11 @@ func TestRuleWithName(t *testing.T) {
 	RegisterTestingT(t)
 
 	// Rule without name should use the full rule representation
-	ruleNoName := New(WithAction(Accept), WithProto(6), WithDstPort(80))
-	Expect(ruleNoName.String()).To(Equal("Accept 6{*:*->*:80}"))
+	ruleNoName := New(WithAction(Accept), WithProto(proto.TCP), WithDstPort(80))
+	Expect(ruleNoName.String()).To(Equal("Accept tcp{*:*->*:80}"))
 
 	// Rule with name should use the name for output
-	ruleWithName := New(WithAction(Accept), WithProto(6), WithDstPort(80), WithName("allow-http"))
+	ruleWithName := New(WithAction(Accept), WithProto(proto.TCP), WithDstPort(80), WithName("allow-http"))
 	Expect(ruleWithName.String()).To(Equal("allow-http"))
 
 	// Setting Name directly should also work
@@ -340,15 +341,15 @@ func TestNegatedRuleMatch(t *testing.T) {
 
 	// Packet that will be matched against negated rules
 	pkt := packet.New(
-		packet.WithSrcAddr("10.10.10.1"), packet.WithSrcPort(55555), packet.WithProto(17),
+		packet.WithSrcAddr("10.10.10.1"), packet.WithSrcPort(55555), packet.WithProto(proto.UDP),
 		packet.WithDstAddr("1.1.1.1"), packet.WithDstPort(53),
 	)
 
 	// Negated protocol: should NOT match proto 17, but SHOULD match everything else
-	ruleNegProto := New(WithNegProto(17))
+	ruleNegProto := New(WithNegProto(proto.UDP))
 	Expect(ruleNegProto.Match(pkt)).To(BeFalse())
 
-	ruleNegProtoOther := New(WithNegProto(6))
+	ruleNegProtoOther := New(WithNegProto(proto.TCP))
 	Expect(ruleNegProtoOther.Match(pkt)).To(BeTrue())
 
 	// Negated source port: should NOT match src port 55555
@@ -384,8 +385,8 @@ func TestNegatedRuleString(t *testing.T) {
 	RegisterTestingT(t)
 
 	// Negated proto should show with ! prefix
-	ruleNegProto := New(WithAction(Accept), WithNegProto(6))
-	Expect(ruleNegProto.String()).To(Equal("Accept !6{*:*->*:*}"))
+	ruleNegProto := New(WithAction(Accept), WithNegProto(proto.TCP))
+	Expect(ruleNegProto.String()).To(Equal("Accept !tcp{*:*->*:*}"))
 
 	// Negated src port should show with ! prefix
 	ruleNegSrcPort := New(WithAction(Drop), WithNegSrcPort(80))
@@ -410,7 +411,7 @@ func TestNegatedRuleConfig(t *testing.T) {
 	// Valid negated rule — negated fields populate dedicated Rule fields
 	rule := New(
 		WithAction(Accept),
-		WithNegProto(6),
+		WithNegProto(proto.TCP),
 		WithNegSrcPort(80),
 		WithNegDstPort(443),
 		WithNegSrcNet("10.0.0.0/8"),
@@ -431,8 +432,8 @@ func TestNegatedRuleConfig(t *testing.T) {
 	// Positive and negated fields can be combined on the same rule
 	ruleCombined := New(
 		WithAction(Accept),
-		WithProto(17),
-		WithNegProto(6),
+		WithProto(proto.UDP),
+		WithNegProto(proto.TCP),
 		WithSrcPort(12345),
 		WithNegSrcPort(80),
 		WithDstPort(53),
@@ -473,10 +474,10 @@ func TestCombinedPositiveAndNegativeRuleMatch(t *testing.T) {
 	Expect(rule.Match(pktOutside)).To(BeFalse())
 
 	// Rule matches proto 17 AND NOT proto 6 (proto 6 is excluded, proto 17 is required)
-	ruleProto := New(WithProto(17), WithNegProto(6))
-	pktProto17 := packet.New(packet.WithProto(17))
-	pktProto6 := packet.New(packet.WithProto(6))
-	pktProto1 := packet.New(packet.WithProto(1))
+	ruleProto := New(WithProto(proto.UDP), WithNegProto(proto.TCP))
+	pktProto17 := packet.New(packet.WithProto(proto.UDP))
+	pktProto6 := packet.New(packet.WithProto(proto.TCP))
+	pktProto1 := packet.New(packet.WithProto(proto.ICMP))
 	Expect(ruleProto.Match(pktProto17)).To(BeTrue())
 	Expect(ruleProto.Match(pktProto6)).To(BeFalse())
 	Expect(ruleProto.Match(pktProto1)).To(BeFalse()) // not in positive set
@@ -486,8 +487,8 @@ func TestCombinedRuleString(t *testing.T) {
 	RegisterTestingT(t)
 
 	// Combined proto field
-	ruleBoth := New(WithAction(Accept), WithProto(17), WithNegProto(6))
-	Expect(ruleBoth.String()).To(Equal("Accept 17,!6{*:*->*:*}"))
+	ruleBoth := New(WithAction(Accept), WithProto(proto.UDP), WithNegProto(proto.TCP))
+	Expect(ruleBoth.String()).To(Equal("Accept udp,!tcp{*:*->*:*}"))
 
 	// Combined src net field
 	ruleSrcNet := New(WithAction(Drop), WithSrcNet("10.0.0.0/8"), WithNegSrcNet("10.10.0.0/16"))

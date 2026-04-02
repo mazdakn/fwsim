@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
+
+	"github.com/mazdakn/fwsim/internal/proto"
 )
 
 func TestSetAdd(t *testing.T) {
@@ -101,9 +103,9 @@ func TestProtoSetAdd(t *testing.T) {
 
 	ps := NewProtoSet()
 
-	ps.Add(6)
-	Expect(ps.Match(6)).To(BeTrue())
-	Expect(ps.Match(17)).To(BeFalse())
+	ps.Add(proto.TCP)
+	Expect(ps.Match(proto.TCP)).To(BeTrue())
+	Expect(ps.Match(proto.UDP)).To(BeFalse())
 }
 
 func TestProtoSetDelete(t *testing.T) {
@@ -111,13 +113,13 @@ func TestProtoSetDelete(t *testing.T) {
 
 	ps := NewProtoSet()
 
-	ps.Add(6)
-	ps.Add(17)
-	Expect(ps.Match(6)).To(BeTrue())
+	ps.Add(proto.TCP)
+	ps.Add(proto.UDP)
+	Expect(ps.Match(proto.TCP)).To(BeTrue())
 
-	ps.Delete(6)
-	Expect(ps.Match(6)).To(BeFalse())
-	Expect(ps.Match(17)).To(BeTrue())
+	ps.Delete(proto.TCP)
+	Expect(ps.Match(proto.TCP)).To(BeFalse())
+	Expect(ps.Match(proto.UDP)).To(BeTrue())
 }
 
 func TestProtoSetMatch(t *testing.T) {
@@ -125,28 +127,28 @@ func TestProtoSetMatch(t *testing.T) {
 
 	ps := NewProtoSet()
 
-	Expect(ps.Match(6)).To(BeFalse())
+	Expect(ps.Match(proto.TCP)).To(BeFalse())
 
-	ps.Add(6)
-	Expect(ps.Match(6)).To(BeTrue())
-	Expect(ps.Match(17)).To(BeFalse())
+	ps.Add(proto.TCP)
+	Expect(ps.Match(proto.TCP)).To(BeTrue())
+	Expect(ps.Match(proto.UDP)).To(BeFalse())
 }
 
 func TestProtoSetStringOneProto(t *testing.T) {
 	RegisterTestingT(t)
 
 	ps := NewProtoSet()
-	ps.Add(6)
-	Expect(ps.String()).To(Equal("6"))
+	ps.Add(proto.TCP)
+	Expect(ps.String()).To(Equal("tcp"))
 }
 
 func TestProtoSetStringMultipleProtos(t *testing.T) {
 	RegisterTestingT(t)
 
 	ps := NewProtoSet()
-	ps.Add(17)
-	ps.Add(6)
-	Expect(ps.String()).To(Equal("{6,17}"))
+	ps.Add(proto.UDP)
+	ps.Add(proto.TCP)
+	Expect(ps.String()).To(Equal("{tcp,udp}"))
 }
 
 func TestIPSetAdd(t *testing.T) {

@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/mazdakn/fwsim/internal/match"
+	"github.com/mazdakn/fwsim/internal/proto"
 	"github.com/mazdakn/fwsim/pkg/config"
 	"github.com/mazdakn/fwsim/pkg/engine"
 	"github.com/mazdakn/fwsim/pkg/validator"
@@ -42,11 +43,11 @@ var (
 
 // Flags for evaluate command
 var (
-	srcAddr string
-	dstAddr string
-	proto   uint
-	srcPort uint
-	dstPort uint
+	srcAddr  string
+	dstAddr  string
+	protoStr string
+	srcPort  uint
+	dstPort  uint
 )
 
 func init() {
@@ -58,7 +59,7 @@ func init() {
 	// Add flags for evaluate command
 	evaluateCmd.Flags().StringVar(&srcAddr, "src-addr", "", "source IP address")
 	evaluateCmd.Flags().StringVar(&dstAddr, "dst-addr", "", "destination IP address")
-	evaluateCmd.Flags().UintVar(&proto, "proto", 0, "IP protocol number")
+	evaluateCmd.Flags().StringVar(&protoStr, "proto", "0", "IP protocol number or name (tcp, udp, icmp)")
 	evaluateCmd.Flags().UintVar(&srcPort, "src-port", 0, "source port")
 	evaluateCmd.Flags().UintVar(&dstPort, "dst-port", 0, "destination port")
 
@@ -85,11 +86,17 @@ func init() {
 }
 
 func runEvaluate(cmd *cobra.Command, args []string) {
+	p, err := proto.Parse(protoStr)
+	if err != nil {
+		logrus.WithError(err).Errorf("invalid protocol: %s", protoStr)
+		os.Exit(1)
+	}
+
 	// TODO: fix validation. Need to validate before initing the struct
 	pkt := &config.Packet{
 		SrcAddr: srcAddr,
 		DstAddr: dstAddr,
-		Proto:   uint8(proto),
+		Proto:   *p,
 		SrcPort: uint16(srcPort),
 		DstPort: uint16(dstPort),
 	}
