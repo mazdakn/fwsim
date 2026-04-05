@@ -8,7 +8,7 @@ import (
 	"github.com/mazdakn/fwsim/internal/counter"
 	"github.com/mazdakn/fwsim/internal/packet"
 	"github.com/mazdakn/fwsim/internal/proto"
-	set "github.com/mazdakn/fwsim/internal/set/types"
+	"github.com/mazdakn/fwsim/internal/set/types"
 )
 
 type Action int
@@ -67,7 +67,7 @@ type RuleOption func(*Rule)
 func WithProto(p proto.Proto) RuleOption {
 	return func(r *Rule) {
 		if r.Proto == nil {
-			r.Proto = set.NewProtoSet()
+			r.Proto = types.NewProtoSet()
 		}
 		r.Proto.Add(p)
 	}
@@ -76,7 +76,7 @@ func WithProto(p proto.Proto) RuleOption {
 func WithSrcPort(port uint16) RuleOption {
 	return func(r *Rule) {
 		if r.SrcPort == nil {
-			r.SrcPort = set.NewPortSet()
+			r.SrcPort = types.NewPortSet()
 		}
 		r.SrcPort.Add(port)
 	}
@@ -85,7 +85,7 @@ func WithSrcPort(port uint16) RuleOption {
 func WithDstPort(port uint16) RuleOption {
 	return func(r *Rule) {
 		if r.DstPort == nil {
-			r.DstPort = set.NewPortSet()
+			r.DstPort = types.NewPortSet()
 		}
 		r.DstPort.Add(port)
 	}
@@ -94,7 +94,7 @@ func WithDstPort(port uint16) RuleOption {
 func WithSrcNet(cidr string) RuleOption {
 	return func(r *Rule) {
 		if r.SrcNet == nil {
-			r.SrcNet = set.NewIPSet()
+			r.SrcNet = types.NewIPSet()
 		}
 		r.SrcNet.Add(MustParseCIDR(cidr))
 	}
@@ -103,7 +103,7 @@ func WithSrcNet(cidr string) RuleOption {
 func WithDstNet(cidr string) RuleOption {
 	return func(r *Rule) {
 		if r.DstNet == nil {
-			r.DstNet = set.NewIPSet()
+			r.DstNet = types.NewIPSet()
 		}
 		r.DstNet.Add(MustParseCIDR(cidr))
 	}
@@ -112,7 +112,7 @@ func WithDstNet(cidr string) RuleOption {
 func WithNegProto(p proto.Proto) RuleOption {
 	return func(r *Rule) {
 		if r.NegProto == nil {
-			r.NegProto = set.NewProtoSet()
+			r.NegProto = types.NewProtoSet()
 		}
 		r.NegProto.Add(p)
 	}
@@ -121,7 +121,7 @@ func WithNegProto(p proto.Proto) RuleOption {
 func WithNegSrcPort(port uint16) RuleOption {
 	return func(r *Rule) {
 		if r.NegSrcPort == nil {
-			r.NegSrcPort = set.NewPortSet()
+			r.NegSrcPort = types.NewPortSet()
 		}
 		r.NegSrcPort.Add(port)
 	}
@@ -130,7 +130,7 @@ func WithNegSrcPort(port uint16) RuleOption {
 func WithNegDstPort(port uint16) RuleOption {
 	return func(r *Rule) {
 		if r.NegDstPort == nil {
-			r.NegDstPort = set.NewPortSet()
+			r.NegDstPort = types.NewPortSet()
 		}
 		r.NegDstPort.Add(port)
 	}
@@ -139,7 +139,7 @@ func WithNegDstPort(port uint16) RuleOption {
 func WithNegSrcNet(cidr string) RuleOption {
 	return func(r *Rule) {
 		if r.NegSrcNet == nil {
-			r.NegSrcNet = set.NewIPSet()
+			r.NegSrcNet = types.NewIPSet()
 		}
 		r.NegSrcNet.Add(MustParseCIDR(cidr))
 	}
@@ -148,7 +148,7 @@ func WithNegSrcNet(cidr string) RuleOption {
 func WithNegDstNet(cidr string) RuleOption {
 	return func(r *Rule) {
 		if r.NegDstNet == nil {
-			r.NegDstNet = set.NewIPSet()
+			r.NegDstNet = types.NewIPSet()
 		}
 		r.NegDstNet.Add(MustParseCIDR(cidr))
 	}
@@ -185,18 +185,18 @@ func New(opts ...RuleOption) *Rule {
 type Rule struct {
 	Name   string
 	Order  uint64
-	SrcNet *set.IPSet
-	DstNet *set.IPSet
-	Proto  *set.ProtoSet
+	SrcNet *types.IPSet
+	DstNet *types.IPSet
+	Proto  *types.ProtoSet
 
-	SrcPort *set.PortSet
-	DstPort *set.PortSet
+	SrcPort *types.PortSet
+	DstPort *types.PortSet
 
-	NegSrcNet  *set.IPSet
-	NegDstNet  *set.IPSet
-	NegProto   *set.ProtoSet
-	NegSrcPort *set.PortSet
-	NegDstPort *set.PortSet
+	NegSrcNet  *types.IPSet
+	NegDstNet  *types.IPSet
+	NegProto   *types.ProtoSet
+	NegSrcPort *types.PortSet
+	NegDstPort *types.PortSet
 
 	Action Action
 

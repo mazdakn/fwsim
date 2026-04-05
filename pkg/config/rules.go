@@ -6,7 +6,7 @@ import (
 	"github.com/goccy/go-yaml"
 	"github.com/mazdakn/fwsim/internal/proto"
 	"github.com/mazdakn/fwsim/internal/rule"
-	set "github.com/mazdakn/fwsim/internal/set/types"
+	"github.com/mazdakn/fwsim/internal/set/types"
 	"github.com/mazdakn/fwsim/pkg/validator"
 )
 
@@ -44,70 +44,70 @@ func (r *Rule) ToRule() *rule.Rule {
 	mRule.Action = rule.MustParseAction(r.Action)
 
 	if len(r.Protocol) > 0 {
-		mRule.Proto = set.NewProtoSet()
+		mRule.Proto = types.NewProtoSet()
 		for _, proto := range r.Protocol {
 			mRule.Proto.Add(proto)
 		}
 	}
 
 	if len(r.NegProto) > 0 {
-		mRule.NegProto = set.NewProtoSet()
+		mRule.NegProto = types.NewProtoSet()
 		for _, proto := range r.NegProto {
 			mRule.NegProto.Add(proto)
 		}
 	}
 
 	if len(r.SrcPort) > 0 {
-		mRule.SrcPort = set.NewPortSet()
+		mRule.SrcPort = types.NewPortSet()
 		for _, port := range r.SrcPort {
 			mRule.SrcPort.Add(port)
 		}
 	}
 
 	if len(r.NegSrcPort) > 0 {
-		mRule.NegSrcPort = set.NewPortSet()
+		mRule.NegSrcPort = types.NewPortSet()
 		for _, port := range r.NegSrcPort {
 			mRule.NegSrcPort.Add(port)
 		}
 	}
 
 	if len(r.DstPort) > 0 {
-		mRule.DstPort = set.NewPortSet()
+		mRule.DstPort = types.NewPortSet()
 		for _, port := range r.DstPort {
 			mRule.DstPort.Add(port)
 		}
 	}
 
 	if len(r.NegDstPort) > 0 {
-		mRule.NegDstPort = set.NewPortSet()
+		mRule.NegDstPort = types.NewPortSet()
 		for _, port := range r.NegDstPort {
 			mRule.NegDstPort.Add(port)
 		}
 	}
 
 	if len(r.SrcNet) > 0 {
-		mRule.SrcNet = set.NewIPSet()
+		mRule.SrcNet = types.NewIPSet()
 		for _, srcNet := range r.SrcNet {
 			mRule.SrcNet.Add(rule.MustParseCIDR(srcNet))
 		}
 	}
 
 	if len(r.NegSrcNet) > 0 {
-		mRule.NegSrcNet = set.NewIPSet()
+		mRule.NegSrcNet = types.NewIPSet()
 		for _, srcNet := range r.NegSrcNet {
 			mRule.NegSrcNet.Add(rule.MustParseCIDR(srcNet))
 		}
 	}
 
 	if len(r.DstNet) > 0 {
-		mRule.DstNet = set.NewIPSet()
+		mRule.DstNet = types.NewIPSet()
 		for _, dstNet := range r.DstNet {
 			mRule.DstNet.Add(rule.MustParseCIDR(dstNet))
 		}
 	}
 
 	if len(r.NegDstNet) > 0 {
-		mRule.NegDstNet = set.NewIPSet()
+		mRule.NegDstNet = types.NewIPSet()
 		for _, dstNet := range r.NegDstNet {
 			mRule.NegDstNet.Add(rule.MustParseCIDR(dstNet))
 		}
