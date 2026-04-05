@@ -8,7 +8,7 @@ import (
 	"github.com/mazdakn/fwsim/internal/counter"
 	"github.com/mazdakn/fwsim/internal/packet"
 	"github.com/mazdakn/fwsim/internal/proto"
-	"github.com/mazdakn/fwsim/internal/set"
+	set "github.com/mazdakn/fwsim/internal/set/types"
 )
 
 type Action int

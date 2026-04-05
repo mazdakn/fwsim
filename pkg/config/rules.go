@@ -6,7 +6,7 @@ import (
 	"github.com/goccy/go-yaml"
 	"github.com/mazdakn/fwsim/internal/proto"
 	"github.com/mazdakn/fwsim/internal/rule"
-	"github.com/mazdakn/fwsim/internal/set"
+	set "github.com/mazdakn/fwsim/internal/set/types"
 	"github.com/mazdakn/fwsim/pkg/validator"
 )
 

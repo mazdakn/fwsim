@@ -1,4 +1,4 @@
-package set
+package types
 
 // Set is a generic set data type.
 type Set[T comparable] struct {
