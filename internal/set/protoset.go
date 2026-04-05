@@ -7,9 +7,9 @@ import (
 	"github.com/mazdakn/fwsim/internal/proto"
 )
 
-// ProtoSet is a Set of Proto protocol values.
+// ProtoSet is a SetType of Proto protocol values.
 type ProtoSet struct {
-	Set[proto.Proto]
+	SetType[proto.Proto]
 }
 
 // NewProtoSet returns an empty ProtoSet.
