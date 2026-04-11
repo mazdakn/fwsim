@@ -8,10 +8,44 @@ import (
 	"github.com/mazdakn/fwsim/pkg/proto"
 )
 
-func TestPacketsFromFile(t *testing.T) {
+const testPacketsYAML = `
+packets:
+  - name: access backend
+    src_addr: 192.168.1.5
+    dst_addr: 1.1.1.1
+    proto: 7
+    src_port: 30000
+    dst_port: 80
+  - name: access app1
+    src_addr: 10.0.0.1
+    dst_addr: 2.2.2.2
+    proto: 7
+    src_port: 12345
+    dst_port: 8080
+  - name: dns traffic
+    src_addr: 172.16.0.1
+    dst_addr: 8.8.8.8
+    proto: 17
+    src_port: 54321
+    dst_port: 53
+  - name: access backend
+    src_addr: 192.168.1.5
+    dst_addr: 1.1.1.1
+    proto: 7
+    src_port: 30000
+    dst_port: 80
+  - name: dns traffic
+    src_addr: 172.16.0.1
+    dst_addr: 8.8.8.8
+    proto: 17
+    src_port: 54321
+    dst_port: 53
+`
+
+func TestPacketsFromBytes(t *testing.T) {
 	RegisterTestingT(t)
 
-	pkts, err := PacketsFromFile("../../hack/packets.yaml")
+	pkts, err := PacketsFromBytes([]byte(testPacketsYAML))
 	Expect(err).To(BeNil())
 	Expect(len(pkts)).To(Equal(5))
 
@@ -30,10 +64,10 @@ func TestPacketsFromFile(t *testing.T) {
 	Expect(pkts[1].DstPort).To(Equal(uint16(8080)))
 }
 
-func TestPacketsFromFileMissing(t *testing.T) {
+func TestPacketsFromBytesInvalid(t *testing.T) {
 	RegisterTestingT(t)
 
-	pkts, err := PacketsFromFile("nonexistent.yaml")
+	pkts, err := PacketsFromBytes([]byte("not: valid: yaml: ["))
 	Expect(err).ToNot(BeNil())
 	Expect(pkts).To(BeNil())
 }

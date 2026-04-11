@@ -6,10 +6,30 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestSetsFromFile(t *testing.T) {
+const testSetsYAML = `
+sets:
+  - name: trusted-ips
+    type: ip
+    members:
+      - 192.168.1.0/24
+      - 10.0.0.0/8
+  - name: web-ports
+    type: port
+    members:
+      - "80"
+      - "443"
+      - "8080"
+  - name: allowed-protos
+    type: proto
+    members:
+      - tcp
+      - udp
+`
+
+func TestSetsFromBytes(t *testing.T) {
 	RegisterTestingT(t)
 
-	sets, err := SetsFromFile("../../hack/sets.yaml")
+	sets, err := SetsFromBytes([]byte(testSetsYAML))
 	Expect(err).To(BeNil())
 	Expect(sets).To(HaveLen(3))
 
@@ -18,10 +38,10 @@ func TestSetsFromFile(t *testing.T) {
 	Expect(sets).To(HaveKey("allowed-protos"))
 }
 
-func TestSetsFromFileMissing(t *testing.T) {
+func TestSetsFromBytesInvalid(t *testing.T) {
 	RegisterTestingT(t)
 
-	sets, err := SetsFromFile("nonexistent.yaml")
+	sets, err := SetsFromBytes([]byte("not: valid: yaml: ["))
 	Expect(err).ToNot(BeNil())
 	Expect(sets).To(BeNil())
 }

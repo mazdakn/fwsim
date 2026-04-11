@@ -50,6 +50,18 @@ func (e *Engine) ConfigFromFile() error {
 	return nil
 }
 
+func (e *Engine) ConfigRulesFromBytes(data []byte) error {
+	rc, err := config.RuleConfigFromBytes(data)
+	if err != nil {
+		return fmt.Errorf("failed to parse rules: %w", err)
+	}
+	e.table = table.New("main", rule.MustParseAction(rc.DefaultAction))
+	for _, r := range rc.Rules {
+		e.table.AddRule(r.ToRule())
+	}
+	return nil
+}
+
 func (e *Engine) ConfigRulesFromFile() error {
 	file := e.Config.RulesFile
 	rc, err := config.RuleConfigFromFile(file)
@@ -59,6 +71,20 @@ func (e *Engine) ConfigRulesFromFile() error {
 	e.table = table.New("main", rule.MustParseAction(rc.DefaultAction))
 	for _, r := range rc.Rules {
 		e.table.AddRule(r.ToRule())
+	}
+	return nil
+}
+
+func (e *Engine) ConfigPacketsFromBytes(data []byte) error {
+	pkts, err := config.PacketsFromBytes(data)
+	if err != nil {
+		return fmt.Errorf("failed to parse packets: %w", err)
+	}
+	e.matches = make([]*match.Match, 0, len(pkts))
+	for _, p := range pkts {
+		e.matches = append(e.matches, &match.Match{
+			Packet: p,
+		})
 	}
 	return nil
 }
@@ -75,6 +101,15 @@ func (e *Engine) ConfigPacketsFromFile() error {
 			Packet: p,
 		})
 	}
+	return nil
+}
+
+func (e *Engine) ConfigSetsFromBytes(data []byte) error {
+	sets, err := config.SetsFromBytes(data)
+	if err != nil {
+		return fmt.Errorf("failed to parse sets: %w", err)
+	}
+	e.sets = sets
 	return nil
 }
 

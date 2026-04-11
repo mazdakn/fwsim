@@ -47,12 +47,8 @@ func (s *Set) ToSet() (set.Set, error) {
 	return result, nil
 }
 
-// SetsFromFile reads a YAML file and returns a map of named set.Set values.
-func SetsFromFile(file string) (map[string]set.Set, error) {
-	data, err := os.ReadFile(file)
-	if err != nil {
-		return nil, err
-	}
+// SetsFromBytes parses YAML bytes and returns a map of named set.Set values.
+func SetsFromBytes(data []byte) (map[string]set.Set, error) {
 	var sc SetConfig
 	if err := yaml.Unmarshal(data, &sc); err != nil {
 		return nil, err
@@ -69,4 +65,13 @@ func SetsFromFile(file string) (map[string]set.Set, error) {
 		sets[s.Name] = namedSet
 	}
 	return sets, nil
+}
+
+// SetsFromFile reads a YAML file and returns a map of named set.Set values.
+func SetsFromFile(file string) (map[string]set.Set, error) {
+	data, err := os.ReadFile(file)
+	if err != nil {
+		return nil, err
+	}
+	return SetsFromBytes(data)
 }
