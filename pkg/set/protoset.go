@@ -1,9 +1,11 @@
 package set
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 
+	"github.com/mazdakn/fwsim/pkg/packet"
 	"github.com/mazdakn/fwsim/pkg/proto"
 )
 
@@ -17,8 +19,30 @@ func NewProtoSet() *ProtoSet {
 	return &ProtoSet{*New[proto.Proto]()}
 }
 
-// Match reports whether p is present in the set.
-func (ps *ProtoSet) Match(p proto.Proto) bool {
+// Add parses s as a protocol name or number and inserts it into the set.
+// It implements the Set interface.
+func (ps *ProtoSet) Add(s string) error {
+	p, err := proto.Parse(s)
+	if err != nil {
+		return fmt.Errorf("invalid protocol %q: %w", s, err)
+	}
+	ps.AddProto(*p)
+	return nil
+}
+
+// AddProto inserts p into the set.
+func (ps *ProtoSet) AddProto(p proto.Proto) {
+	ps.set.Add(p)
+}
+
+// Match reports whether the protocol of pkt is present in the set.
+// It implements the Set interface.
+func (ps *ProtoSet) Match(pkt *packet.Packet) bool {
+	return ps.MatchProto(pkt.Proto)
+}
+
+// MatchProto reports whether p is present in the set.
+func (ps *ProtoSet) MatchProto(p proto.Proto) bool {
 	return ps.Exists(p)
 }
 

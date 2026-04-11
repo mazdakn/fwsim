@@ -1,9 +1,12 @@
 package set
 
 import (
+	"fmt"
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/mazdakn/fwsim/pkg/packet"
 )
 
 // PortSet is a set of uint16 port values.
@@ -16,8 +19,31 @@ func NewPortSet() *PortSet {
 	return &PortSet{*New[uint16]()}
 }
 
-// Match reports whether port is present in the set.
-func (p *PortSet) Match(port uint16) bool {
+// Add parses s as a port number and inserts it into the set.
+// It implements the Set interface.
+func (p *PortSet) Add(s string) error {
+	n, err := strconv.ParseUint(s, 10, 16)
+	if err != nil {
+		return fmt.Errorf("invalid port %q: %w", s, err)
+	}
+	p.AddPort(uint16(n))
+	return nil
+}
+
+// AddPort inserts port into the set.
+func (p *PortSet) AddPort(port uint16) {
+	p.set.Add(port)
+}
+
+// Match reports whether either the source or destination port of pkt is
+// present in the set.
+// It implements the Set interface.
+func (p *PortSet) Match(pkt *packet.Packet) bool {
+	return p.MatchPort(pkt.SrcPort) || p.MatchPort(pkt.DstPort)
+}
+
+// MatchPort reports whether port is present in the set.
+func (p *PortSet) MatchPort(port uint16) bool {
 	return p.Exists(port)
 }
 

@@ -22,6 +22,7 @@ const (
 var (
 	inputFile   string
 	packetsFile string
+	setsFile    string
 	rootCmd     = &cobra.Command{
 		Use:   "fwsim",
 		Short: "Firewall simulator",
@@ -83,6 +84,7 @@ func init() {
 	// Add run subcommand
 	rootCmd.AddCommand(runCmd)
 	runCmd.Flags().StringVarP(&packetsFile, "packets", "p", defaultPacketsFile, "input file with packet information")
+	runCmd.Flags().StringVarP(&setsFile, "sets", "s", "", "input file with set definitions")
 }
 
 func runEvaluate(cmd *cobra.Command, args []string) {
@@ -130,6 +132,7 @@ func runPackets(cmd *cobra.Command, args []string) {
 	e := engine.New(engine.Config{
 		RulesFile:   inputFile,
 		PacketsFile: packetsFile,
+		SetsFile:    setsFile,
 	})
 	if err := e.ConfigFromFile(); err != nil {
 		logrus.WithError(err).Errorf("failed to load rules from %s", inputFile)

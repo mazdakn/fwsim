@@ -1,9 +1,12 @@
 package set
 
 import (
+	"fmt"
 	"net"
 	"sort"
 	"strings"
+
+	"github.com/mazdakn/fwsim/pkg/packet"
 )
 
 // IPSet is a Set of net.IPNet CIDR blocks.
@@ -18,18 +21,36 @@ func NewIPSet() *IPSet {
 	}
 }
 
-// Add inserts ipnet into the set.
-func (s *IPSet) Add(ipnet *net.IPNet) {
+// Add parses cidr and inserts the resulting network into the set.
+// It implements the Set interface.
+func (s *IPSet) Add(cidr string) error {
+	_, ipnet, err := net.ParseCIDR(cidr)
+	if err != nil {
+		return fmt.Errorf("invalid CIDR %q: %w", cidr, err)
+	}
+	s.AddNet(ipnet)
+	return nil
+}
+
+// AddNet inserts ipnet into the set.
+func (s *IPSet) AddNet(ipnet *net.IPNet) {
 	s.nets[ipnet.String()] = ipnet
 }
 
-// Delete removes ipnet from the set.
-func (s *IPSet) Delete(ipnet *net.IPNet) {
+// DeleteNet removes ipnet from the set.
+func (s *IPSet) DeleteNet(ipnet *net.IPNet) {
 	delete(s.nets, ipnet.String())
 }
 
-// Match reports whether ip is contained in any of the networks in the set.
-func (s *IPSet) Match(ip net.IP) bool {
+// Match reports whether either the source or destination address of pkt is
+// contained in any network in the set.
+// It implements the Set interface.
+func (s *IPSet) Match(pkt *packet.Packet) bool {
+	return s.MatchIP(pkt.SrcAddr) || s.MatchIP(pkt.DstAddr)
+}
+
+// MatchIP reports whether ip is contained in any of the networks in the set.
+func (s *IPSet) MatchIP(ip net.IP) bool {
 	for _, ipnet := range s.nets {
 		if ipnet.Contains(ip) {
 			return true

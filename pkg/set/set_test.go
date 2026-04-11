@@ -50,9 +50,9 @@ func TestPortSetAdd(t *testing.T) {
 
 	ps := NewPortSet()
 
-	ps.Add(80)
-	Expect(ps.Match(80)).To(BeTrue())
-	Expect(ps.Match(443)).To(BeFalse())
+	ps.AddPort(80)
+	Expect(ps.MatchPort(80)).To(BeTrue())
+	Expect(ps.MatchPort(443)).To(BeFalse())
 }
 
 func TestPortSetDelete(t *testing.T) {
@@ -60,13 +60,13 @@ func TestPortSetDelete(t *testing.T) {
 
 	ps := NewPortSet()
 
-	ps.Add(80)
-	ps.Add(443)
-	Expect(ps.Match(80)).To(BeTrue())
+	ps.AddPort(80)
+	ps.AddPort(443)
+	Expect(ps.MatchPort(80)).To(BeTrue())
 
 	ps.Delete(80)
-	Expect(ps.Match(80)).To(BeFalse())
-	Expect(ps.Match(443)).To(BeTrue())
+	Expect(ps.MatchPort(80)).To(BeFalse())
+	Expect(ps.MatchPort(443)).To(BeTrue())
 }
 
 func TestPortSetMatch(t *testing.T) {
@@ -74,18 +74,18 @@ func TestPortSetMatch(t *testing.T) {
 
 	ps := NewPortSet()
 
-	Expect(ps.Match(80)).To(BeFalse())
+	Expect(ps.MatchPort(80)).To(BeFalse())
 
-	ps.Add(80)
-	Expect(ps.Match(80)).To(BeTrue())
-	Expect(ps.Match(8080)).To(BeFalse())
+	ps.AddPort(80)
+	Expect(ps.MatchPort(80)).To(BeTrue())
+	Expect(ps.MatchPort(8080)).To(BeFalse())
 }
 
 func TestPortSetStringOnePort(t *testing.T) {
 	RegisterTestingT(t)
 
 	ps := NewPortSet()
-	ps.Add(80)
+	ps.AddPort(80)
 	Expect(ps.String()).To(Equal("80"))
 }
 
@@ -93,8 +93,8 @@ func TestPortSetStringMultiplePorts(t *testing.T) {
 	RegisterTestingT(t)
 
 	ps := NewPortSet()
-	ps.Add(443)
-	ps.Add(80)
+	ps.AddPort(443)
+	ps.AddPort(80)
 	Expect(ps.String()).To(Equal("{80,443}"))
 }
 
@@ -103,9 +103,9 @@ func TestProtoSetAdd(t *testing.T) {
 
 	ps := NewProtoSet()
 
-	ps.Add(proto.TCP)
-	Expect(ps.Match(proto.TCP)).To(BeTrue())
-	Expect(ps.Match(proto.UDP)).To(BeFalse())
+	ps.AddProto(proto.TCP)
+	Expect(ps.MatchProto(proto.TCP)).To(BeTrue())
+	Expect(ps.MatchProto(proto.UDP)).To(BeFalse())
 }
 
 func TestProtoSetDelete(t *testing.T) {
@@ -113,13 +113,13 @@ func TestProtoSetDelete(t *testing.T) {
 
 	ps := NewProtoSet()
 
-	ps.Add(proto.TCP)
-	ps.Add(proto.UDP)
-	Expect(ps.Match(proto.TCP)).To(BeTrue())
+	ps.AddProto(proto.TCP)
+	ps.AddProto(proto.UDP)
+	Expect(ps.MatchProto(proto.TCP)).To(BeTrue())
 
 	ps.Delete(proto.TCP)
-	Expect(ps.Match(proto.TCP)).To(BeFalse())
-	Expect(ps.Match(proto.UDP)).To(BeTrue())
+	Expect(ps.MatchProto(proto.TCP)).To(BeFalse())
+	Expect(ps.MatchProto(proto.UDP)).To(BeTrue())
 }
 
 func TestProtoSetMatch(t *testing.T) {
@@ -127,18 +127,18 @@ func TestProtoSetMatch(t *testing.T) {
 
 	ps := NewProtoSet()
 
-	Expect(ps.Match(proto.TCP)).To(BeFalse())
+	Expect(ps.MatchProto(proto.TCP)).To(BeFalse())
 
-	ps.Add(proto.TCP)
-	Expect(ps.Match(proto.TCP)).To(BeTrue())
-	Expect(ps.Match(proto.UDP)).To(BeFalse())
+	ps.AddProto(proto.TCP)
+	Expect(ps.MatchProto(proto.TCP)).To(BeTrue())
+	Expect(ps.MatchProto(proto.UDP)).To(BeFalse())
 }
 
 func TestProtoSetStringOneProto(t *testing.T) {
 	RegisterTestingT(t)
 
 	ps := NewProtoSet()
-	ps.Add(proto.TCP)
+	ps.AddProto(proto.TCP)
 	Expect(ps.String()).To(Equal("tcp"))
 }
 
@@ -146,8 +146,8 @@ func TestProtoSetStringMultipleProtos(t *testing.T) {
 	RegisterTestingT(t)
 
 	ps := NewProtoSet()
-	ps.Add(proto.UDP)
-	ps.Add(proto.TCP)
+	ps.AddProto(proto.UDP)
+	ps.AddProto(proto.TCP)
 	Expect(ps.String()).To(Equal("{tcp,udp}"))
 }
 
@@ -157,9 +157,9 @@ func TestIPSetAdd(t *testing.T) {
 	s := NewIPSet()
 	_, ipnet, err := net.ParseCIDR("10.0.0.0/8")
 	Expect(err).ToNot(HaveOccurred())
-	s.Add(ipnet)
-	Expect(s.Match(net.ParseIP("10.1.2.3"))).To(BeTrue())
-	Expect(s.Match(net.ParseIP("192.168.0.1"))).To(BeFalse())
+	s.AddNet(ipnet)
+	Expect(s.MatchIP(net.ParseIP("10.1.2.3"))).To(BeTrue())
+	Expect(s.MatchIP(net.ParseIP("192.168.0.1"))).To(BeFalse())
 }
 
 func TestIPSetDelete(t *testing.T) {
@@ -170,26 +170,26 @@ func TestIPSetDelete(t *testing.T) {
 	Expect(err).ToNot(HaveOccurred())
 	_, net2, err := net.ParseCIDR("192.168.0.0/16")
 	Expect(err).ToNot(HaveOccurred())
-	s.Add(net1)
-	s.Add(net2)
-	Expect(s.Match(net.ParseIP("10.1.2.3"))).To(BeTrue())
+	s.AddNet(net1)
+	s.AddNet(net2)
+	Expect(s.MatchIP(net.ParseIP("10.1.2.3"))).To(BeTrue())
 
-	s.Delete(net1)
-	Expect(s.Match(net.ParseIP("10.1.2.3"))).To(BeFalse())
-	Expect(s.Match(net.ParseIP("192.168.1.1"))).To(BeTrue())
+	s.DeleteNet(net1)
+	Expect(s.MatchIP(net.ParseIP("10.1.2.3"))).To(BeFalse())
+	Expect(s.MatchIP(net.ParseIP("192.168.1.1"))).To(BeTrue())
 }
 
 func TestIPSetMatch(t *testing.T) {
 	RegisterTestingT(t)
 
 	s := NewIPSet()
-	Expect(s.Match(net.ParseIP("10.0.0.1"))).To(BeFalse())
+	Expect(s.MatchIP(net.ParseIP("10.0.0.1"))).To(BeFalse())
 
 	_, ipnet, err := net.ParseCIDR("10.0.0.0/8")
 	Expect(err).ToNot(HaveOccurred())
-	s.Add(ipnet)
-	Expect(s.Match(net.ParseIP("10.0.0.1"))).To(BeTrue())
-	Expect(s.Match(net.ParseIP("172.16.0.1"))).To(BeFalse())
+	s.AddNet(ipnet)
+	Expect(s.MatchIP(net.ParseIP("10.0.0.1"))).To(BeTrue())
+	Expect(s.MatchIP(net.ParseIP("172.16.0.1"))).To(BeFalse())
 }
 
 func TestIPSetMatchMultipleNets(t *testing.T) {
@@ -200,11 +200,11 @@ func TestIPSetMatchMultipleNets(t *testing.T) {
 	Expect(err).ToNot(HaveOccurred())
 	_, net2, err := net.ParseCIDR("192.168.0.0/16")
 	Expect(err).ToNot(HaveOccurred())
-	s.Add(net1)
-	s.Add(net2)
-	Expect(s.Match(net.ParseIP("10.1.2.3"))).To(BeTrue())
-	Expect(s.Match(net.ParseIP("192.168.1.1"))).To(BeTrue())
-	Expect(s.Match(net.ParseIP("172.16.0.1"))).To(BeFalse())
+	s.AddNet(net1)
+	s.AddNet(net2)
+	Expect(s.MatchIP(net.ParseIP("10.1.2.3"))).To(BeTrue())
+	Expect(s.MatchIP(net.ParseIP("192.168.1.1"))).To(BeTrue())
+	Expect(s.MatchIP(net.ParseIP("172.16.0.1"))).To(BeFalse())
 }
 
 func TestIPSetStringOneNet(t *testing.T) {
@@ -213,7 +213,7 @@ func TestIPSetStringOneNet(t *testing.T) {
 	s := NewIPSet()
 	_, ipnet, err := net.ParseCIDR("10.0.0.0/8")
 	Expect(err).ToNot(HaveOccurred())
-	s.Add(ipnet)
+	s.AddNet(ipnet)
 	Expect(s.String()).To(Equal("10.0.0.0/8"))
 }
 
@@ -225,7 +225,7 @@ func TestIPSetStringMultipleNets(t *testing.T) {
 	Expect(err).ToNot(HaveOccurred())
 	_, net2, err := net.ParseCIDR("10.0.0.0/8")
 	Expect(err).ToNot(HaveOccurred())
-	s.Add(net1)
-	s.Add(net2)
+	s.AddNet(net1)
+	s.AddNet(net2)
 	Expect(s.String()).To(Equal("{10.0.0.0/8,192.168.0.0/16}"))
 }

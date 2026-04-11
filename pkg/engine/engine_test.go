@@ -46,6 +46,25 @@ func TestPacketsFromFileAndMatch(t *testing.T) {
 	Expect(m.Result.Verdict).To(Equal(rule.Accept))
 }
 
+func TestLoadSetsFromConfig(t *testing.T) {
+	RegisterTestingT(t)
+
+	engine := New(Config{
+		RulesFile: "../../hack/simple.yaml",
+		SetsFile:  "../../hack/sets.yaml",
+	})
+	err := engine.ConfigRulesFromFile()
+	Expect(err).To(BeNil())
+
+	err = engine.ConfigSetsFromFile()
+	Expect(err).To(BeNil())
+
+	sets := engine.Sets()
+	Expect(sets).To(HaveLen(3))
+	Expect(sets).To(HaveKey("trusted-ips"))
+	Expect(sets).To(HaveKey("web-ports"))
+	Expect(sets).To(HaveKey("allowed-protos"))
+}
 func TestLoadRulesFromConfig(t *testing.T) {
 	RegisterTestingT(t)
 
@@ -62,7 +81,7 @@ func TestLoadRulesFromConfig(t *testing.T) {
 	Expect(rule1.DstNet).ToNot(BeNil())
 	Expect(rule1.DstNet.String()).To(Equal("1.1.1.1/32"))
 	Expect(rule1.Proto).ToNot(BeNil())
-	Expect(rule1.Proto.Match(7)).To(BeTrue())
+	Expect(rule1.Proto.MatchProto(7)).To(BeTrue())
 	Expect(rule1.Action.String()).To(Equal("Accept"))
 
 	// Verify second rule
@@ -70,7 +89,7 @@ func TestLoadRulesFromConfig(t *testing.T) {
 	Expect(rule2.DstNet).ToNot(BeNil())
 	Expect(rule2.DstNet.String()).To(Equal("1.1.1.1/32"))
 	Expect(rule2.Proto).ToNot(BeNil())
-	Expect(rule2.Proto.Match(7)).To(BeTrue())
+	Expect(rule2.Proto.MatchProto(7)).To(BeTrue())
 	Expect(rule2.Action.String()).To(Equal("Drop"))
 
 	// Verify default action is set
