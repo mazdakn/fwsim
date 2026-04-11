@@ -5,8 +5,6 @@ import (
 	"net"
 	"sort"
 	"strings"
-
-	"github.com/mazdakn/fwsim/pkg/packet"
 )
 
 // IPSet is a Set of net.IPNet CIDR blocks.
@@ -21,38 +19,37 @@ func NewIPSet() *IPSet {
 	}
 }
 
-// Add parses cidr and inserts the resulting network into the set.
-// It implements the Set interface.
-func (s *IPSet) Add(cidr string) error {
-	_, ipnet, err := net.ParseCIDR(cidr)
-	if err != nil {
-		return fmt.Errorf("invalid CIDR %q: %w", cidr, err)
+// Add inserts a value into the set. v must be either a *net.IPNet or a string
+// in CIDR notation. It implements the Set interface.
+func (s *IPSet) Add(v any) error {
+	switch val := v.(type) {
+	case *net.IPNet:
+		s.nets[val.String()] = val
+		return nil
+	case string:
+		_, ipnet, err := net.ParseCIDR(val)
+		if err != nil {
+			return fmt.Errorf("invalid CIDR %q: %w", val, err)
+		}
+		s.nets[ipnet.String()] = ipnet
+		return nil
+	default:
+		return fmt.Errorf("IPSet.Add: unsupported type %T", v)
 	}
-	s.AddNet(ipnet)
-	return nil
 }
 
-// AddNet inserts ipnet into the set.
-func (s *IPSet) AddNet(ipnet *net.IPNet) {
-	s.nets[ipnet.String()] = ipnet
-}
-
-// DeleteNet removes ipnet from the set.
-func (s *IPSet) DeleteNet(ipnet *net.IPNet) {
+// Delete removes ipnet from the set.
+func (s *IPSet) Delete(ipnet *net.IPNet) {
 	delete(s.nets, ipnet.String())
 }
 
-// Match reports whether either the source or destination address of pkt is
-// contained in any network in the set. This OR semantics is intentional for
-// standalone named sets: when a set is used outside a specific rule field
-// context, it matches if either endpoint of the packet is in the set.
-// It implements the Set interface.
-func (s *IPSet) Match(pkt *packet.Packet) bool {
-	return s.MatchIP(pkt.SrcAddr) || s.MatchIP(pkt.DstAddr)
-}
-
-// MatchIP reports whether ip is contained in any of the networks in the set.
-func (s *IPSet) MatchIP(ip net.IP) bool {
+// Match reports whether v is contained in any network in the set.
+// v must be a net.IP. It implements the Set interface.
+func (s *IPSet) Match(v any) bool {
+	ip, ok := v.(net.IP)
+	if !ok {
+		return false
+	}
 	for _, ipnet := range s.nets {
 		if ipnet.Contains(ip) {
 			return true

@@ -5,8 +5,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-
-	"github.com/mazdakn/fwsim/pkg/packet"
 )
 
 // PortSet is a set of uint16 port values.
@@ -19,33 +17,32 @@ func NewPortSet() *PortSet {
 	return &PortSet{*New[uint16]()}
 }
 
-// Add parses s as a port number and inserts it into the set.
-// It implements the Set interface.
-func (p *PortSet) Add(s string) error {
-	n, err := strconv.ParseUint(s, 10, 16)
-	if err != nil {
-		return fmt.Errorf("invalid port %q: %w", s, err)
+// Add inserts a value into the set. v must be either a uint16 port number or a
+// string representation of a port number. It implements the Set interface.
+func (p *PortSet) Add(v any) error {
+	switch val := v.(type) {
+	case uint16:
+		p.set.Add(val)
+		return nil
+	case string:
+		n, err := strconv.ParseUint(val, 10, 16)
+		if err != nil {
+			return fmt.Errorf("invalid port %q: %w", val, err)
+		}
+		p.set.Add(uint16(n))
+		return nil
+	default:
+		return fmt.Errorf("PortSet.Add: unsupported type %T", v)
 	}
-	p.AddPort(uint16(n))
-	return nil
 }
 
-// AddPort inserts port into the set.
-func (p *PortSet) AddPort(port uint16) {
-	p.set.Add(port)
-}
-
-// Match reports whether either the source or destination port of pkt is
-// present in the set. This OR semantics is intentional for standalone named
-// sets: when a set is used outside a specific rule field context, it matches
-// if either port of the packet is in the set.
-// It implements the Set interface.
-func (p *PortSet) Match(pkt *packet.Packet) bool {
-	return p.MatchPort(pkt.SrcPort) || p.MatchPort(pkt.DstPort)
-}
-
-// MatchPort reports whether port is present in the set.
-func (p *PortSet) MatchPort(port uint16) bool {
+// Match reports whether v is present in the set. v must be a uint16 port
+// number. It implements the Set interface.
+func (p *PortSet) Match(v any) bool {
+	port, ok := v.(uint16)
+	if !ok {
+		return false
+	}
 	return p.Exists(port)
 }
 

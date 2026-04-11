@@ -5,7 +5,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/mazdakn/fwsim/pkg/packet"
 	"github.com/mazdakn/fwsim/pkg/proto"
 )
 
@@ -19,30 +18,32 @@ func NewProtoSet() *ProtoSet {
 	return &ProtoSet{*New[proto.Proto]()}
 }
 
-// Add parses s as a protocol name or number and inserts it into the set.
-// It implements the Set interface.
-func (ps *ProtoSet) Add(s string) error {
-	p, err := proto.Parse(s)
-	if err != nil {
-		return fmt.Errorf("invalid protocol %q: %w", s, err)
+// Add inserts a value into the set. v must be either a proto.Proto value or a
+// string protocol name/number. It implements the Set interface.
+func (ps *ProtoSet) Add(v any) error {
+	switch val := v.(type) {
+	case proto.Proto:
+		ps.set.Add(val)
+		return nil
+	case string:
+		p, err := proto.Parse(val)
+		if err != nil {
+			return fmt.Errorf("invalid protocol %q: %w", val, err)
+		}
+		ps.set.Add(*p)
+		return nil
+	default:
+		return fmt.Errorf("ProtoSet.Add: unsupported type %T", v)
 	}
-	ps.AddProto(*p)
-	return nil
 }
 
-// AddProto inserts p into the set.
-func (ps *ProtoSet) AddProto(p proto.Proto) {
-	ps.set.Add(p)
-}
-
-// Match reports whether the protocol of pkt is present in the set.
-// It implements the Set interface.
-func (ps *ProtoSet) Match(pkt *packet.Packet) bool {
-	return ps.MatchProto(pkt.Proto)
-}
-
-// MatchProto reports whether p is present in the set.
-func (ps *ProtoSet) MatchProto(p proto.Proto) bool {
+// Match reports whether v is present in the set. v must be a proto.Proto
+// value. It implements the Set interface.
+func (ps *ProtoSet) Match(v any) bool {
+	p, ok := v.(proto.Proto)
+	if !ok {
+		return false
+	}
 	return ps.Exists(p)
 }
 

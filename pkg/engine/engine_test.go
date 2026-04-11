@@ -3,9 +3,10 @@ package engine
 import (
 	"testing"
 
-	"github.com/mazdakn/fwsim/pkg/match"
-	"github.com/mazdakn/fwsim/pkg/rule"
 	"github.com/mazdakn/fwsim/pkg/config"
+	"github.com/mazdakn/fwsim/pkg/match"
+	"github.com/mazdakn/fwsim/pkg/proto"
+	"github.com/mazdakn/fwsim/pkg/rule"
 	. "github.com/onsi/gomega"
 )
 
@@ -81,7 +82,7 @@ func TestLoadRulesFromConfig(t *testing.T) {
 	Expect(rule1.DstNet).ToNot(BeNil())
 	Expect(rule1.DstNet.String()).To(Equal("1.1.1.1/32"))
 	Expect(rule1.Proto).ToNot(BeNil())
-	Expect(rule1.Proto.MatchProto(7)).To(BeTrue())
+	Expect(rule1.Proto.Match(proto.Proto(7))).To(BeTrue())
 	Expect(rule1.Action.String()).To(Equal("Accept"))
 
 	// Verify second rule
@@ -89,7 +90,7 @@ func TestLoadRulesFromConfig(t *testing.T) {
 	Expect(rule2.DstNet).ToNot(BeNil())
 	Expect(rule2.DstNet.String()).To(Equal("1.1.1.1/32"))
 	Expect(rule2.Proto).ToNot(BeNil())
-	Expect(rule2.Proto.MatchProto(7)).To(BeTrue())
+	Expect(rule2.Proto.Match(proto.Proto(7))).To(BeTrue())
 	Expect(rule2.Action.String()).To(Equal("Drop"))
 
 	// Verify default action is set

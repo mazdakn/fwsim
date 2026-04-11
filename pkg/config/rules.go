@@ -46,70 +46,70 @@ func (r *Rule) ToRule() *rule.Rule {
 	if len(r.Protocol) > 0 {
 		mRule.Proto = set.NewProtoSet()
 		for _, proto := range r.Protocol {
-			mRule.Proto.AddProto(proto)
+			mRule.Proto.Add(proto)
 		}
 	}
 
 	if len(r.NegProto) > 0 {
 		mRule.NegProto = set.NewProtoSet()
 		for _, proto := range r.NegProto {
-			mRule.NegProto.AddProto(proto)
+			mRule.NegProto.Add(proto)
 		}
 	}
 
 	if len(r.SrcPort) > 0 {
 		mRule.SrcPort = set.NewPortSet()
 		for _, port := range r.SrcPort {
-			mRule.SrcPort.AddPort(port)
+			mRule.SrcPort.Add(port)
 		}
 	}
 
 	if len(r.NegSrcPort) > 0 {
 		mRule.NegSrcPort = set.NewPortSet()
 		for _, port := range r.NegSrcPort {
-			mRule.NegSrcPort.AddPort(port)
+			mRule.NegSrcPort.Add(port)
 		}
 	}
 
 	if len(r.DstPort) > 0 {
 		mRule.DstPort = set.NewPortSet()
 		for _, port := range r.DstPort {
-			mRule.DstPort.AddPort(port)
+			mRule.DstPort.Add(port)
 		}
 	}
 
 	if len(r.NegDstPort) > 0 {
 		mRule.NegDstPort = set.NewPortSet()
 		for _, port := range r.NegDstPort {
-			mRule.NegDstPort.AddPort(port)
+			mRule.NegDstPort.Add(port)
 		}
 	}
 
 	if len(r.SrcNet) > 0 {
 		mRule.SrcNet = set.NewIPSet()
 		for _, srcNet := range r.SrcNet {
-			mRule.SrcNet.AddNet(rule.MustParseCIDR(srcNet))
+			mRule.SrcNet.Add(rule.MustParseCIDR(srcNet))
 		}
 	}
 
 	if len(r.NegSrcNet) > 0 {
 		mRule.NegSrcNet = set.NewIPSet()
 		for _, srcNet := range r.NegSrcNet {
-			mRule.NegSrcNet.AddNet(rule.MustParseCIDR(srcNet))
+			mRule.NegSrcNet.Add(rule.MustParseCIDR(srcNet))
 		}
 	}
 
 	if len(r.DstNet) > 0 {
 		mRule.DstNet = set.NewIPSet()
 		for _, dstNet := range r.DstNet {
-			mRule.DstNet.AddNet(rule.MustParseCIDR(dstNet))
+			mRule.DstNet.Add(rule.MustParseCIDR(dstNet))
 		}
 	}
 
 	if len(r.NegDstNet) > 0 {
 		mRule.NegDstNet = set.NewIPSet()
 		for _, dstNet := range r.NegDstNet {
-			mRule.NegDstNet.AddNet(rule.MustParseCIDR(dstNet))
+			mRule.NegDstNet.Add(rule.MustParseCIDR(dstNet))
 		}
 	}
 

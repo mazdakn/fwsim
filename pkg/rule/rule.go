@@ -69,7 +69,7 @@ func WithProto(p proto.Proto) RuleOption {
 		if r.Proto == nil {
 			r.Proto = set.NewProtoSet()
 		}
-		r.Proto.AddProto(p)
+		r.Proto.Add(p)
 	}
 }
 
@@ -78,7 +78,7 @@ func WithSrcPort(port uint16) RuleOption {
 		if r.SrcPort == nil {
 			r.SrcPort = set.NewPortSet()
 		}
-		r.SrcPort.AddPort(port)
+		r.SrcPort.Add(port)
 	}
 }
 
@@ -87,7 +87,7 @@ func WithDstPort(port uint16) RuleOption {
 		if r.DstPort == nil {
 			r.DstPort = set.NewPortSet()
 		}
-		r.DstPort.AddPort(port)
+		r.DstPort.Add(port)
 	}
 }
 
@@ -96,7 +96,7 @@ func WithSrcNet(cidr string) RuleOption {
 		if r.SrcNet == nil {
 			r.SrcNet = set.NewIPSet()
 		}
-		r.SrcNet.AddNet(MustParseCIDR(cidr))
+		r.SrcNet.Add(MustParseCIDR(cidr))
 	}
 }
 
@@ -105,7 +105,7 @@ func WithDstNet(cidr string) RuleOption {
 		if r.DstNet == nil {
 			r.DstNet = set.NewIPSet()
 		}
-		r.DstNet.AddNet(MustParseCIDR(cidr))
+		r.DstNet.Add(MustParseCIDR(cidr))
 	}
 }
 
@@ -114,7 +114,7 @@ func WithNegProto(p proto.Proto) RuleOption {
 		if r.NegProto == nil {
 			r.NegProto = set.NewProtoSet()
 		}
-		r.NegProto.AddProto(p)
+		r.NegProto.Add(p)
 	}
 }
 
@@ -123,7 +123,7 @@ func WithNegSrcPort(port uint16) RuleOption {
 		if r.NegSrcPort == nil {
 			r.NegSrcPort = set.NewPortSet()
 		}
-		r.NegSrcPort.AddPort(port)
+		r.NegSrcPort.Add(port)
 	}
 }
 
@@ -132,7 +132,7 @@ func WithNegDstPort(port uint16) RuleOption {
 		if r.NegDstPort == nil {
 			r.NegDstPort = set.NewPortSet()
 		}
-		r.NegDstPort.AddPort(port)
+		r.NegDstPort.Add(port)
 	}
 }
 
@@ -141,7 +141,7 @@ func WithNegSrcNet(cidr string) RuleOption {
 		if r.NegSrcNet == nil {
 			r.NegSrcNet = set.NewIPSet()
 		}
-		r.NegSrcNet.AddNet(MustParseCIDR(cidr))
+		r.NegSrcNet.Add(MustParseCIDR(cidr))
 	}
 }
 
@@ -150,7 +150,7 @@ func WithNegDstNet(cidr string) RuleOption {
 		if r.NegDstNet == nil {
 			r.NegDstNet = set.NewIPSet()
 		}
-		r.NegDstNet.AddNet(MustParseCIDR(cidr))
+		r.NegDstNet.Add(MustParseCIDR(cidr))
 	}
 }
 
@@ -204,34 +204,34 @@ type Rule struct {
 }
 
 func (r *Rule) Match(pkt *packet.Packet) bool {
-	if r.Proto != nil && !r.Proto.MatchProto(pkt.Proto) {
+	if r.Proto != nil && !r.Proto.Match(pkt.Proto) {
 		return false
 	}
-	if r.NegProto != nil && r.NegProto.MatchProto(pkt.Proto) {
+	if r.NegProto != nil && r.NegProto.Match(pkt.Proto) {
 		return false
 	}
-	if r.SrcPort != nil && !r.SrcPort.MatchPort(pkt.SrcPort) {
+	if r.SrcPort != nil && !r.SrcPort.Match(pkt.SrcPort) {
 		return false
 	}
-	if r.NegSrcPort != nil && r.NegSrcPort.MatchPort(pkt.SrcPort) {
+	if r.NegSrcPort != nil && r.NegSrcPort.Match(pkt.SrcPort) {
 		return false
 	}
-	if r.DstPort != nil && !r.DstPort.MatchPort(pkt.DstPort) {
+	if r.DstPort != nil && !r.DstPort.Match(pkt.DstPort) {
 		return false
 	}
-	if r.NegDstPort != nil && r.NegDstPort.MatchPort(pkt.DstPort) {
+	if r.NegDstPort != nil && r.NegDstPort.Match(pkt.DstPort) {
 		return false
 	}
-	if r.SrcNet != nil && !r.SrcNet.MatchIP(pkt.SrcAddr) {
+	if r.SrcNet != nil && !r.SrcNet.Match(pkt.SrcAddr) {
 		return false
 	}
-	if r.NegSrcNet != nil && r.NegSrcNet.MatchIP(pkt.SrcAddr) {
+	if r.NegSrcNet != nil && r.NegSrcNet.Match(pkt.SrcAddr) {
 		return false
 	}
-	if r.DstNet != nil && !r.DstNet.MatchIP(pkt.DstAddr) {
+	if r.DstNet != nil && !r.DstNet.Match(pkt.DstAddr) {
 		return false
 	}
-	if r.NegDstNet != nil && r.NegDstNet.MatchIP(pkt.DstAddr) {
+	if r.NegDstNet != nil && r.NegDstNet.Match(pkt.DstAddr) {
 		return false
 	}
 	// All conditions passed - increment packet counter
