@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/mazdakn/fwsim/internal/match"
-	"github.com/mazdakn/fwsim/internal/proto"
+	"github.com/mazdakn/fwsim/pkg/match"
+	"github.com/mazdakn/fwsim/pkg/proto"
 	"github.com/mazdakn/fwsim/pkg/config"
 	"github.com/mazdakn/fwsim/pkg/engine"
 	"github.com/mazdakn/fwsim/pkg/validator"

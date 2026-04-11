@@ -4,7 +4,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/mazdakn/fwsim/internal/proto"
+	"github.com/mazdakn/fwsim/pkg/proto"
 )
 
 // ProtoSet is a Set of Proto protocol values.

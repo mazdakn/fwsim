@@ -4,9 +4,9 @@ import (
 	"os"
 
 	"github.com/goccy/go-yaml"
-	"github.com/mazdakn/fwsim/internal/proto"
-	"github.com/mazdakn/fwsim/internal/rule"
-	"github.com/mazdakn/fwsim/internal/set"
+	"github.com/mazdakn/fwsim/pkg/proto"
+	"github.com/mazdakn/fwsim/pkg/rule"
+	"github.com/mazdakn/fwsim/pkg/set"
 	"github.com/mazdakn/fwsim/pkg/validator"
 )
 

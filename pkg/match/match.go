@@ -1,8 +1,8 @@
 package match
 
 import (
-	"github.com/mazdakn/fwsim/internal/packet"
-	"github.com/mazdakn/fwsim/internal/rule"
+	"github.com/mazdakn/fwsim/pkg/packet"
+	"github.com/mazdakn/fwsim/pkg/rule"
 )
 
 // Result holds the outcome of matching a packet against a Table.
