@@ -116,11 +116,7 @@ func (r *Rule) ToRule() *rule.Rule {
 	return mRule
 }
 
-func RuleConfigFromFile(file string) (*RuleConfig, error) {
-	data, err := os.ReadFile(file)
-	if err != nil {
-		return nil, err
-	}
+func RuleConfigFromBytes(data []byte) (*RuleConfig, error) {
 	var rc RuleConfig
 	if err := yaml.Unmarshal(data, &rc); err != nil {
 		return nil, err
@@ -129,4 +125,12 @@ func RuleConfigFromFile(file string) (*RuleConfig, error) {
 		return nil, err
 	}
 	return &rc, nil
+}
+
+func RuleConfigFromFile(file string) (*RuleConfig, error) {
+	data, err := os.ReadFile(file)
+	if err != nil {
+		return nil, err
+	}
+	return RuleConfigFromBytes(data)
 }

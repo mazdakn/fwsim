@@ -38,11 +38,7 @@ func (p *Packet) ToPacket() *packet.Packet {
 	)
 }
 
-func PacketsFromFile(file string) ([]*packet.Packet, error) {
-	data, err := os.ReadFile(file)
-	if err != nil {
-		return nil, err
-	}
+func PacketsFromBytes(data []byte) ([]*packet.Packet, error) {
 	var pc PacketConfig
 	if err := yaml.Unmarshal(data, &pc); err != nil {
 		return nil, err
@@ -55,4 +51,12 @@ func PacketsFromFile(file string) ([]*packet.Packet, error) {
 		pkts = append(pkts, p.ToPacket())
 	}
 	return pkts, nil
+}
+
+func PacketsFromFile(file string) ([]*packet.Packet, error) {
+	data, err := os.ReadFile(file)
+	if err != nil {
+		return nil, err
+	}
+	return PacketsFromBytes(data)
 }
