@@ -5,7 +5,7 @@ import (
 
 	. "github.com/onsi/gomega"
 
-	"github.com/mazdakn/fwsim/internal/proto"
+	"github.com/mazdakn/fwsim/pkg/proto"
 )
 
 func TestPacketsFromFile(t *testing.T) {

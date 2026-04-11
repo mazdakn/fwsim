@@ -3,7 +3,7 @@ package validator_test
 import (
 	"testing"
 
-	"github.com/mazdakn/fwsim/internal/proto"
+	"github.com/mazdakn/fwsim/pkg/proto"
 	"github.com/mazdakn/fwsim/pkg/config"
 	"github.com/mazdakn/fwsim/pkg/validator"
 	. "github.com/onsi/gomega"

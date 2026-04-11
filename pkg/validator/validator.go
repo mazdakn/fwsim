@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/mazdakn/fwsim/internal/rule"
+	"github.com/mazdakn/fwsim/pkg/rule"
 )
 
 // ValidateCIDR returns true if cidr is valid CIDR notation.

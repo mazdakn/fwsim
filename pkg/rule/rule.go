@@ -5,10 +5,10 @@ import (
 	"net"
 	"strings"
 
-	"github.com/mazdakn/fwsim/internal/counter"
-	"github.com/mazdakn/fwsim/internal/packet"
-	"github.com/mazdakn/fwsim/internal/proto"
-	"github.com/mazdakn/fwsim/internal/set"
+	"github.com/mazdakn/fwsim/pkg/counter"
+	"github.com/mazdakn/fwsim/pkg/packet"
+	"github.com/mazdakn/fwsim/pkg/proto"
+	"github.com/mazdakn/fwsim/pkg/set"
 )
 
 type Action int

@@ -3,9 +3,9 @@ package table
 import (
 	"testing"
 
-	"github.com/mazdakn/fwsim/internal/match"
-	"github.com/mazdakn/fwsim/internal/packet"
-	"github.com/mazdakn/fwsim/internal/rule"
+	"github.com/mazdakn/fwsim/pkg/match"
+	"github.com/mazdakn/fwsim/pkg/packet"
+	"github.com/mazdakn/fwsim/pkg/rule"
 	. "github.com/onsi/gomega"
 )
 

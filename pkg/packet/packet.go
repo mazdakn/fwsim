@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/mazdakn/fwsim/internal/proto"
+	"github.com/mazdakn/fwsim/pkg/proto"
 )
 
 type PacketOption func(*Packet)

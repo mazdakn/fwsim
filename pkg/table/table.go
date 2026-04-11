@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/mazdakn/fwsim/internal/match"
-	"github.com/mazdakn/fwsim/internal/rule"
+	"github.com/mazdakn/fwsim/pkg/match"
+	"github.com/mazdakn/fwsim/pkg/rule"
 	"github.com/sirupsen/logrus"
 )
 
