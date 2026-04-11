@@ -43,7 +43,9 @@ func (s *IPSet) DeleteNet(ipnet *net.IPNet) {
 }
 
 // Match reports whether either the source or destination address of pkt is
-// contained in any network in the set.
+// contained in any network in the set. This OR semantics is intentional for
+// standalone named sets: when a set is used outside a specific rule field
+// context, it matches if either endpoint of the packet is in the set.
 // It implements the Set interface.
 func (s *IPSet) Match(pkt *packet.Packet) bool {
 	return s.MatchIP(pkt.SrcAddr) || s.MatchIP(pkt.DstAddr)

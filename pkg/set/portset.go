@@ -36,7 +36,9 @@ func (p *PortSet) AddPort(port uint16) {
 }
 
 // Match reports whether either the source or destination port of pkt is
-// present in the set.
+// present in the set. This OR semantics is intentional for standalone named
+// sets: when a set is used outside a specific rule field context, it matches
+// if either port of the packet is in the set.
 // It implements the Set interface.
 func (p *PortSet) Match(pkt *packet.Packet) bool {
 	return p.MatchPort(pkt.SrcPort) || p.MatchPort(pkt.DstPort)
