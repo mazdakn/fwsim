@@ -6,9 +6,9 @@ import (
 	"strings"
 )
 
-// PortSet is a Set of uint16 port values.
+// PortSet is a set of uint16 port values.
 type PortSet struct {
-	Set[uint16]
+	set[uint16]
 }
 
 // NewPortSet returns an empty PortSet.
