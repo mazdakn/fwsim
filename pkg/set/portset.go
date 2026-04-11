@@ -1,6 +1,7 @@
 package set
 
 import (
+	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -16,8 +17,32 @@ func NewPortSet() *PortSet {
 	return &PortSet{*New[uint16]()}
 }
 
-// Match reports whether port is present in the set.
-func (p *PortSet) Match(port uint16) bool {
+// Add inserts a value into the set. v must be either a uint16 port number or a
+// string representation of a port number. It implements the Set interface.
+func (p *PortSet) Add(v any) error {
+	switch val := v.(type) {
+	case uint16:
+		p.set.Add(val)
+		return nil
+	case string:
+		n, err := strconv.ParseUint(val, 10, 16)
+		if err != nil {
+			return fmt.Errorf("invalid port %q: %w", val, err)
+		}
+		p.set.Add(uint16(n))
+		return nil
+	default:
+		return fmt.Errorf("PortSet.Add: unsupported type %T", v)
+	}
+}
+
+// Match reports whether v is present in the set. v must be a uint16 port
+// number. It implements the Set interface.
+func (p *PortSet) Match(v any) bool {
+	port, ok := v.(uint16)
+	if !ok {
+		return false
+	}
 	return p.Exists(port)
 }
 

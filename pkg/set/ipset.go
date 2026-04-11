@@ -1,6 +1,7 @@
 package set
 
 import (
+	"fmt"
 	"net"
 	"sort"
 	"strings"
@@ -18,9 +19,23 @@ func NewIPSet() *IPSet {
 	}
 }
 
-// Add inserts ipnet into the set.
-func (s *IPSet) Add(ipnet *net.IPNet) {
-	s.nets[ipnet.String()] = ipnet
+// Add inserts a value into the set. v must be either a *net.IPNet or a string
+// in CIDR notation. It implements the Set interface.
+func (s *IPSet) Add(v any) error {
+	switch val := v.(type) {
+	case *net.IPNet:
+		s.nets[val.String()] = val
+		return nil
+	case string:
+		_, ipnet, err := net.ParseCIDR(val)
+		if err != nil {
+			return fmt.Errorf("invalid CIDR %q: %w", val, err)
+		}
+		s.nets[ipnet.String()] = ipnet
+		return nil
+	default:
+		return fmt.Errorf("IPSet.Add: unsupported type %T", v)
+	}
 }
 
 // Delete removes ipnet from the set.
@@ -28,8 +43,13 @@ func (s *IPSet) Delete(ipnet *net.IPNet) {
 	delete(s.nets, ipnet.String())
 }
 
-// Match reports whether ip is contained in any of the networks in the set.
-func (s *IPSet) Match(ip net.IP) bool {
+// Match reports whether v is contained in any network in the set.
+// v must be a net.IP. It implements the Set interface.
+func (s *IPSet) Match(v any) bool {
+	ip, ok := v.(net.IP)
+	if !ok {
+		return false
+	}
 	for _, ipnet := range s.nets {
 		if ipnet.Contains(ip) {
 			return true

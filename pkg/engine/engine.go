@@ -3,10 +3,11 @@ package engine
 import (
 	"fmt"
 
+	"github.com/mazdakn/fwsim/pkg/config"
 	"github.com/mazdakn/fwsim/pkg/match"
 	"github.com/mazdakn/fwsim/pkg/rule"
+	"github.com/mazdakn/fwsim/pkg/set"
 	"github.com/mazdakn/fwsim/pkg/table"
-	"github.com/mazdakn/fwsim/pkg/config"
 )
 
 type Config struct {
@@ -15,6 +16,9 @@ type Config struct {
 
 	// Packet input
 	PacketsFile string
+
+	// Sets input
+	SetsFile string
 }
 
 type Engine struct {
@@ -22,6 +26,7 @@ type Engine struct {
 
 	table   *table.Table
 	matches []*match.Match
+	sets    map[string]set.Set
 }
 
 func New(conf Config) *Engine {
@@ -36,6 +41,11 @@ func (e *Engine) ConfigFromFile() error {
 	}
 	if err := e.ConfigPacketsFromFile(); err != nil {
 		return err
+	}
+	if e.Config.SetsFile != "" {
+		if err := e.ConfigSetsFromFile(); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -66,6 +76,21 @@ func (e *Engine) ConfigPacketsFromFile() error {
 		})
 	}
 	return nil
+}
+
+func (e *Engine) ConfigSetsFromFile() error {
+	file := e.Config.SetsFile
+	sets, err := config.SetsFromFile(file)
+	if err != nil {
+		return fmt.Errorf("failed to read sets from %s: %w", file, err)
+	}
+	e.sets = sets
+	return nil
+}
+
+// Sets returns the map of user-defined named sets loaded into the engine.
+func (e *Engine) Sets() map[string]set.Set {
+	return e.sets
 }
 
 func (e *Engine) RunTest(m *match.Match) {

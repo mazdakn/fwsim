@@ -36,6 +36,16 @@ func ValidateProtocol(proto uint) bool {
 	return proto <= 255
 }
 
+// ValidateSetType returns true if setType is a recognised set type ("ip", "port", "proto").
+func ValidateSetType(setType string) bool {
+	switch setType {
+	case "ip", "port", "proto":
+		return true
+	default:
+		return false
+	}
+}
+
 // validateByTag validates value using the function identified by tag.
 // It returns an error if tag is not a recognised function name, so that
 // a typo in a struct tag is surfaced immediately rather than silently failing.
@@ -47,6 +57,8 @@ func validateByTag(tag, value string) (bool, error) {
 		return ValidateAction(value), nil
 	case "isValidIP":
 		return ValidateIP(value), nil
+	case "isValidSetType":
+		return ValidateSetType(value), nil
 	default:
 		return false, fmt.Errorf("unknown validation tag: %s", tag)
 	}
