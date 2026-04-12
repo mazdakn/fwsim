@@ -107,6 +107,14 @@ func ValidateStructFields(s any) error {
 			fieldName = field.Name
 		}
 
+		// Recursively validate named struct fields without requiring a tag.
+		if field.Type.Kind() == reflect.Struct {
+			if err := ValidateStructFields(fieldVal.Interface()); err != nil {
+				return fmt.Errorf("%s: %w", fieldName, err)
+			}
+			continue
+		}
+
 		// Recursively validate slice-of-struct fields without requiring a tag.
 		if field.Type.Kind() == reflect.Slice {
 			elemType := field.Type.Elem()

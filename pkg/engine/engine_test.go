@@ -13,20 +13,24 @@ import (
 const testRulesYAML = `
 rules:
   - name: allow-192.168-to-1.1.1.1
-    src_net: [192.168.1.0/24]
-    dst_net: [1.1.1.1/32]
-    dst_port: [80]
-    src_port: [30000]
+    src:
+      net: [192.168.1.0/24]
+      port: [30000]
+    dst:
+      net: [1.1.1.1/32]
+      port: [80]
     proto: [7]
     action: Accept
   - name: deny-access-http
-    dst_net: [1.1.1.1/32]
-    dst_port: [80]
+    dst:
+      net: [1.1.1.1/32]
+      port: [80]
     proto: [7]
     action: Drop
   - name: deny-tcp-8080
-    dst_net: [2.2.2.2/32]
-    dst_port: [8080]
+    dst:
+      net: [2.2.2.2/32]
+      port: [8080]
     proto: [7]
     action: Drop
 default_action: Accept
@@ -140,8 +144,10 @@ func TestLoadSetsFromBytes(t *testing.T) {
 const testRulesWithSetsYAML = `
 rules:
   - name: allow-trusted-to-web
-    src_ip_set: trusted-ips
-    dst_port_set: web-ports
+    src:
+      ip_set: trusted-ips
+    dst:
+      port_set: web-ports
     action: Accept
   - name: deny-all
     action: Drop
@@ -214,7 +220,8 @@ func TestRulesWithNamedSetsMatch(t *testing.T) {
 const testRulesWithNotSetsYAML = `
 rules:
   - name: allow-non-blocked-src
-    not_src_ip_set: trusted-ips
+    not_src:
+      ip_set: trusted-ips
     action: Accept
   - name: deny-all
     action: Drop
