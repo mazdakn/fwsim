@@ -53,6 +53,10 @@ func TestPortString(t *testing.T) {
 		{Port{Number: 80}, "80"},
 		{Port{Number: 0}, "0"},
 		{Port{Number: 65535}, "65535"},
+		// Ranges.
+		{Port{Number: 1024, End: 65535}, "1024-65535"},
+		{Port{Number: 0, End: 1023}, "0-1023"},
+		{Port{Number: 80, End: 443}, "80-443"},
 	}
 
 	for _, tt := range tests {
@@ -60,6 +64,16 @@ func TestPortString(t *testing.T) {
 			Expect(tt.port.String()).To(Equal(tt.expected))
 		})
 	}
+}
+
+func TestPortIsRange(t *testing.T) {
+	RegisterTestingT(t)
+
+	Expect(Port{Number: 80}.IsRange()).To(BeFalse())
+	Expect(Port{Number: 80, End: 80}.IsRange()).To(BeFalse())
+	Expect(Port{Number: 80, End: 443}.IsRange()).To(BeTrue())
+	Expect(Port{Number: 0, End: 1023}.IsRange()).To(BeTrue())
+	Expect(Port{Number: 0, End: 0}.IsRange()).To(BeFalse())
 }
 
 func TestPortParse(t *testing.T) {
@@ -81,9 +95,19 @@ func TestPortParse(t *testing.T) {
 		{"443", &Port{Number: 443}, false},
 		{"0", &Port{Number: 0}, false},
 		{"65535", &Port{Number: 65535}, false},
+		// Port ranges.
+		{"1024-65535", &Port{Number: 1024, End: 65535}, false},
+		{"0-1023", &Port{Number: 0, End: 1023}, false},
+		{"80-443", &Port{Number: 80, End: 443}, false},
+		{"8080-8090", &Port{Number: 8080, End: 8090}, false},
+		// Error cases.
 		{"65536", nil, true},
 		{"invalid", nil, true},
 		{"-1", nil, true},
+		{"443-80", nil, true},   // end < start
+		{"abc-443", nil, true},  // invalid start
+		{"80-xyz", nil, true},   // invalid end
+		{"80-65536", nil, true}, // end out of range
 	}
 
 	for _, tt := range tests {
@@ -144,6 +168,39 @@ func TestPortUnmarshalYAMLString(t *testing.T) {
 		{"ssh string", "ssh", Port{Number: 22, Name: "ssh"}},
 		{"numeric string 80", "80", Port{Number: 80}},
 		{"numeric string 443", "443", Port{Number: 443}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var p Port
+			unmarshal := func(v interface{}) error {
+				switch dst := v.(type) {
+				case *uint16:
+					_ = dst
+					return fmt.Errorf("not a uint16")
+				case *string:
+					*dst = tt.input
+					return nil
+				}
+				return fmt.Errorf("unexpected type")
+			}
+			Expect(p.UnmarshalYAML(unmarshal)).To(Succeed())
+			Expect(p).To(Equal(tt.expected))
+		})
+	}
+}
+
+func TestPortUnmarshalYAMLRangeString(t *testing.T) {
+	RegisterTestingT(t)
+
+	tests := []struct {
+		name     string
+		input    string
+		expected Port
+	}{
+		{"range 1024-65535", "1024-65535", Port{Number: 1024, End: 65535}},
+		{"range 80-443", "80-443", Port{Number: 80, End: 443}},
+		{"range 0-1023", "0-1023", Port{Number: 0, End: 1023}},
 	}
 
 	for _, tt := range tests {
