@@ -129,7 +129,9 @@ func (p *PortSet) String() string {
 		if e.start == e.end {
 			sb.WriteString(strconv.Itoa(int(e.start)))
 		} else {
-			sb.WriteString(strconv.Itoa(int(e.start)) + "-" + strconv.Itoa(int(e.end)))
+			sb.WriteString(strconv.Itoa(int(e.start)))
+			sb.WriteByte('-')
+			sb.WriteString(strconv.Itoa(int(e.end)))
 		}
 	}
 	sb.WriteByte('}')

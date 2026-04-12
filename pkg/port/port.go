@@ -47,7 +47,7 @@ var wellKnownPorts = map[string]uint16{
 // "start-end" (e.g. "1024-65535").
 func Parse(s string) (*Port, error) {
 	// Check for range syntax: "start-end".
-	if idx := strings.LastIndex(s, "-"); idx > 0 {
+	if idx := strings.Index(s, "-"); idx > 0 {
 		startStr := s[:idx]
 		endStr := s[idx+1:]
 		start, err := strconv.ParseUint(startStr, 10, 16)
