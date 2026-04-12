@@ -7,6 +7,7 @@ import (
 
 	"github.com/mazdakn/fwsim/pkg/packet"
 	"github.com/mazdakn/fwsim/pkg/proto"
+	"github.com/mazdakn/fwsim/pkg/set"
 	. "github.com/onsi/gomega"
 )
 
@@ -493,4 +494,68 @@ func TestCombinedRuleString(t *testing.T) {
 	// Combined src net field
 	ruleSrcNet := New(WithAction(Drop), WithSrcNet("10.0.0.0/8"), WithNegSrcNet("10.10.0.0/16"))
 	Expect(ruleSrcNet.String()).To(Equal("Drop *{10.0.0.0/8,!10.10.0.0/16:*->*:*}"))
+}
+
+func TestNamedSetRuleMatch(t *testing.T) {
+	RegisterTestingT(t)
+
+	ipSet := set.NewIPSet()
+	_ = ipSet.Add("10.0.0.0/8")
+
+	portSet := set.NewPortSet()
+	_ = portSet.Add(uint16(80))
+
+	pktMatch := packet.New(
+		packet.WithSrcAddr("10.1.2.3"), packet.WithSrcPort(55555), packet.WithProto(proto.TCP),
+		packet.WithDstAddr("1.1.1.1"), packet.WithDstPort(80),
+	)
+	pktNoMatchIP := packet.New(
+		packet.WithSrcAddr("192.168.1.1"), packet.WithSrcPort(55555), packet.WithProto(proto.TCP),
+		packet.WithDstAddr("1.1.1.1"), packet.WithDstPort(80),
+	)
+	pktNoMatchPort := packet.New(
+		packet.WithSrcAddr("10.1.2.3"), packet.WithSrcPort(55555), packet.WithProto(proto.TCP),
+		packet.WithDstAddr("1.1.1.1"), packet.WithDstPort(443),
+	)
+
+	r := New(WithSrcIPSet(ipSet), WithDstPortSet(portSet))
+	Expect(r.Match(pktMatch)).To(BeTrue())
+	Expect(r.Match(pktNoMatchIP)).To(BeFalse())
+	Expect(r.Match(pktNoMatchPort)).To(BeFalse())
+}
+
+func TestNamedSetRuleMatchDstIPSet(t *testing.T) {
+	RegisterTestingT(t)
+
+	ipSet := set.NewIPSet()
+	_ = ipSet.Add("1.1.1.0/24")
+
+	pktMatch := packet.New(
+		packet.WithSrcAddr("10.1.2.3"), packet.WithDstAddr("1.1.1.1"),
+	)
+	pktNoMatch := packet.New(
+		packet.WithSrcAddr("10.1.2.3"), packet.WithDstAddr("2.2.2.2"),
+	)
+
+	r := New(WithDstIPSet(ipSet))
+	Expect(r.Match(pktMatch)).To(BeTrue())
+	Expect(r.Match(pktNoMatch)).To(BeFalse())
+}
+
+func TestNamedSetRuleMatchSrcPortSet(t *testing.T) {
+	RegisterTestingT(t)
+
+	portSet := set.NewPortSet()
+	_ = portSet.Add(uint16(55555))
+
+	pktMatch := packet.New(
+		packet.WithSrcPort(55555),
+	)
+	pktNoMatch := packet.New(
+		packet.WithSrcPort(12345),
+	)
+
+	r := New(WithSrcPortSet(portSet))
+	Expect(r.Match(pktMatch)).To(BeTrue())
+	Expect(r.Match(pktNoMatch)).To(BeFalse())
 }
