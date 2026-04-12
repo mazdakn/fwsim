@@ -88,32 +88,32 @@ func TestConfigValidateInvalidDstNet(t *testing.T) {
 	Expect(err.Error()).To(ContainSubstring("invalid dst_net"))
 }
 
-func TestConfigValidateInvalidNegSrcNet(t *testing.T) {
+func TestConfigValidateInvalidNotSrcNet(t *testing.T) {
 	RegisterTestingT(t)
 
 	c := &config.RuleConfig{
 		Rules: []config.Rule{
-			{NegSrcNet: []string{"256.0.0.0/8"}, Action: "Drop"},
+			{NotSrcNet: []string{"256.0.0.0/8"}, Action: "Drop"},
 		},
 		DefaultAction: "Accept",
 	}
 	err := c.Validate()
 	Expect(err).ToNot(BeNil())
-	Expect(err.Error()).To(ContainSubstring("invalid neg_src_net"))
+	Expect(err.Error()).To(ContainSubstring("invalid not_src_net"))
 }
 
-func TestConfigValidateInvalidNegDstNet(t *testing.T) {
+func TestConfigValidateInvalidNotDstNet(t *testing.T) {
 	RegisterTestingT(t)
 
 	c := &config.RuleConfig{
 		Rules: []config.Rule{
-			{NegDstNet: []string{"abc"}, Action: "Drop"},
+			{NotDstNet: []string{"abc"}, Action: "Drop"},
 		},
 		DefaultAction: "Accept",
 	}
 	err := c.Validate()
 	Expect(err).ToNot(BeNil())
-	Expect(err.Error()).To(ContainSubstring("invalid neg_dst_net"))
+	Expect(err.Error()).To(ContainSubstring("invalid not_dst_net"))
 }
 
 func TestConfigValidateInvalidRuleAction(t *testing.T) {
@@ -242,8 +242,8 @@ func TestConfigValidateValid(t *testing.T) {
 			{
 				SrcNet:    []string{"192.168.1.0/24"},
 				DstNet:    []string{"1.1.1.1/32"},
-				NegSrcNet: []string{"192.168.1.128/25"},
-				NegDstNet: []string{"1.1.1.0/30"},
+				NotSrcNet: []string{"192.168.1.128/25"},
+				NotDstNet: []string{"1.1.1.0/30"},
 				Action:    "Accept",
 			},
 		},
@@ -324,9 +324,9 @@ func TestConfigValidateValidRuleWithPortsAndProto(t *testing.T) {
 				Protocol:   []proto.Proto{proto.TCP, proto.UDP},
 				SrcPort:    []uint16{30000},
 				DstPort:    []uint16{80, 443},
-				NegProto:   []proto.Proto{proto.ICMP},
-				NegSrcPort: []uint16{22},
-				NegDstPort: []uint16{8080},
+				NotProto:   []proto.Proto{proto.ICMP},
+				NotSrcPort: []uint16{22},
+				NotDstPort: []uint16{8080},
 				Action:     "Accept",
 			},
 		},

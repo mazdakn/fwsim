@@ -211,10 +211,10 @@ func TestRulesWithNamedSetsMatch(t *testing.T) {
 	Expect(m.Result.Verdict).To(Equal(rule.Drop))
 }
 
-const testRulesWithNegSetsYAML = `
+const testRulesWithNotSetsYAML = `
 rules:
   - name: allow-non-blocked-src
-    neg_src_ip_set: trusted-ips
+    not_src_ip_set: trusted-ips
     action: Accept
   - name: deny-all
     action: Drop
@@ -228,11 +228,11 @@ func TestRulesReferencingNegatedNamedSets(t *testing.T) {
 	err := engine.ConfigSetsFromBytes([]byte(testSetsYAML))
 	Expect(err).To(BeNil())
 
-	err = engine.ConfigRulesFromBytes([]byte(testRulesWithNegSetsYAML))
+	err = engine.ConfigRulesFromBytes([]byte(testRulesWithNotSetsYAML))
 	Expect(err).To(BeNil())
 
 	Expect(len(engine.table.Rules)).To(Equal(2))
-	Expect(engine.table.Rules[0].NegSource.IPSet).ToNot(BeNil())
+	Expect(engine.table.Rules[0].NotSource.IPSet).ToNot(BeNil())
 }
 
 func TestRulesWithNegatedNamedSetsMatch(t *testing.T) {
@@ -242,7 +242,7 @@ func TestRulesWithNegatedNamedSetsMatch(t *testing.T) {
 	err := engine.ConfigSetsFromBytes([]byte(testSetsYAML))
 	Expect(err).To(BeNil())
 
-	err = engine.ConfigRulesFromBytes([]byte(testRulesWithNegSetsYAML))
+	err = engine.ConfigRulesFromBytes([]byte(testRulesWithNotSetsYAML))
 	Expect(err).To(BeNil())
 
 	pkts, err := config.PacketsFromBytes([]byte(testPacketsYAML))
@@ -264,7 +264,7 @@ func TestRulesReferencingUnknownNegatedSetError(t *testing.T) {
 
 	engine := New(Config{})
 	// No sets loaded — negated set reference must fail at load time.
-	err := engine.ConfigRulesFromBytes([]byte(testRulesWithNegSetsYAML))
+	err := engine.ConfigRulesFromBytes([]byte(testRulesWithNotSetsYAML))
 	Expect(err).ToNot(BeNil())
 	Expect(err.Error()).To(ContainSubstring("unknown set"))
 }
