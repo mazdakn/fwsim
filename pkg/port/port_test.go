@@ -7,6 +7,31 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+func TestPortResolve(t *testing.T) {
+	RegisterTestingT(t)
+
+	// Numeric port: Resolve returns Number unchanged.
+	Expect(Port{Number: 80}.Resolve()).To(Equal(uint16(80)))
+	Expect(Port{Number: 0}.Resolve()).To(Equal(uint16(0)))
+	Expect(Port{Number: 65535}.Resolve()).To(Equal(uint16(65535)))
+
+	// Named port: Resolve looks up the number from wellKnownPorts.
+	Expect(Port{Name: "http"}.Resolve()).To(Equal(uint16(80)))
+	Expect(Port{Name: "https"}.Resolve()).To(Equal(uint16(443)))
+	Expect(Port{Name: "ssh"}.Resolve()).To(Equal(uint16(22)))
+	Expect(Port{Name: "dns"}.Resolve()).To(Equal(uint16(53)))
+
+	// Name is case-insensitive.
+	Expect(Port{Name: "HTTP"}.Resolve()).To(Equal(uint16(80)))
+	Expect(Port{Name: "HTTPS"}.Resolve()).To(Equal(uint16(443)))
+
+	// Named port with Number already set: name takes precedence.
+	Expect(Port{Number: 0, Name: "http"}.Resolve()).To(Equal(uint16(80)))
+
+	// Unknown name with Number: falls back to Number.
+	Expect(Port{Number: 9999, Name: "unknown"}.Resolve()).To(Equal(uint16(9999)))
+}
+
 func TestPortConstants(t *testing.T) {
 	RegisterTestingT(t)
 

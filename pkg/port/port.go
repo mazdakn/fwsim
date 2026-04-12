@@ -48,6 +48,20 @@ func Parse(s string) (*Port, error) {
 	return &Port{Number: uint16(n)}, nil
 }
 
+// Resolve returns the port number. When the Port was created with a name,
+// it looks the number up in the well-known ports map. When no name is set,
+// it returns Number directly. If the Name is set but not in the well-known
+// ports map, it falls back to Number; this case should not arise after
+// successful validation via ValidatePortValue.
+func (p Port) Resolve() uint16 {
+	if p.Name != "" {
+		if n, ok := wellKnownPorts[strings.ToLower(p.Name)]; ok {
+			return n
+		}
+	}
+	return p.Number
+}
+
 // String returns the port name if the port was specified by name, otherwise its
 // numeric value as a string.
 func (p Port) String() string {

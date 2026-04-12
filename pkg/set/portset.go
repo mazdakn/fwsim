@@ -28,13 +28,12 @@ func (p *PortSet) Add(v any) error {
 		p.set.Add(val)
 		return nil
 	case port.Port:
-		p.set.Add(val.Number)
+		p.set.Add(val.Resolve())
 		return nil
 	case string:
 		parsed, err := port.Parse(val)
 		if err != nil {
-			// Re-wrap with a friendlier message that mentions the raw input.
-			return fmt.Errorf("invalid port %q: not a valid port number or name", val)
+			return fmt.Errorf("invalid port %q: %w", val, err)
 		}
 		p.set.Add(parsed.Number)
 		return nil

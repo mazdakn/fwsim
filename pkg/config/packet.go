@@ -34,8 +34,8 @@ func (p *Packet) ToPacket() *packet.Packet {
 		packet.WithSrcAddr(p.SrcAddr),
 		packet.WithDstAddr(p.DstAddr),
 		packet.WithProto(p.Proto),
-		packet.WithSrcPort(p.SrcPort.Number),
-		packet.WithDstPort(p.DstPort.Number),
+		packet.WithSrcPort(p.SrcPort.Resolve()),
+		packet.WithDstPort(p.DstPort.Resolve()),
 	)
 }
 

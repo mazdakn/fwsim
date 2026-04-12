@@ -5,6 +5,7 @@ import (
 
 	. "github.com/onsi/gomega"
 
+	"github.com/mazdakn/fwsim/pkg/port"
 	"github.com/mazdakn/fwsim/pkg/set"
 )
 
@@ -218,4 +219,28 @@ func TestToRuleWithoutNegatedSetsNilByDefault(t *testing.T) {
 	Expect(mRule.NotDestination.IPSet).To(BeNil())
 	Expect(mRule.NotSource.PortSet).To(BeNil())
 	Expect(mRule.NotDestination.PortSet).To(BeNil())
+}
+
+func TestToRuleWithNameOnlyPorts(t *testing.T) {
+	RegisterTestingT(t)
+
+	r := &Rule{
+		Name: "allow-http",
+		Source: Endpoint{
+			Port: []port.Port{{Name: "ssh"}},
+		},
+		Destination: Endpoint{
+			Port: []port.Port{{Name: "http"}, {Name: "https"}},
+		},
+		Action: "Accept",
+	}
+	mRule, err := r.ToRule(nil)
+	Expect(err).To(BeNil())
+	Expect(mRule).ToNot(BeNil())
+	Expect(mRule.Source.Port).ToNot(BeNil())
+	Expect(mRule.Source.Port.Match(uint16(22))).To(BeTrue())
+	Expect(mRule.Destination.Port).ToNot(BeNil())
+	Expect(mRule.Destination.Port.Match(uint16(80))).To(BeTrue())
+	Expect(mRule.Destination.Port.Match(uint16(443))).To(BeTrue())
+	Expect(mRule.Destination.Port.Match(uint16(22))).To(BeFalse())
 }

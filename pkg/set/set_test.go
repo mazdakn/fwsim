@@ -6,6 +6,7 @@ import (
 
 	. "github.com/onsi/gomega"
 
+	"github.com/mazdakn/fwsim/pkg/port"
 	"github.com/mazdakn/fwsim/pkg/proto"
 )
 
@@ -43,6 +44,30 @@ func TestSetExists(t *testing.T) {
 	s.Add("present")
 	Expect(s.Exists("present")).To(BeTrue())
 	Expect(s.Exists("missing")).To(BeFalse())
+}
+
+func TestPortSetAddPortStruct(t *testing.T) {
+	RegisterTestingT(t)
+
+	ps := NewPortSet()
+
+	// port.Port with only a name — number must be resolved from the name.
+	Expect(ps.Add(port.Port{Name: "http"})).To(Succeed())
+	Expect(ps.Match(uint16(80))).To(BeTrue())
+	Expect(ps.Match(uint16(443))).To(BeFalse())
+
+	Expect(ps.Add(port.Port{Name: "https"})).To(Succeed())
+	Expect(ps.Match(uint16(443))).To(BeTrue())
+
+	// port.Port with both number and name — name takes precedence.
+	ps2 := NewPortSet()
+	Expect(ps2.Add(port.Port{Number: 0, Name: "ssh"})).To(Succeed())
+	Expect(ps2.Match(uint16(22))).To(BeTrue())
+
+	// port.Port with only a number.
+	ps3 := NewPortSet()
+	Expect(ps3.Add(port.Port{Number: 8080})).To(Succeed())
+	Expect(ps3.Match(uint16(8080))).To(BeTrue())
 }
 
 func TestPortSetAdd(t *testing.T) {

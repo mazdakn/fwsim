@@ -32,9 +32,11 @@ func ValidatePort(port uint) bool {
 	return port <= 65535
 }
 
-// ValidatePortValue returns true if p is a valid port: numeric ports are always
-// valid (uint16 guarantees range 0–65535), and named ports must be a well-known
-// service name recognised by port.Parse.
+// ValidatePortValue returns true if p is a valid port. Ports with no name are
+// always valid because the uint16 Number field enforces the 0–65535 range
+// constraint. When a Name is set, it must be a well-known service name
+// recognised by port.Parse; an invalid name is rejected even when a valid
+// Number is also present.
 func ValidatePortValue(p port.Port) bool {
 	if p.Name == "" {
 		return true

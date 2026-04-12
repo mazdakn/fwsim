@@ -171,9 +171,11 @@ func TestValidatePortValue(t *testing.T) {
 	Expect(validator.ValidatePortValue(port.Port{Number: 443, Name: "https"})).To(BeTrue())
 	Expect(validator.ValidatePortValue(port.Port{Number: 22, Name: "ssh"})).To(BeTrue())
 
-	// Unknown names are invalid
+	// Unknown names are invalid, even when a valid Number is also set — the
+	// Name field takes precedence during validation.
 	Expect(validator.ValidatePortValue(port.Port{Name: "notaservice"})).To(BeFalse())
 	Expect(validator.ValidatePortValue(port.Port{Name: "badport"})).To(BeFalse())
+	Expect(validator.ValidatePortValue(port.Port{Number: 80, Name: "badservice"})).To(BeFalse())
 }
 
 func TestValidateProtocol(t *testing.T) {

@@ -46,7 +46,7 @@ func (e *Endpoint) toEndpoint(ruleName string, sets map[string]set.Set) (rule.En
 	if len(e.Port) > 0 {
 		ep.Port = set.NewPortSet()
 		for _, p := range e.Port {
-			ep.Port.Add(p.Number)
+			ep.Port.Add(p)
 		}
 	}
 

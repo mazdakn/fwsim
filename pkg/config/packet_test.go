@@ -5,6 +5,7 @@ import (
 
 	. "github.com/onsi/gomega"
 
+	"github.com/mazdakn/fwsim/pkg/port"
 	"github.com/mazdakn/fwsim/pkg/proto"
 )
 
@@ -70,4 +71,19 @@ func TestPacketsFromBytesInvalid(t *testing.T) {
 	pkts, err := PacketsFromBytes([]byte("not: valid: yaml: ["))
 	Expect(err).ToNot(BeNil())
 	Expect(pkts).To(BeNil())
+}
+
+func TestToPacketWithNameOnlyPort(t *testing.T) {
+	RegisterTestingT(t)
+
+	p := &Packet{
+		SrcAddr: "192.168.1.5",
+		DstAddr: "1.1.1.1",
+		Proto:   proto.TCP,
+		SrcPort: port.Port{Name: "ssh"},
+		DstPort: port.Port{Name: "https"},
+	}
+	pkt := p.ToPacket()
+	Expect(pkt.SrcPort).To(Equal(uint16(22)))
+	Expect(pkt.DstPort).To(Equal(uint16(443)))
 }
