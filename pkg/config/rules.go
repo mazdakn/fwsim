@@ -69,58 +69,58 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 	}
 
 	if len(r.SrcPort) > 0 {
-		mRule.SrcPort = set.NewPortSet()
+		mRule.Source.Port = set.NewPortSet()
 		for _, port := range r.SrcPort {
-			mRule.SrcPort.Add(port)
+			mRule.Source.Port.Add(port)
 		}
 	}
 
 	if len(r.NegSrcPort) > 0 {
-		mRule.NegSrcPort = set.NewPortSet()
+		mRule.NegSource.Port = set.NewPortSet()
 		for _, port := range r.NegSrcPort {
-			mRule.NegSrcPort.Add(port)
+			mRule.NegSource.Port.Add(port)
 		}
 	}
 
 	if len(r.DstPort) > 0 {
-		mRule.DstPort = set.NewPortSet()
+		mRule.Destination.Port = set.NewPortSet()
 		for _, port := range r.DstPort {
-			mRule.DstPort.Add(port)
+			mRule.Destination.Port.Add(port)
 		}
 	}
 
 	if len(r.NegDstPort) > 0 {
-		mRule.NegDstPort = set.NewPortSet()
+		mRule.NegDestination.Port = set.NewPortSet()
 		for _, port := range r.NegDstPort {
-			mRule.NegDstPort.Add(port)
+			mRule.NegDestination.Port.Add(port)
 		}
 	}
 
 	if len(r.SrcNet) > 0 {
-		mRule.SrcNet = set.NewIPSet()
+		mRule.Source.Net = set.NewIPSet()
 		for _, srcNet := range r.SrcNet {
-			mRule.SrcNet.Add(rule.MustParseCIDR(srcNet))
+			mRule.Source.Net.Add(rule.MustParseCIDR(srcNet))
 		}
 	}
 
 	if len(r.NegSrcNet) > 0 {
-		mRule.NegSrcNet = set.NewIPSet()
+		mRule.NegSource.Net = set.NewIPSet()
 		for _, srcNet := range r.NegSrcNet {
-			mRule.NegSrcNet.Add(rule.MustParseCIDR(srcNet))
+			mRule.NegSource.Net.Add(rule.MustParseCIDR(srcNet))
 		}
 	}
 
 	if len(r.DstNet) > 0 {
-		mRule.DstNet = set.NewIPSet()
+		mRule.Destination.Net = set.NewIPSet()
 		for _, dstNet := range r.DstNet {
-			mRule.DstNet.Add(rule.MustParseCIDR(dstNet))
+			mRule.Destination.Net.Add(rule.MustParseCIDR(dstNet))
 		}
 	}
 
 	if len(r.NegDstNet) > 0 {
-		mRule.NegDstNet = set.NewIPSet()
+		mRule.NegDestination.Net = set.NewIPSet()
 		for _, dstNet := range r.NegDstNet {
-			mRule.NegDstNet.Add(rule.MustParseCIDR(dstNet))
+			mRule.NegDestination.Net.Add(rule.MustParseCIDR(dstNet))
 		}
 	}
 
@@ -129,7 +129,7 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 		if !ok {
 			return nil, fmt.Errorf("rule %q references unknown set %q", r.Name, r.SrcIPSet)
 		}
-		mRule.SrcIPSet = s
+		mRule.Source.IPSet = s
 	}
 
 	if r.DstIPSet != "" {
@@ -137,7 +137,7 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 		if !ok {
 			return nil, fmt.Errorf("rule %q references unknown set %q", r.Name, r.DstIPSet)
 		}
-		mRule.DstIPSet = s
+		mRule.Destination.IPSet = s
 	}
 
 	if r.SrcPortSet != "" {
@@ -145,7 +145,7 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 		if !ok {
 			return nil, fmt.Errorf("rule %q references unknown set %q", r.Name, r.SrcPortSet)
 		}
-		mRule.SrcPortSet = s
+		mRule.Source.PortSet = s
 	}
 
 	if r.DstPortSet != "" {
@@ -153,7 +153,7 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 		if !ok {
 			return nil, fmt.Errorf("rule %q references unknown set %q", r.Name, r.DstPortSet)
 		}
-		mRule.DstPortSet = s
+		mRule.Destination.PortSet = s
 	}
 
 	if r.NegSrcIPSet != "" {
@@ -161,7 +161,7 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 		if !ok {
 			return nil, fmt.Errorf("rule %q references unknown set %q", r.Name, r.NegSrcIPSet)
 		}
-		mRule.NegSrcIPSet = s
+		mRule.NegSource.IPSet = s
 	}
 
 	if r.NegDstIPSet != "" {
@@ -169,7 +169,7 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 		if !ok {
 			return nil, fmt.Errorf("rule %q references unknown set %q", r.Name, r.NegDstIPSet)
 		}
-		mRule.NegDstIPSet = s
+		mRule.NegDestination.IPSet = s
 	}
 
 	if r.NegSrcPortSet != "" {
@@ -177,7 +177,7 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 		if !ok {
 			return nil, fmt.Errorf("rule %q references unknown set %q", r.Name, r.NegSrcPortSet)
 		}
-		mRule.NegSrcPortSet = s
+		mRule.NegSource.PortSet = s
 	}
 
 	if r.NegDstPortSet != "" {
@@ -185,7 +185,7 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 		if !ok {
 			return nil, fmt.Errorf("rule %q references unknown set %q", r.Name, r.NegDstPortSet)
 		}
-		mRule.NegDstPortSet = s
+		mRule.NegDestination.PortSet = s
 	}
 
 	return mRule, nil
