@@ -211,6 +211,64 @@ func TestRulesWithNamedSetsMatch(t *testing.T) {
 	Expect(m.Result.Verdict).To(Equal(rule.Drop))
 }
 
+const testRulesWithNegSetsYAML = `
+rules:
+  - name: allow-non-blocked-src
+    neg_src_ip_set: trusted-ips
+    action: Accept
+  - name: deny-all
+    action: Drop
+default_action: Drop
+`
+
+func TestRulesReferencingNegatedNamedSets(t *testing.T) {
+	RegisterTestingT(t)
+
+	engine := New(Config{})
+	err := engine.ConfigSetsFromBytes([]byte(testSetsYAML))
+	Expect(err).To(BeNil())
+
+	err = engine.ConfigRulesFromBytes([]byte(testRulesWithNegSetsYAML))
+	Expect(err).To(BeNil())
+
+	Expect(len(engine.table.Rules)).To(Equal(2))
+	Expect(engine.table.Rules[0].NegSrcIPSet).ToNot(BeNil())
+}
+
+func TestRulesWithNegatedNamedSetsMatch(t *testing.T) {
+	RegisterTestingT(t)
+
+	engine := New(Config{})
+	err := engine.ConfigSetsFromBytes([]byte(testSetsYAML))
+	Expect(err).To(BeNil())
+
+	err = engine.ConfigRulesFromBytes([]byte(testRulesWithNegSetsYAML))
+	Expect(err).To(BeNil())
+
+	pkts, err := config.PacketsFromBytes([]byte(testPacketsYAML))
+	Expect(err).To(BeNil())
+
+	// First packet: src 192.168.1.5 — in trusted-ips → negated, rule1 does NOT match → deny-all (Drop)
+	m := &match.Match{Packet: pkts[0]}
+	engine.RunTest(m)
+	Expect(m.Result.Verdict).To(Equal(rule.Drop))
+
+	// Third packet: src 172.16.0.1 — NOT in trusted-ips → rule1 matches (Accept)
+	m = &match.Match{Packet: pkts[2]}
+	engine.RunTest(m)
+	Expect(m.Result.Verdict).To(Equal(rule.Accept))
+}
+
+func TestRulesReferencingUnknownNegatedSetError(t *testing.T) {
+	RegisterTestingT(t)
+
+	engine := New(Config{})
+	// No sets loaded — negated set reference must fail at load time.
+	err := engine.ConfigRulesFromBytes([]byte(testRulesWithNegSetsYAML))
+	Expect(err).ToNot(BeNil())
+	Expect(err.Error()).To(ContainSubstring("unknown set"))
+}
+
 func TestLoadRulesFromBytes(t *testing.T) {
 	RegisterTestingT(t)
 

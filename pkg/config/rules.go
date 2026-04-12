@@ -34,10 +34,14 @@ type Rule struct {
 	NegProto   []proto.Proto `yaml:"neg_proto,omitempty"   validate:"isProtoValid"`
 	NegSrcPort []uint16      `yaml:"neg_src_port,omitempty" validate:"isPortValid"`
 	NegDstPort []uint16      `yaml:"neg_dst_port,omitempty" validate:"isPortValid"`
-	SrcIPSet   string        `yaml:"src_ip_set,omitempty"`
-	DstIPSet   string        `yaml:"dst_ip_set,omitempty"`
-	SrcPortSet string        `yaml:"src_port_set,omitempty"`
-	DstPortSet string        `yaml:"dst_port_set,omitempty"`
+	SrcIPSet      string        `yaml:"src_ip_set,omitempty"`
+	DstIPSet      string        `yaml:"dst_ip_set,omitempty"`
+	SrcPortSet    string        `yaml:"src_port_set,omitempty"`
+	DstPortSet    string        `yaml:"dst_port_set,omitempty"`
+	NegSrcIPSet   string        `yaml:"neg_src_ip_set,omitempty"`
+	NegDstIPSet   string        `yaml:"neg_dst_ip_set,omitempty"`
+	NegSrcPortSet string        `yaml:"neg_src_port_set,omitempty"`
+	NegDstPortSet string        `yaml:"neg_dst_port_set,omitempty"`
 	Action     string        `yaml:"action,omitempty"      validate:"isValidAction"`
 }
 
@@ -150,6 +154,38 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 			return nil, fmt.Errorf("rule %q references unknown set %q", r.Name, r.DstPortSet)
 		}
 		mRule.DstPortSet = s
+	}
+
+	if r.NegSrcIPSet != "" {
+		s, ok := sets[r.NegSrcIPSet]
+		if !ok {
+			return nil, fmt.Errorf("rule %q references unknown set %q", r.Name, r.NegSrcIPSet)
+		}
+		mRule.NegSrcIPSet = s
+	}
+
+	if r.NegDstIPSet != "" {
+		s, ok := sets[r.NegDstIPSet]
+		if !ok {
+			return nil, fmt.Errorf("rule %q references unknown set %q", r.Name, r.NegDstIPSet)
+		}
+		mRule.NegDstIPSet = s
+	}
+
+	if r.NegSrcPortSet != "" {
+		s, ok := sets[r.NegSrcPortSet]
+		if !ok {
+			return nil, fmt.Errorf("rule %q references unknown set %q", r.Name, r.NegSrcPortSet)
+		}
+		mRule.NegSrcPortSet = s
+	}
+
+	if r.NegDstPortSet != "" {
+		s, ok := sets[r.NegDstPortSet]
+		if !ok {
+			return nil, fmt.Errorf("rule %q references unknown set %q", r.Name, r.NegDstPortSet)
+		}
+		mRule.NegDstPortSet = s
 	}
 
 	return mRule, nil
