@@ -5,6 +5,7 @@ import (
 
 	"github.com/goccy/go-yaml"
 	"github.com/mazdakn/fwsim/pkg/packet"
+	"github.com/mazdakn/fwsim/pkg/port"
 	"github.com/mazdakn/fwsim/pkg/proto"
 	"github.com/mazdakn/fwsim/pkg/validator"
 )
@@ -21,8 +22,8 @@ type Packet struct {
 	SrcAddr string      `yaml:"src_addr,omitempty" validate:"isValidIP"`
 	DstAddr string      `yaml:"dst_addr,omitempty" validate:"isValidIP"`
 	Proto   proto.Proto `yaml:"proto,omitempty"    validate:"isProtoValid"`
-	SrcPort uint16      `yaml:"src_port,omitempty" validate:"isPortValid"`
-	DstPort uint16      `yaml:"dst_port,omitempty" validate:"isPortValid"`
+	SrcPort port.Port   `yaml:"src_port,omitempty"`
+	DstPort port.Port   `yaml:"dst_port,omitempty"`
 
 	Metadata packet.Metadata `yaml:"metadata,omitempty"`
 }
@@ -33,8 +34,8 @@ func (p *Packet) ToPacket() *packet.Packet {
 		packet.WithSrcAddr(p.SrcAddr),
 		packet.WithDstAddr(p.DstAddr),
 		packet.WithProto(p.Proto),
-		packet.WithSrcPort(p.SrcPort),
-		packet.WithDstPort(p.DstPort),
+		packet.WithSrcPort(p.SrcPort.Number),
+		packet.WithDstPort(p.DstPort.Number),
 	)
 }
 

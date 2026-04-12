@@ -5,6 +5,7 @@ import (
 
 	"github.com/mazdakn/fwsim/pkg/proto"
 	"github.com/mazdakn/fwsim/pkg/config"
+	"github.com/mazdakn/fwsim/pkg/port"
 	"github.com/mazdakn/fwsim/pkg/validator"
 	. "github.com/onsi/gomega"
 )
@@ -341,12 +342,12 @@ func TestConfigValidateValidRuleWithPortsAndProto(t *testing.T) {
 	c := &config.RuleConfig{
 		Rules: []config.Rule{
 			{
-				Source:         config.Endpoint{Net: []string{"192.168.1.0/24"}, Port: []uint16{30000}},
-				Destination:    config.Endpoint{Net: []string{"1.1.1.1/32"}, Port: []uint16{80, 443}},
+				Source:         config.Endpoint{Net: []string{"192.168.1.0/24"}, Port: []port.Port{{Number: 30000}}},
+				Destination:    config.Endpoint{Net: []string{"1.1.1.1/32"}, Port: []port.Port{{Number: 80}, {Number: 443}}},
 				Protocol:       []proto.Proto{proto.TCP, proto.UDP},
 				NotProto:       []proto.Proto{proto.ICMP},
-				NotSource:      config.Endpoint{Port: []uint16{22}},
-				NotDestination: config.Endpoint{Port: []uint16{8080}},
+				NotSource:      config.Endpoint{Port: []port.Port{{Number: 22}}},
+				NotDestination: config.Endpoint{Port: []port.Port{{Number: 8080}}},
 				Action:         "Accept",
 			},
 		},
@@ -361,7 +362,7 @@ func TestConfigValidateValidPacketWithPortAndProto(t *testing.T) {
 
 	pkts := &config.PacketConfig{
 		Packets: []config.Packet{
-			{SrcAddr: "192.168.1.5", DstAddr: "1.1.1.1", Proto: proto.TCP, SrcPort: 30000, DstPort: 80},
+			{SrcAddr: "192.168.1.5", DstAddr: "1.1.1.1", Proto: proto.TCP, SrcPort: port.Port{Number: 30000}, DstPort: port.Port{Number: 80}},
 		},
 	}
 	err := pkts.Validate()

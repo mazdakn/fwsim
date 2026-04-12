@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/mazdakn/fwsim/pkg/port"
 )
 
 // PortSet is a set of uint16 port values.
@@ -17,19 +19,24 @@ func NewPortSet() *PortSet {
 	return &PortSet{*New[uint16]()}
 }
 
-// Add inserts a value into the set. v must be either a uint16 port number or a
-// string representation of a port number. It implements the Set interface.
+// Add inserts a value into the set. v must be a uint16 port number, a port.Port,
+// or a string representation of a port number or well-known port name (e.g.
+// "http"). It implements the Set interface.
 func (p *PortSet) Add(v any) error {
 	switch val := v.(type) {
 	case uint16:
 		p.set.Add(val)
 		return nil
+	case port.Port:
+		p.set.Add(val.Number)
+		return nil
 	case string:
-		n, err := strconv.ParseUint(val, 10, 16)
+		parsed, err := port.Parse(val)
 		if err != nil {
-			return fmt.Errorf("invalid port %q: %w", val, err)
+			// Re-wrap with a friendlier message that mentions the raw input.
+			return fmt.Errorf("invalid port %q: not a valid port number or name", val)
 		}
-		p.set.Add(uint16(n))
+		p.set.Add(parsed.Number)
 		return nil
 	default:
 		return fmt.Errorf("PortSet.Add: unsupported type %T", v)
