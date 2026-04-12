@@ -40,12 +40,10 @@ func TestToRuleWithValidSets(t *testing.T) {
 	}
 
 	r := &Rule{
-		Name:       "test-rule",
-		SrcIPSet:   "my-ips",
-		DstIPSet:   "my-ips",
-		SrcPortSet: "my-ports",
-		DstPortSet: "my-ports",
-		Action:     "Accept",
+		Name:        "test-rule",
+		Source:      Endpoint{IPSet: "my-ips", PortSet: "my-ports"},
+		Destination: Endpoint{IPSet: "my-ips", PortSet: "my-ports"},
+		Action:      "Accept",
 	}
 	mRule, err := r.ToRule(sets)
 	Expect(err).To(BeNil())
@@ -60,9 +58,9 @@ func TestToRuleWithUnknownSrcIPSet(t *testing.T) {
 	RegisterTestingT(t)
 
 	r := &Rule{
-		Name:     "bad-rule",
-		SrcIPSet: "nonexistent",
-		Action:   "Accept",
+		Name:   "bad-rule",
+		Source: Endpoint{IPSet: "nonexistent"},
+		Action: "Accept",
 	}
 	mRule, err := r.ToRule(nil)
 	Expect(err).ToNot(BeNil())
@@ -75,9 +73,9 @@ func TestToRuleWithUnknownDstIPSet(t *testing.T) {
 	RegisterTestingT(t)
 
 	r := &Rule{
-		Name:     "bad-rule",
-		DstIPSet: "nonexistent",
-		Action:   "Accept",
+		Name:        "bad-rule",
+		Destination: Endpoint{IPSet: "nonexistent"},
+		Action:      "Accept",
 	}
 	mRule, err := r.ToRule(nil)
 	Expect(err).ToNot(BeNil())
@@ -89,9 +87,9 @@ func TestToRuleWithUnknownSrcPortSet(t *testing.T) {
 	RegisterTestingT(t)
 
 	r := &Rule{
-		Name:       "bad-rule",
-		SrcPortSet: "nonexistent",
-		Action:     "Accept",
+		Name:   "bad-rule",
+		Source: Endpoint{PortSet: "nonexistent"},
+		Action: "Accept",
 	}
 	mRule, err := r.ToRule(nil)
 	Expect(err).ToNot(BeNil())
@@ -103,9 +101,9 @@ func TestToRuleWithUnknownDstPortSet(t *testing.T) {
 	RegisterTestingT(t)
 
 	r := &Rule{
-		Name:       "bad-rule",
-		DstPortSet: "nonexistent",
-		Action:     "Accept",
+		Name:        "bad-rule",
+		Destination: Endpoint{PortSet: "nonexistent"},
+		Action:      "Accept",
 	}
 	mRule, err := r.ToRule(nil)
 	Expect(err).ToNot(BeNil())
@@ -119,10 +117,14 @@ func TestRuleConfigFromBytesWithSetFields(t *testing.T) {
 	yaml := `
 rules:
   - name: allow-trusted
-    src_ip_set: trusted-ips
-    dst_port_set: web-ports
-    not_src_ip_set: blocked-ips
-    not_dst_port_set: banned-ports
+    src:
+      ip_set: trusted-ips
+    dst:
+      port_set: web-ports
+    not_src:
+      ip_set: blocked-ips
+    not_dst:
+      port_set: banned-ports
     action: Accept
 default_action: Drop
 `
@@ -130,10 +132,10 @@ default_action: Drop
 	Expect(err).To(BeNil())
 	Expect(rc).ToNot(BeNil())
 	Expect(rc.Rules).To(HaveLen(1))
-	Expect(rc.Rules[0].SrcIPSet).To(Equal("trusted-ips"))
-	Expect(rc.Rules[0].DstPortSet).To(Equal("web-ports"))
-	Expect(rc.Rules[0].NotSrcIPSet).To(Equal("blocked-ips"))
-	Expect(rc.Rules[0].NotDstPortSet).To(Equal("banned-ports"))
+	Expect(rc.Rules[0].Source.IPSet).To(Equal("trusted-ips"))
+	Expect(rc.Rules[0].Destination.PortSet).To(Equal("web-ports"))
+	Expect(rc.Rules[0].NotSource.IPSet).To(Equal("blocked-ips"))
+	Expect(rc.Rules[0].NotDestination.PortSet).To(Equal("banned-ports"))
 }
 
 func TestToRuleWithValidNegatedSets(t *testing.T) {
@@ -151,12 +153,10 @@ func TestToRuleWithValidNegatedSets(t *testing.T) {
 	}
 
 	r := &Rule{
-		Name:          "test-neg-rule",
-		NotSrcIPSet:   "blocked-ips",
-		NotDstIPSet:   "blocked-ips",
-		NotSrcPortSet: "banned-ports",
-		NotDstPortSet: "banned-ports",
-		Action:        "Accept",
+		Name:           "test-neg-rule",
+		NotSource:      Endpoint{IPSet: "blocked-ips", PortSet: "banned-ports"},
+		NotDestination: Endpoint{IPSet: "blocked-ips", PortSet: "banned-ports"},
+		Action:         "Accept",
 	}
 	mRule, err := r.ToRule(sets)
 	Expect(err).To(BeNil())
@@ -170,7 +170,7 @@ func TestToRuleWithValidNegatedSets(t *testing.T) {
 func TestToRuleWithUnknownNotSrcIPSet(t *testing.T) {
 	RegisterTestingT(t)
 
-	r := &Rule{Name: "bad", NotSrcIPSet: "nonexistent", Action: "Accept"}
+	r := &Rule{Name: "bad", NotSource: Endpoint{IPSet: "nonexistent"}, Action: "Accept"}
 	mRule, err := r.ToRule(nil)
 	Expect(err).ToNot(BeNil())
 	Expect(err.Error()).To(ContainSubstring("unknown set"))
@@ -181,7 +181,7 @@ func TestToRuleWithUnknownNotSrcIPSet(t *testing.T) {
 func TestToRuleWithUnknownNotDstIPSet(t *testing.T) {
 	RegisterTestingT(t)
 
-	r := &Rule{Name: "bad", NotDstIPSet: "nonexistent", Action: "Accept"}
+	r := &Rule{Name: "bad", NotDestination: Endpoint{IPSet: "nonexistent"}, Action: "Accept"}
 	mRule, err := r.ToRule(nil)
 	Expect(err).ToNot(BeNil())
 	Expect(err.Error()).To(ContainSubstring("unknown set"))
@@ -191,7 +191,7 @@ func TestToRuleWithUnknownNotDstIPSet(t *testing.T) {
 func TestToRuleWithUnknownNotSrcPortSet(t *testing.T) {
 	RegisterTestingT(t)
 
-	r := &Rule{Name: "bad", NotSrcPortSet: "nonexistent", Action: "Accept"}
+	r := &Rule{Name: "bad", NotSource: Endpoint{PortSet: "nonexistent"}, Action: "Accept"}
 	mRule, err := r.ToRule(nil)
 	Expect(err).ToNot(BeNil())
 	Expect(err.Error()).To(ContainSubstring("unknown set"))
@@ -201,7 +201,7 @@ func TestToRuleWithUnknownNotSrcPortSet(t *testing.T) {
 func TestToRuleWithUnknownNotDstPortSet(t *testing.T) {
 	RegisterTestingT(t)
 
-	r := &Rule{Name: "bad", NotDstPortSet: "nonexistent", Action: "Accept"}
+	r := &Rule{Name: "bad", NotDestination: Endpoint{PortSet: "nonexistent"}, Action: "Accept"}
 	mRule, err := r.ToRule(nil)
 	Expect(err).ToNot(BeNil())
 	Expect(err.Error()).To(ContainSubstring("unknown set"))

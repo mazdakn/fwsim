@@ -42,7 +42,7 @@ func TestConfigValidateMissingDefaultAction(t *testing.T) {
 
 	c := &config.RuleConfig{
 		Rules: []config.Rule{
-			{SrcNet: []string{"192.168.1.0/24"}, Action: "Accept"},
+			{Source: config.Endpoint{Net: []string{"192.168.1.0/24"}}, Action: "Accept"},
 		},
 	}
 	Expect(c.DefaultAction).To(BeEmpty())
@@ -65,13 +65,13 @@ func TestConfigValidateInvalidSrcNet(t *testing.T) {
 
 	c := &config.RuleConfig{
 		Rules: []config.Rule{
-			{SrcNet: []string{"not-a-cidr"}, Action: "Accept"},
+			{Source: config.Endpoint{Net: []string{"not-a-cidr"}}, Action: "Accept"},
 		},
 		DefaultAction: "Accept",
 	}
 	err := c.Validate()
 	Expect(err).ToNot(BeNil())
-	Expect(err.Error()).To(ContainSubstring("invalid src_net"))
+	Expect(err.Error()).To(ContainSubstring("src: invalid net"))
 }
 
 func TestConfigValidateInvalidDstNet(t *testing.T) {
@@ -79,13 +79,13 @@ func TestConfigValidateInvalidDstNet(t *testing.T) {
 
 	c := &config.RuleConfig{
 		Rules: []config.Rule{
-			{DstNet: []string{"bad-cidr"}, Action: "Drop"},
+			{Destination: config.Endpoint{Net: []string{"bad-cidr"}}, Action: "Drop"},
 		},
 		DefaultAction: "Accept",
 	}
 	err := c.Validate()
 	Expect(err).ToNot(BeNil())
-	Expect(err.Error()).To(ContainSubstring("invalid dst_net"))
+	Expect(err.Error()).To(ContainSubstring("dst: invalid net"))
 }
 
 func TestConfigValidateInvalidNotSrcNet(t *testing.T) {
@@ -93,13 +93,13 @@ func TestConfigValidateInvalidNotSrcNet(t *testing.T) {
 
 	c := &config.RuleConfig{
 		Rules: []config.Rule{
-			{NotSrcNet: []string{"256.0.0.0/8"}, Action: "Drop"},
+			{NotSource: config.Endpoint{Net: []string{"256.0.0.0/8"}}, Action: "Drop"},
 		},
 		DefaultAction: "Accept",
 	}
 	err := c.Validate()
 	Expect(err).ToNot(BeNil())
-	Expect(err.Error()).To(ContainSubstring("invalid not_src_net"))
+	Expect(err.Error()).To(ContainSubstring("not_src: invalid net"))
 }
 
 func TestConfigValidateInvalidNotDstNet(t *testing.T) {
@@ -107,13 +107,13 @@ func TestConfigValidateInvalidNotDstNet(t *testing.T) {
 
 	c := &config.RuleConfig{
 		Rules: []config.Rule{
-			{NotDstNet: []string{"abc"}, Action: "Drop"},
+			{NotDestination: config.Endpoint{Net: []string{"abc"}}, Action: "Drop"},
 		},
 		DefaultAction: "Accept",
 	}
 	err := c.Validate()
 	Expect(err).ToNot(BeNil())
-	Expect(err.Error()).To(ContainSubstring("invalid not_dst_net"))
+	Expect(err.Error()).To(ContainSubstring("not_dst: invalid net"))
 }
 
 func TestConfigValidateInvalidRuleAction(t *testing.T) {
@@ -121,7 +121,7 @@ func TestConfigValidateInvalidRuleAction(t *testing.T) {
 
 	c := &config.RuleConfig{
 		Rules: []config.Rule{
-			{SrcNet: []string{"10.0.0.0/8"}, Action: "unknown"},
+			{Source: config.Endpoint{Net: []string{"10.0.0.0/8"}}, Action: "unknown"},
 		},
 		DefaultAction: "Accept",
 	}
@@ -195,6 +195,28 @@ func TestValidateStructFieldsRecursiveSlice(t *testing.T) {
 	Expect(err).To(BeNil())
 }
 
+func TestValidateStructFieldsRecursiveStruct(t *testing.T) {
+	RegisterTestingT(t)
+
+	type Inner struct {
+		CIDR string `yaml:"cidr" validate:"isValidCIDR"`
+	}
+	type Outer struct {
+		Inner Inner `yaml:"inner"`
+	}
+
+	err := validator.ValidateStructFields(Outer{
+		Inner: Inner{CIDR: "not-a-cidr"},
+	})
+	Expect(err).ToNot(BeNil())
+	Expect(err.Error()).To(ContainSubstring("inner: invalid cidr"))
+
+	err = validator.ValidateStructFields(Outer{
+		Inner: Inner{CIDR: "192.168.1.0/24"},
+	})
+	Expect(err).To(BeNil())
+}
+
 func TestConfigValidateInvalidSrcAddr(t *testing.T) {
 	RegisterTestingT(t)
 
@@ -240,11 +262,11 @@ func TestConfigValidateValid(t *testing.T) {
 	c := &config.RuleConfig{
 		Rules: []config.Rule{
 			{
-				SrcNet:    []string{"192.168.1.0/24"},
-				DstNet:    []string{"1.1.1.1/32"},
-				NotSrcNet: []string{"192.168.1.128/25"},
-				NotDstNet: []string{"1.1.1.0/30"},
-				Action:    "Accept",
+				Source:         config.Endpoint{Net: []string{"192.168.1.0/24"}},
+				Destination:    config.Endpoint{Net: []string{"1.1.1.1/32"}},
+				NotSource:      config.Endpoint{Net: []string{"192.168.1.128/25"}},
+				NotDestination: config.Endpoint{Net: []string{"1.1.1.0/30"}},
+				Action:         "Accept",
 			},
 		},
 		DefaultAction: "Drop",
@@ -319,15 +341,13 @@ func TestConfigValidateValidRuleWithPortsAndProto(t *testing.T) {
 	c := &config.RuleConfig{
 		Rules: []config.Rule{
 			{
-				SrcNet:     []string{"192.168.1.0/24"},
-				DstNet:     []string{"1.1.1.1/32"},
-				Protocol:   []proto.Proto{proto.TCP, proto.UDP},
-				SrcPort:    []uint16{30000},
-				DstPort:    []uint16{80, 443},
-				NotProto:   []proto.Proto{proto.ICMP},
-				NotSrcPort: []uint16{22},
-				NotDstPort: []uint16{8080},
-				Action:     "Accept",
+				Source:         config.Endpoint{Net: []string{"192.168.1.0/24"}, Port: []uint16{30000}},
+				Destination:    config.Endpoint{Net: []string{"1.1.1.1/32"}, Port: []uint16{80, 443}},
+				Protocol:       []proto.Proto{proto.TCP, proto.UDP},
+				NotProto:       []proto.Proto{proto.ICMP},
+				NotSource:      config.Endpoint{Port: []uint16{22}},
+				NotDestination: config.Endpoint{Port: []uint16{8080}},
+				Action:         "Accept",
 			},
 		},
 		DefaultAction: "Drop",
