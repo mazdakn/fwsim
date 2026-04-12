@@ -8,6 +8,7 @@ import (
 	"github.com/mazdakn/fwsim/pkg/proto"
 	"github.com/mazdakn/fwsim/pkg/config"
 	"github.com/mazdakn/fwsim/pkg/engine"
+	"github.com/mazdakn/fwsim/pkg/port"
 	"github.com/mazdakn/fwsim/pkg/validator"
 	"github.com/olekukonko/tablewriter"
 	"github.com/sirupsen/logrus"
@@ -99,8 +100,8 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 		SrcAddr: srcAddr,
 		DstAddr: dstAddr,
 		Proto:   *p,
-		SrcPort: uint16(srcPort),
-		DstPort: uint16(dstPort),
+		SrcPort: port.Port{Number: uint16(srcPort)},
+		DstPort: port.Port{Number: uint16(dstPort)},
 	}
 
 	if err := validator.ValidateStructFields(pkt); err != nil {

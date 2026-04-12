@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/mazdakn/fwsim/pkg/port"
 	"github.com/mazdakn/fwsim/pkg/rule"
 )
 
@@ -29,6 +30,19 @@ func ValidateIP(ip string) bool {
 // ValidatePort returns true if port is a valid port number (0–65535).
 func ValidatePort(port uint) bool {
 	return port <= 65535
+}
+
+// ValidatePortValue returns true if p is a valid port. Ports with no name are
+// always valid because the uint16 Number field enforces the 0–65535 range
+// constraint. When a Name is set, it must be a well-known service name
+// recognised by port.Parse; an invalid name is rejected even when a valid
+// Number is also present.
+func ValidatePortValue(p port.Port) bool {
+	if p.Name == "" {
+		return true
+	}
+	_, err := port.Parse(p.Name)
+	return err == nil
 }
 
 // ValidateProtocol returns true if proto is a valid IP protocol number (0–255).
@@ -77,6 +91,22 @@ func validateUintByTag(tag string, value uint64) (bool, error) {
 	}
 }
 
+// validateStructByTag validates a struct value using the function identified by
+// tag. It returns an error if tag is not a recognised function name for struct
+// types.
+func validateStructByTag(tag string, fieldVal reflect.Value) (bool, error) {
+	switch tag {
+	case "isPortValid":
+		p, ok := fieldVal.Interface().(port.Port)
+		if !ok {
+			return false, fmt.Errorf("isPortValid: expected port.Port, got %T", fieldVal.Interface())
+		}
+		return ValidatePortValue(p), nil
+	default:
+		return false, fmt.Errorf("unknown validation tag for struct: %s", tag)
+	}
+}
+
 // ValidateStructFields validates all fields in s that carry a "validate" struct
 // tag, as well as any slice-of-struct fields (validated recursively). The tag
 // value must be a function name recognised by validateByTag. Field names used
@@ -107,15 +137,30 @@ func ValidateStructFields(s any) error {
 			fieldName = field.Name
 		}
 
-		// Recursively validate named struct fields without requiring a tag.
+		// Validate or recursively validate named struct fields.
+		// If the field carries a validate tag, validate the struct as a whole
+		// using that tag. Otherwise recurse into its fields.
 		if field.Type.Kind() == reflect.Struct {
-			if err := ValidateStructFields(fieldVal.Interface()); err != nil {
-				return fmt.Errorf("%s: %w", fieldName, err)
+			validateTag := field.Tag.Get("validate")
+			if validateTag != "" {
+				ok, err := validateStructByTag(validateTag, fieldVal)
+				if err != nil {
+					return err
+				}
+				if !ok {
+					return fmt.Errorf("invalid %s: %v", fieldName, fieldVal.Interface())
+				}
+			} else {
+				if err := ValidateStructFields(fieldVal.Interface()); err != nil {
+					return fmt.Errorf("%s: %w", fieldName, err)
+				}
 			}
 			continue
 		}
 
-		// Recursively validate slice-of-struct fields without requiring a tag.
+		// Validate or recursively validate slice-of-struct fields.
+		// If the field carries a validate tag, validate each element as a whole
+		// using that tag. Otherwise recurse into each element's fields.
 		if field.Type.Kind() == reflect.Slice {
 			elemType := field.Type.Elem()
 			isPtr := elemType.Kind() == reflect.Ptr
@@ -123,13 +168,24 @@ func ValidateStructFields(s any) error {
 				elemType = elemType.Elem()
 			}
 			if elemType.Kind() == reflect.Struct {
+				validateTag := field.Tag.Get("validate")
 				for j := 0; j < fieldVal.Len(); j++ {
 					elem := fieldVal.Index(j)
 					if isPtr && elem.IsNil() {
 						continue
 					}
-					if err := ValidateStructFields(elem.Interface()); err != nil {
-						return fmt.Errorf("%s[%d]: %w", fieldName, j, err)
+					if validateTag != "" {
+						ok, err := validateStructByTag(validateTag, elem)
+						if err != nil {
+							return err
+						}
+						if !ok {
+							return fmt.Errorf("invalid %s[%d]: %v", fieldName, j, elem.Interface())
+						}
+					} else {
+						if err := ValidateStructFields(elem.Interface()); err != nil {
+							return fmt.Errorf("%s[%d]: %w", fieldName, j, err)
+						}
 					}
 				}
 				continue

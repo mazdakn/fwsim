@@ -496,6 +496,24 @@ func TestCombinedRuleString(t *testing.T) {
 	Expect(ruleSrcNet.String()).To(Equal("Drop *{10.0.0.0/8,!10.10.0.0/16:*->*:*}"))
 }
 
+func TestNamedSetRuleMatchWithNamedPortString(t *testing.T) {
+	RegisterTestingT(t)
+
+	// Build a port set using well-known port names as strings.
+	portSet := set.NewPortSet()
+	_ = portSet.Add("http")
+	_ = portSet.Add("https")
+
+	pktHTTP := packet.New(packet.WithDstPort(80))
+	pktHTTPS := packet.New(packet.WithDstPort(443))
+	pktOther := packet.New(packet.WithDstPort(8080))
+
+	r := New(WithDstPortSet(portSet))
+	Expect(r.Match(pktHTTP)).To(BeTrue())
+	Expect(r.Match(pktHTTPS)).To(BeTrue())
+	Expect(r.Match(pktOther)).To(BeFalse())
+}
+
 func TestNamedSetRuleMatch(t *testing.T) {
 	RegisterTestingT(t)
 
