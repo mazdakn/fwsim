@@ -123,6 +123,57 @@ func TestPortSetStringMultiplePorts(t *testing.T) {
 	Expect(ps.String()).To(Equal("{80,443}"))
 }
 
+func TestPortSetAddRange(t *testing.T) {
+	RegisterTestingT(t)
+
+	ps := NewPortSet()
+	Expect(ps.Add(port.Port{Number: 1024, End: 65535})).To(Succeed())
+	Expect(ps.Match(uint16(1024))).To(BeTrue())
+	Expect(ps.Match(uint16(8080))).To(BeTrue())
+	Expect(ps.Match(uint16(65535))).To(BeTrue())
+	Expect(ps.Match(uint16(1023))).To(BeFalse())
+	Expect(ps.Match(uint16(80))).To(BeFalse())
+}
+
+func TestPortSetAddRangeString(t *testing.T) {
+	RegisterTestingT(t)
+
+	ps := NewPortSet()
+	Expect(ps.Add("1024-65535")).To(Succeed())
+	Expect(ps.Match(uint16(1024))).To(BeTrue())
+	Expect(ps.Match(uint16(8080))).To(BeTrue())
+	Expect(ps.Match(uint16(65535))).To(BeTrue())
+	Expect(ps.Match(uint16(1023))).To(BeFalse())
+}
+
+func TestPortSetAddRangeAndSinglePort(t *testing.T) {
+	RegisterTestingT(t)
+
+	ps := NewPortSet()
+	Expect(ps.Add(uint16(80))).To(Succeed())
+	Expect(ps.Add("1024-65535")).To(Succeed())
+	Expect(ps.Match(uint16(80))).To(BeTrue())
+	Expect(ps.Match(uint16(8080))).To(BeTrue())
+	Expect(ps.Match(uint16(443))).To(BeFalse())
+}
+
+func TestPortSetStringWithRange(t *testing.T) {
+	RegisterTestingT(t)
+
+	ps := NewPortSet()
+	Expect(ps.Add("1024-65535")).To(Succeed())
+	Expect(ps.String()).To(Equal("1024-65535"))
+}
+
+func TestPortSetStringWithRangeAndPort(t *testing.T) {
+	RegisterTestingT(t)
+
+	ps := NewPortSet()
+	Expect(ps.Add(uint16(80))).To(Succeed())
+	Expect(ps.Add("1024-65535")).To(Succeed())
+	Expect(ps.String()).To(Equal("{80,1024-65535}"))
+}
+
 func TestProtoSetAdd(t *testing.T) {
 	RegisterTestingT(t)
 
