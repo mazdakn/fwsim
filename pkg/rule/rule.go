@@ -84,10 +84,10 @@ func WithSrcPort(port uint16) RuleOption {
 
 func WithDstPort(port uint16) RuleOption {
 	return func(r *Rule) {
-		if r.DstPort == nil {
-			r.DstPort = set.NewPortSet()
+		if r.Destination.Port == nil {
+			r.Destination.Port = set.NewPortSet()
 		}
-		r.DstPort.Add(port)
+		r.Destination.Port.Add(port)
 	}
 }
 
@@ -102,10 +102,10 @@ func WithSrcNet(cidr string) RuleOption {
 
 func WithDstNet(cidr string) RuleOption {
 	return func(r *Rule) {
-		if r.DstNet == nil {
-			r.DstNet = set.NewIPSet()
+		if r.Destination.Net == nil {
+			r.Destination.Net = set.NewIPSet()
 		}
-		r.DstNet.Add(MustParseCIDR(cidr))
+		r.Destination.Net.Add(MustParseCIDR(cidr))
 	}
 }
 
@@ -120,37 +120,37 @@ func WithNegProto(p proto.Proto) RuleOption {
 
 func WithNegSrcPort(port uint16) RuleOption {
 	return func(r *Rule) {
-		if r.NegSrcPort == nil {
-			r.NegSrcPort = set.NewPortSet()
+		if r.NegSource.Port == nil {
+			r.NegSource.Port = set.NewPortSet()
 		}
-		r.NegSrcPort.Add(port)
+		r.NegSource.Port.Add(port)
 	}
 }
 
 func WithNegDstPort(port uint16) RuleOption {
 	return func(r *Rule) {
-		if r.NegDstPort == nil {
-			r.NegDstPort = set.NewPortSet()
+		if r.NegDestination.Port == nil {
+			r.NegDestination.Port = set.NewPortSet()
 		}
-		r.NegDstPort.Add(port)
+		r.NegDestination.Port.Add(port)
 	}
 }
 
 func WithNegSrcNet(cidr string) RuleOption {
 	return func(r *Rule) {
-		if r.NegSrcNet == nil {
-			r.NegSrcNet = set.NewIPSet()
+		if r.NegSource.Net == nil {
+			r.NegSource.Net = set.NewIPSet()
 		}
-		r.NegSrcNet.Add(MustParseCIDR(cidr))
+		r.NegSource.Net.Add(MustParseCIDR(cidr))
 	}
 }
 
 func WithNegDstNet(cidr string) RuleOption {
 	return func(r *Rule) {
-		if r.NegDstNet == nil {
-			r.NegDstNet = set.NewIPSet()
+		if r.NegDestination.Net == nil {
+			r.NegDestination.Net = set.NewIPSet()
 		}
-		r.NegDstNet.Add(MustParseCIDR(cidr))
+		r.NegDestination.Net.Add(MustParseCIDR(cidr))
 	}
 }
 
@@ -162,7 +162,7 @@ func WithSrcIPSet(s set.Set) RuleOption {
 
 func WithDstIPSet(s set.Set) RuleOption {
 	return func(r *Rule) {
-		r.DstIPSet = s
+		r.Destination.IPSet = s
 	}
 }
 
@@ -174,31 +174,31 @@ func WithSrcPortSet(s set.Set) RuleOption {
 
 func WithDstPortSet(s set.Set) RuleOption {
 	return func(r *Rule) {
-		r.DstPortSet = s
+		r.Destination.PortSet = s
 	}
 }
 
 func WithNegSrcIPSet(s set.Set) RuleOption {
 	return func(r *Rule) {
-		r.NegSrcIPSet = s
+		r.NegSource.IPSet = s
 	}
 }
 
 func WithNegDstIPSet(s set.Set) RuleOption {
 	return func(r *Rule) {
-		r.NegDstIPSet = s
+		r.NegDestination.IPSet = s
 	}
 }
 
 func WithNegSrcPortSet(s set.Set) RuleOption {
 	return func(r *Rule) {
-		r.NegSrcPortSet = s
+		r.NegSource.PortSet = s
 	}
 }
 
 func WithNegDstPortSet(s set.Set) RuleOption {
 	return func(r *Rule) {
-		r.NegDstPortSet = s
+		r.NegDestination.PortSet = s
 	}
 }
 
@@ -239,29 +239,15 @@ type Endpoint struct {
 }
 
 type Rule struct {
-	Name   string
-	Order  uint64
-	Source Endpoint
-	DstNet *set.IPSet
-	Proto  *set.ProtoSet
+	Name        string
+	Order       uint64
+	Source      Endpoint
+	Destination Endpoint
+	Proto       *set.ProtoSet
 
-	DstPort *set.PortSet
-
-	NegSrcNet  *set.IPSet
-	NegDstNet  *set.IPSet
-	NegProto   *set.ProtoSet
-	NegSrcPort *set.PortSet
-	NegDstPort *set.PortSet
-
-	// User-defined named sets for matching.
-	DstIPSet   set.Set
-	DstPortSet set.Set
-
-	// User-defined named sets for negated matching.
-	NegSrcIPSet   set.Set
-	NegDstIPSet   set.Set
-	NegSrcPortSet set.Set
-	NegDstPortSet set.Set
+	NegSource      Endpoint
+	NegDestination Endpoint
+	NegProto       *set.ProtoSet
 
 	Action Action
 
@@ -278,49 +264,49 @@ func (r *Rule) Match(pkt *packet.Packet) bool {
 	if r.Source.Port != nil && !r.Source.Port.Match(pkt.SrcPort) {
 		return false
 	}
-	if r.NegSrcPort != nil && r.NegSrcPort.Match(pkt.SrcPort) {
+	if r.NegSource.Port != nil && r.NegSource.Port.Match(pkt.SrcPort) {
 		return false
 	}
-	if r.DstPort != nil && !r.DstPort.Match(pkt.DstPort) {
+	if r.Destination.Port != nil && !r.Destination.Port.Match(pkt.DstPort) {
 		return false
 	}
-	if r.NegDstPort != nil && r.NegDstPort.Match(pkt.DstPort) {
+	if r.NegDestination.Port != nil && r.NegDestination.Port.Match(pkt.DstPort) {
 		return false
 	}
 	if r.Source.Net != nil && !r.Source.Net.Match(pkt.SrcAddr) {
 		return false
 	}
-	if r.NegSrcNet != nil && r.NegSrcNet.Match(pkt.SrcAddr) {
+	if r.NegSource.Net != nil && r.NegSource.Net.Match(pkt.SrcAddr) {
 		return false
 	}
-	if r.DstNet != nil && !r.DstNet.Match(pkt.DstAddr) {
+	if r.Destination.Net != nil && !r.Destination.Net.Match(pkt.DstAddr) {
 		return false
 	}
-	if r.NegDstNet != nil && r.NegDstNet.Match(pkt.DstAddr) {
+	if r.NegDestination.Net != nil && r.NegDestination.Net.Match(pkt.DstAddr) {
 		return false
 	}
 	if !matchNamedSet(r.Source.IPSet, pkt.SrcAddr) {
 		return false
 	}
-	if !matchNamedSet(r.DstIPSet, pkt.DstAddr) {
+	if !matchNamedSet(r.Destination.IPSet, pkt.DstAddr) {
 		return false
 	}
 	if !matchNamedSet(r.Source.PortSet, pkt.SrcPort) {
 		return false
 	}
-	if !matchNamedSet(r.DstPortSet, pkt.DstPort) {
+	if !matchNamedSet(r.Destination.PortSet, pkt.DstPort) {
 		return false
 	}
-	if r.NegSrcIPSet != nil && r.NegSrcIPSet.Match(pkt.SrcAddr) {
+	if r.NegSource.IPSet != nil && r.NegSource.IPSet.Match(pkt.SrcAddr) {
 		return false
 	}
-	if r.NegDstIPSet != nil && r.NegDstIPSet.Match(pkt.DstAddr) {
+	if r.NegDestination.IPSet != nil && r.NegDestination.IPSet.Match(pkt.DstAddr) {
 		return false
 	}
-	if r.NegSrcPortSet != nil && r.NegSrcPortSet.Match(pkt.SrcPort) {
+	if r.NegSource.PortSet != nil && r.NegSource.PortSet.Match(pkt.SrcPort) {
 		return false
 	}
-	if r.NegDstPortSet != nil && r.NegDstPortSet.Match(pkt.DstPort) {
+	if r.NegDestination.PortSet != nil && r.NegDestination.PortSet.Match(pkt.DstPort) {
 		return false
 	}
 	// All conditions passed - increment packet counter
@@ -355,51 +341,51 @@ func (r *Rule) String() string {
 	}
 	srcPort := "*"
 	switch {
-	case r.Source.Port != nil && r.NegSrcPort != nil:
-		srcPort = r.Source.Port.String() + ",!" + r.NegSrcPort.String()
+	case r.Source.Port != nil && r.NegSource.Port != nil:
+		srcPort = r.Source.Port.String() + ",!" + r.NegSource.Port.String()
 	case r.Source.Port != nil:
 		srcPort = r.Source.Port.String()
-	case r.NegSrcPort != nil:
-		srcPort = "!" + r.NegSrcPort.String()
+	case r.NegSource.Port != nil:
+		srcPort = "!" + r.NegSource.Port.String()
 	}
 	srcPort = appendSetString(srcPort, r.Source.PortSet)
-	srcPort = appendNegSetString(srcPort, r.NegSrcPortSet)
+	srcPort = appendNegSetString(srcPort, r.NegSource.PortSet)
 
 	dstPort := "*"
 	switch {
-	case r.DstPort != nil && r.NegDstPort != nil:
-		dstPort = r.DstPort.String() + ",!" + r.NegDstPort.String()
-	case r.DstPort != nil:
-		dstPort = r.DstPort.String()
-	case r.NegDstPort != nil:
-		dstPort = "!" + r.NegDstPort.String()
+	case r.Destination.Port != nil && r.NegDestination.Port != nil:
+		dstPort = r.Destination.Port.String() + ",!" + r.NegDestination.Port.String()
+	case r.Destination.Port != nil:
+		dstPort = r.Destination.Port.String()
+	case r.NegDestination.Port != nil:
+		dstPort = "!" + r.NegDestination.Port.String()
 	}
-	dstPort = appendSetString(dstPort, r.DstPortSet)
-	dstPort = appendNegSetString(dstPort, r.NegDstPortSet)
+	dstPort = appendSetString(dstPort, r.Destination.PortSet)
+	dstPort = appendNegSetString(dstPort, r.NegDestination.PortSet)
 
 	srcNet := "*"
 	switch {
-	case r.Source.Net != nil && r.NegSrcNet != nil:
-		srcNet = r.Source.Net.String() + ",!" + r.NegSrcNet.String()
+	case r.Source.Net != nil && r.NegSource.Net != nil:
+		srcNet = r.Source.Net.String() + ",!" + r.NegSource.Net.String()
 	case r.Source.Net != nil:
 		srcNet = r.Source.Net.String()
-	case r.NegSrcNet != nil:
-		srcNet = "!" + r.NegSrcNet.String()
+	case r.NegSource.Net != nil:
+		srcNet = "!" + r.NegSource.Net.String()
 	}
 	srcNet = appendSetString(srcNet, r.Source.IPSet)
-	srcNet = appendNegSetString(srcNet, r.NegSrcIPSet)
+	srcNet = appendNegSetString(srcNet, r.NegSource.IPSet)
 
 	dstNet := "*"
 	switch {
-	case r.DstNet != nil && r.NegDstNet != nil:
-		dstNet = r.DstNet.String() + ",!" + r.NegDstNet.String()
-	case r.DstNet != nil:
-		dstNet = r.DstNet.String()
-	case r.NegDstNet != nil:
-		dstNet = "!" + r.NegDstNet.String()
+	case r.Destination.Net != nil && r.NegDestination.Net != nil:
+		dstNet = r.Destination.Net.String() + ",!" + r.NegDestination.Net.String()
+	case r.Destination.Net != nil:
+		dstNet = r.Destination.Net.String()
+	case r.NegDestination.Net != nil:
+		dstNet = "!" + r.NegDestination.Net.String()
 	}
-	dstNet = appendSetString(dstNet, r.DstIPSet)
-	dstNet = appendNegSetString(dstNet, r.NegDstIPSet)
+	dstNet = appendSetString(dstNet, r.Destination.IPSet)
+	dstNet = appendNegSetString(dstNet, r.NegDestination.IPSet)
 	return fmt.Sprintf("%s %s{%s:%s->%s:%s}", r.Action, proto, srcNet, srcPort, dstNet, dstPort)
 }
 

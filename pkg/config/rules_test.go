@@ -20,9 +20,9 @@ func TestToRuleWithoutSets(t *testing.T) {
 	Expect(mRule).ToNot(BeNil())
 	Expect(mRule.Name).To(Equal("allow-http"))
 	Expect(mRule.Source.IPSet).To(BeNil())
-	Expect(mRule.DstIPSet).To(BeNil())
+	Expect(mRule.Destination.IPSet).To(BeNil())
 	Expect(mRule.Source.PortSet).To(BeNil())
-	Expect(mRule.DstPortSet).To(BeNil())
+	Expect(mRule.Destination.PortSet).To(BeNil())
 }
 
 func TestToRuleWithValidSets(t *testing.T) {
@@ -51,9 +51,9 @@ func TestToRuleWithValidSets(t *testing.T) {
 	Expect(err).To(BeNil())
 	Expect(mRule).ToNot(BeNil())
 	Expect(mRule.Source.IPSet).To(Equal(sets["my-ips"]))
-	Expect(mRule.DstIPSet).To(Equal(sets["my-ips"]))
+	Expect(mRule.Destination.IPSet).To(Equal(sets["my-ips"]))
 	Expect(mRule.Source.PortSet).To(Equal(sets["my-ports"]))
-	Expect(mRule.DstPortSet).To(Equal(sets["my-ports"]))
+	Expect(mRule.Destination.PortSet).To(Equal(sets["my-ports"]))
 }
 
 func TestToRuleWithUnknownSrcIPSet(t *testing.T) {
@@ -161,10 +161,10 @@ func TestToRuleWithValidNegatedSets(t *testing.T) {
 	mRule, err := r.ToRule(sets)
 	Expect(err).To(BeNil())
 	Expect(mRule).ToNot(BeNil())
-	Expect(mRule.NegSrcIPSet).To(Equal(sets["blocked-ips"]))
-	Expect(mRule.NegDstIPSet).To(Equal(sets["blocked-ips"]))
-	Expect(mRule.NegSrcPortSet).To(Equal(sets["banned-ports"]))
-	Expect(mRule.NegDstPortSet).To(Equal(sets["banned-ports"]))
+	Expect(mRule.NegSource.IPSet).To(Equal(sets["blocked-ips"]))
+	Expect(mRule.NegDestination.IPSet).To(Equal(sets["blocked-ips"]))
+	Expect(mRule.NegSource.PortSet).To(Equal(sets["banned-ports"]))
+	Expect(mRule.NegDestination.PortSet).To(Equal(sets["banned-ports"]))
 }
 
 func TestToRuleWithUnknownNegSrcIPSet(t *testing.T) {
@@ -214,8 +214,8 @@ func TestToRuleWithoutNegatedSetsNilByDefault(t *testing.T) {
 	r := &Rule{Name: "allow-http", Action: "Accept"}
 	mRule, err := r.ToRule(nil)
 	Expect(err).To(BeNil())
-	Expect(mRule.NegSrcIPSet).To(BeNil())
-	Expect(mRule.NegDstIPSet).To(BeNil())
-	Expect(mRule.NegSrcPortSet).To(BeNil())
-	Expect(mRule.NegDstPortSet).To(BeNil())
+	Expect(mRule.NegSource.IPSet).To(BeNil())
+	Expect(mRule.NegDestination.IPSet).To(BeNil())
+	Expect(mRule.NegSource.PortSet).To(BeNil())
+	Expect(mRule.NegDestination.PortSet).To(BeNil())
 }

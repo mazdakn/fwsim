@@ -419,16 +419,16 @@ func TestNegatedRuleConfig(t *testing.T) {
 		WithNegDstNet("192.168.0.0/16"),
 	)
 	Expect(rule.NegProto).ToNot(BeNil())
-	Expect(rule.NegSrcPort).ToNot(BeNil())
-	Expect(rule.NegDstPort).ToNot(BeNil())
-	Expect(rule.NegSrcNet).ToNot(BeNil())
-	Expect(rule.NegDstNet).ToNot(BeNil())
+	Expect(rule.NegSource.Port).ToNot(BeNil())
+	Expect(rule.NegDestination.Port).ToNot(BeNil())
+	Expect(rule.NegSource.Net).ToNot(BeNil())
+	Expect(rule.NegDestination.Net).ToNot(BeNil())
 	// Positive fields should be nil when only negated values are specified
 	Expect(rule.Proto).To(BeNil())
 	Expect(rule.Source.Port).To(BeNil())
-	Expect(rule.DstPort).To(BeNil())
+	Expect(rule.Destination.Port).To(BeNil())
 	Expect(rule.Source.Net).To(BeNil())
-	Expect(rule.DstNet).To(BeNil())
+	Expect(rule.Destination.Net).To(BeNil())
 
 	// Positive and negated fields can be combined on the same rule
 	ruleCombined := New(
@@ -447,13 +447,13 @@ func TestNegatedRuleConfig(t *testing.T) {
 	Expect(ruleCombined.Proto).ToNot(BeNil())
 	Expect(ruleCombined.NegProto).ToNot(BeNil())
 	Expect(ruleCombined.Source.Port).ToNot(BeNil())
-	Expect(ruleCombined.NegSrcPort).ToNot(BeNil())
-	Expect(ruleCombined.DstPort).ToNot(BeNil())
-	Expect(ruleCombined.NegDstPort).ToNot(BeNil())
+	Expect(ruleCombined.NegSource.Port).ToNot(BeNil())
+	Expect(ruleCombined.Destination.Port).ToNot(BeNil())
+	Expect(ruleCombined.NegDestination.Port).ToNot(BeNil())
 	Expect(ruleCombined.Source.Net).ToNot(BeNil())
-	Expect(ruleCombined.NegSrcNet).ToNot(BeNil())
-	Expect(ruleCombined.DstNet).ToNot(BeNil())
-	Expect(ruleCombined.NegDstNet).ToNot(BeNil())
+	Expect(ruleCombined.NegSource.Net).ToNot(BeNil())
+	Expect(ruleCombined.Destination.Net).ToNot(BeNil())
+	Expect(ruleCombined.NegDestination.Net).ToNot(BeNil())
 }
 
 func TestCombinedPositiveAndNegativeRuleMatch(t *testing.T) {
