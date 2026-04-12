@@ -72,6 +72,22 @@ func TestSetToSetPort(t *testing.T) {
 	Expect(result).ToNot(BeNil())
 }
 
+func TestSetToSetPortNamed(t *testing.T) {
+	RegisterTestingT(t)
+
+	s := &Set{
+		Name:    "my-named-ports",
+		Type:    "port",
+		Members: []string{"http", "https"},
+	}
+	result, err := s.ToSet()
+	Expect(err).To(BeNil())
+	Expect(result).ToNot(BeNil())
+	Expect(result.Match(uint16(80))).To(BeTrue())
+	Expect(result.Match(uint16(443))).To(BeTrue())
+	Expect(result.Match(uint16(8080))).To(BeFalse())
+}
+
 func TestSetToSetProto(t *testing.T) {
 	RegisterTestingT(t)
 

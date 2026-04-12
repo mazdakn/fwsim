@@ -73,6 +73,38 @@ func TestPacketsFromBytesInvalid(t *testing.T) {
 	Expect(pkts).To(BeNil())
 }
 
+const testPacketsNamedPortYAML = `
+packets:
+  - name: http request
+    src_addr: 192.168.1.10
+    dst_addr: 1.1.1.1
+    proto: 6
+    src_port: ssh
+    dst_port: http
+  - name: https request
+    src_addr: 10.0.0.5
+    dst_addr: 2.2.2.2
+    proto: 6
+    src_port: 12345
+    dst_port: https
+`
+
+func TestPacketsFromBytesWithNamedPorts(t *testing.T) {
+	RegisterTestingT(t)
+
+	pkts, err := PacketsFromBytes([]byte(testPacketsNamedPortYAML))
+	Expect(err).To(BeNil())
+	Expect(pkts).To(HaveLen(2))
+
+	// First packet: src_port "ssh" → 22, dst_port "http" → 80
+	Expect(pkts[0].SrcPort).To(Equal(uint16(22)))
+	Expect(pkts[0].DstPort).To(Equal(uint16(80)))
+
+	// Second packet: src_port numeric 12345, dst_port "https" → 443
+	Expect(pkts[1].SrcPort).To(Equal(uint16(12345)))
+	Expect(pkts[1].DstPort).To(Equal(uint16(443)))
+}
+
 func TestToPacketWithNameOnlyPort(t *testing.T) {
 	RegisterTestingT(t)
 

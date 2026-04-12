@@ -90,6 +90,122 @@ sets:
       - udp
 `
 
+const testRulesNamedPortYAML = `
+rules:
+  - name: allow-http
+    dst:
+      port: [http]
+    proto: [6]
+    action: Accept
+  - name: allow-https
+    dst:
+      port: [https]
+    proto: [6]
+    action: Accept
+  - name: deny-all
+    action: Drop
+default_action: Drop
+`
+
+const testPacketsNamedPortYAML = `
+packets:
+  - name: http to 1.1.1.1
+    src_addr: 192.168.1.5
+    dst_addr: 1.1.1.1
+    proto: 6
+    src_port: 30000
+    dst_port: http
+  - name: https to 2.2.2.2
+    src_addr: 10.0.0.1
+    dst_addr: 2.2.2.2
+    proto: 6
+    src_port: 12345
+    dst_port: https
+  - name: dns traffic
+    src_addr: 172.16.0.1
+    dst_addr: 8.8.8.8
+    proto: 17
+    src_port: 54321
+    dst_port: dns
+`
+
+func TestEngineWithNamedPortsInRulesAndPackets(t *testing.T) {
+	RegisterTestingT(t)
+
+	engine := New(Config{})
+	err := engine.ConfigRulesFromBytes([]byte(testRulesNamedPortYAML))
+	Expect(err).To(BeNil())
+
+	pkts, err := config.PacketsFromBytes([]byte(testPacketsNamedPortYAML))
+	Expect(err).To(BeNil())
+	Expect(pkts).To(HaveLen(3))
+
+	// Packet to port "http" (80) → matches allow-http rule (Accept)
+	m := &match.Match{Packet: pkts[0]}
+	engine.RunTest(m)
+	Expect(m.Result.Verdict).To(Equal(rule.Accept))
+
+	// Packet to port "https" (443) → matches allow-https rule (Accept)
+	m = &match.Match{Packet: pkts[1]}
+	engine.RunTest(m)
+	Expect(m.Result.Verdict).To(Equal(rule.Accept))
+
+	// Packet to port "dns" (53) with proto 17 → no matching rule → deny-all (Drop)
+	m = &match.Match{Packet: pkts[2]}
+	engine.RunTest(m)
+	Expect(m.Result.Verdict).To(Equal(rule.Drop))
+}
+
+const testSetsNamedPortYAML = `
+sets:
+  - name: named-web-ports
+    type: port
+    members:
+      - http
+      - https
+      - ssh
+`
+
+func TestEngineWithNamedPortsInSets(t *testing.T) {
+	RegisterTestingT(t)
+
+	engine := New(Config{})
+
+	err := engine.ConfigSetsFromBytes([]byte(testSetsNamedPortYAML))
+	Expect(err).To(BeNil())
+
+	const rulesWithNamedPortSetYAML = `
+rules:
+  - name: allow-named-web
+    dst:
+      port_set: named-web-ports
+    action: Accept
+  - name: deny-all
+    action: Drop
+default_action: Drop
+`
+	err = engine.ConfigRulesFromBytes([]byte(rulesWithNamedPortSetYAML))
+	Expect(err).To(BeNil())
+
+	pkts, err := config.PacketsFromBytes([]byte(testPacketsNamedPortYAML))
+	Expect(err).To(BeNil())
+
+	// Packet to port "http" (80) → in named-web-ports → Accept
+	m := &match.Match{Packet: pkts[0]}
+	engine.RunTest(m)
+	Expect(m.Result.Verdict).To(Equal(rule.Accept))
+
+	// Packet to port "https" (443) → in named-web-ports → Accept
+	m = &match.Match{Packet: pkts[1]}
+	engine.RunTest(m)
+	Expect(m.Result.Verdict).To(Equal(rule.Accept))
+
+	// Packet to port "dns" (53) → NOT in named-web-ports → deny-all (Drop)
+	m = &match.Match{Packet: pkts[2]}
+	engine.RunTest(m)
+	Expect(m.Result.Verdict).To(Equal(rule.Drop))
+}
+
 func TestNew(t *testing.T) {
 	RegisterTestingT(t)
 
