@@ -29,19 +29,19 @@ type Rule struct {
 	Protocol   []proto.Proto `yaml:"proto,omitempty"       validate:"isProtoValid"`
 	SrcPort    []uint16      `yaml:"src_port,omitempty"    validate:"isPortValid"`
 	DstPort    []uint16      `yaml:"dst_port,omitempty"    validate:"isPortValid"`
-	NegSrcNet  []string      `yaml:"neg_src_net,omitempty" validate:"isValidCIDR"`
-	NegDstNet  []string      `yaml:"neg_dst_net,omitempty" validate:"isValidCIDR"`
-	NegProto   []proto.Proto `yaml:"neg_proto,omitempty"   validate:"isProtoValid"`
-	NegSrcPort []uint16      `yaml:"neg_src_port,omitempty" validate:"isPortValid"`
-	NegDstPort []uint16      `yaml:"neg_dst_port,omitempty" validate:"isPortValid"`
+	NotSrcNet  []string      `yaml:"neg_src_net,omitempty" validate:"isValidCIDR"`
+	NotDstNet  []string      `yaml:"neg_dst_net,omitempty" validate:"isValidCIDR"`
+	NotProto   []proto.Proto `yaml:"neg_proto,omitempty"   validate:"isProtoValid"`
+	NotSrcPort []uint16      `yaml:"neg_src_port,omitempty" validate:"isPortValid"`
+	NotDstPort []uint16      `yaml:"neg_dst_port,omitempty" validate:"isPortValid"`
 	SrcIPSet      string        `yaml:"src_ip_set,omitempty"`
 	DstIPSet      string        `yaml:"dst_ip_set,omitempty"`
 	SrcPortSet    string        `yaml:"src_port_set,omitempty"`
 	DstPortSet    string        `yaml:"dst_port_set,omitempty"`
-	NegSrcIPSet   string        `yaml:"neg_src_ip_set,omitempty"`
-	NegDstIPSet   string        `yaml:"neg_dst_ip_set,omitempty"`
-	NegSrcPortSet string        `yaml:"neg_src_port_set,omitempty"`
-	NegDstPortSet string        `yaml:"neg_dst_port_set,omitempty"`
+	NotSrcIPSet   string        `yaml:"neg_src_ip_set,omitempty"`
+	NotDstIPSet   string        `yaml:"neg_dst_ip_set,omitempty"`
+	NotSrcPortSet string        `yaml:"neg_src_port_set,omitempty"`
+	NotDstPortSet string        `yaml:"neg_dst_port_set,omitempty"`
 	Action     string        `yaml:"action,omitempty"      validate:"isValidAction"`
 }
 
@@ -61,10 +61,10 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 		}
 	}
 
-	if len(r.NegProto) > 0 {
-		mRule.NegProto = set.NewProtoSet()
-		for _, proto := range r.NegProto {
-			mRule.NegProto.Add(proto)
+	if len(r.NotProto) > 0 {
+		mRule.NotProto = set.NewProtoSet()
+		for _, proto := range r.NotProto {
+			mRule.NotProto.Add(proto)
 		}
 	}
 
@@ -75,10 +75,10 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 		}
 	}
 
-	if len(r.NegSrcPort) > 0 {
-		mRule.NegSource.Port = set.NewPortSet()
-		for _, port := range r.NegSrcPort {
-			mRule.NegSource.Port.Add(port)
+	if len(r.NotSrcPort) > 0 {
+		mRule.NotSource.Port = set.NewPortSet()
+		for _, port := range r.NotSrcPort {
+			mRule.NotSource.Port.Add(port)
 		}
 	}
 
@@ -89,10 +89,10 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 		}
 	}
 
-	if len(r.NegDstPort) > 0 {
-		mRule.NegDestination.Port = set.NewPortSet()
-		for _, port := range r.NegDstPort {
-			mRule.NegDestination.Port.Add(port)
+	if len(r.NotDstPort) > 0 {
+		mRule.NotDestination.Port = set.NewPortSet()
+		for _, port := range r.NotDstPort {
+			mRule.NotDestination.Port.Add(port)
 		}
 	}
 
@@ -103,10 +103,10 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 		}
 	}
 
-	if len(r.NegSrcNet) > 0 {
-		mRule.NegSource.Net = set.NewIPSet()
-		for _, srcNet := range r.NegSrcNet {
-			mRule.NegSource.Net.Add(rule.MustParseCIDR(srcNet))
+	if len(r.NotSrcNet) > 0 {
+		mRule.NotSource.Net = set.NewIPSet()
+		for _, srcNet := range r.NotSrcNet {
+			mRule.NotSource.Net.Add(rule.MustParseCIDR(srcNet))
 		}
 	}
 
@@ -117,10 +117,10 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 		}
 	}
 
-	if len(r.NegDstNet) > 0 {
-		mRule.NegDestination.Net = set.NewIPSet()
-		for _, dstNet := range r.NegDstNet {
-			mRule.NegDestination.Net.Add(rule.MustParseCIDR(dstNet))
+	if len(r.NotDstNet) > 0 {
+		mRule.NotDestination.Net = set.NewIPSet()
+		for _, dstNet := range r.NotDstNet {
+			mRule.NotDestination.Net.Add(rule.MustParseCIDR(dstNet))
 		}
 	}
 
@@ -156,36 +156,36 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 		mRule.Destination.PortSet = s
 	}
 
-	if r.NegSrcIPSet != "" {
-		s, ok := sets[r.NegSrcIPSet]
+	if r.NotSrcIPSet != "" {
+		s, ok := sets[r.NotSrcIPSet]
 		if !ok {
-			return nil, fmt.Errorf("rule %q references unknown set %q", r.Name, r.NegSrcIPSet)
+			return nil, fmt.Errorf("rule %q references unknown set %q", r.Name, r.NotSrcIPSet)
 		}
-		mRule.NegSource.IPSet = s
+		mRule.NotSource.IPSet = s
 	}
 
-	if r.NegDstIPSet != "" {
-		s, ok := sets[r.NegDstIPSet]
+	if r.NotDstIPSet != "" {
+		s, ok := sets[r.NotDstIPSet]
 		if !ok {
-			return nil, fmt.Errorf("rule %q references unknown set %q", r.Name, r.NegDstIPSet)
+			return nil, fmt.Errorf("rule %q references unknown set %q", r.Name, r.NotDstIPSet)
 		}
-		mRule.NegDestination.IPSet = s
+		mRule.NotDestination.IPSet = s
 	}
 
-	if r.NegSrcPortSet != "" {
-		s, ok := sets[r.NegSrcPortSet]
+	if r.NotSrcPortSet != "" {
+		s, ok := sets[r.NotSrcPortSet]
 		if !ok {
-			return nil, fmt.Errorf("rule %q references unknown set %q", r.Name, r.NegSrcPortSet)
+			return nil, fmt.Errorf("rule %q references unknown set %q", r.Name, r.NotSrcPortSet)
 		}
-		mRule.NegSource.PortSet = s
+		mRule.NotSource.PortSet = s
 	}
 
-	if r.NegDstPortSet != "" {
-		s, ok := sets[r.NegDstPortSet]
+	if r.NotDstPortSet != "" {
+		s, ok := sets[r.NotDstPortSet]
 		if !ok {
-			return nil, fmt.Errorf("rule %q references unknown set %q", r.Name, r.NegDstPortSet)
+			return nil, fmt.Errorf("rule %q references unknown set %q", r.Name, r.NotDstPortSet)
 		}
-		mRule.NegDestination.PortSet = s
+		mRule.NotDestination.PortSet = s
 	}
 
 	return mRule, nil

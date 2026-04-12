@@ -347,63 +347,63 @@ func TestNegatedRuleMatch(t *testing.T) {
 	)
 
 	// Negated protocol: should NOT match proto 17, but SHOULD match everything else
-	ruleNegProto := New(WithNegProto(proto.UDP))
-	Expect(ruleNegProto.Match(pkt)).To(BeFalse())
+	ruleNotProto := New(WithNotProto(proto.UDP))
+	Expect(ruleNotProto.Match(pkt)).To(BeFalse())
 
-	ruleNegProtoOther := New(WithNegProto(proto.TCP))
-	Expect(ruleNegProtoOther.Match(pkt)).To(BeTrue())
+	ruleNotProtoOther := New(WithNotProto(proto.TCP))
+	Expect(ruleNotProtoOther.Match(pkt)).To(BeTrue())
 
 	// Negated source port: should NOT match src port 55555
-	ruleNegSrcPort := New(WithNegSrcPort(55555))
-	Expect(ruleNegSrcPort.Match(pkt)).To(BeFalse())
+	ruleNotSrcPort := New(WithNotSrcPort(55555))
+	Expect(ruleNotSrcPort.Match(pkt)).To(BeFalse())
 
-	ruleNegSrcPortOther := New(WithNegSrcPort(12345))
-	Expect(ruleNegSrcPortOther.Match(pkt)).To(BeTrue())
+	ruleNotSrcPortOther := New(WithNotSrcPort(12345))
+	Expect(ruleNotSrcPortOther.Match(pkt)).To(BeTrue())
 
 	// Negated destination port: should NOT match dst port 53
-	ruleNegDstPort := New(WithNegDstPort(53))
-	Expect(ruleNegDstPort.Match(pkt)).To(BeFalse())
+	ruleNotDstPort := New(WithNotDstPort(53))
+	Expect(ruleNotDstPort.Match(pkt)).To(BeFalse())
 
-	ruleNegDstPortOther := New(WithNegDstPort(80))
-	Expect(ruleNegDstPortOther.Match(pkt)).To(BeTrue())
+	ruleNotDstPortOther := New(WithNotDstPort(80))
+	Expect(ruleNotDstPortOther.Match(pkt)).To(BeTrue())
 
 	// Negated source network: should NOT match 10.10.10.0/24
-	ruleNegSrcNet := New(WithNegSrcNet("10.10.10.0/24"))
-	Expect(ruleNegSrcNet.Match(pkt)).To(BeFalse())
+	ruleNotSrcNet := New(WithNotSrcNet("10.10.10.0/24"))
+	Expect(ruleNotSrcNet.Match(pkt)).To(BeFalse())
 
-	ruleNegSrcNetOther := New(WithNegSrcNet("192.168.0.0/16"))
-	Expect(ruleNegSrcNetOther.Match(pkt)).To(BeTrue())
+	ruleNotSrcNetOther := New(WithNotSrcNet("192.168.0.0/16"))
+	Expect(ruleNotSrcNetOther.Match(pkt)).To(BeTrue())
 
 	// Negated destination network: should NOT match 1.1.1.1/32
-	ruleNegDstNet := New(WithNegDstNet("1.1.1.1/32"))
-	Expect(ruleNegDstNet.Match(pkt)).To(BeFalse())
+	ruleNotDstNet := New(WithNotDstNet("1.1.1.1/32"))
+	Expect(ruleNotDstNet.Match(pkt)).To(BeFalse())
 
-	ruleNegDstNetOther := New(WithNegDstNet("2.2.2.2/32"))
-	Expect(ruleNegDstNetOther.Match(pkt)).To(BeTrue())
+	ruleNotDstNetOther := New(WithNotDstNet("2.2.2.2/32"))
+	Expect(ruleNotDstNetOther.Match(pkt)).To(BeTrue())
 }
 
 func TestNegatedRuleString(t *testing.T) {
 	RegisterTestingT(t)
 
 	// Negated proto should show with ! prefix
-	ruleNegProto := New(WithAction(Accept), WithNegProto(proto.TCP))
-	Expect(ruleNegProto.String()).To(Equal("Accept !tcp{*:*->*:*}"))
+	ruleNotProto := New(WithAction(Accept), WithNotProto(proto.TCP))
+	Expect(ruleNotProto.String()).To(Equal("Accept !tcp{*:*->*:*}"))
 
 	// Negated src port should show with ! prefix
-	ruleNegSrcPort := New(WithAction(Drop), WithNegSrcPort(80))
-	Expect(ruleNegSrcPort.String()).To(Equal("Drop *{*:!80->*:*}"))
+	ruleNotSrcPort := New(WithAction(Drop), WithNotSrcPort(80))
+	Expect(ruleNotSrcPort.String()).To(Equal("Drop *{*:!80->*:*}"))
 
 	// Negated dst port should show with ! prefix
-	ruleNegDstPort := New(WithAction(Accept), WithNegDstPort(53))
-	Expect(ruleNegDstPort.String()).To(Equal("Accept *{*:*->*:!53}"))
+	ruleNotDstPort := New(WithAction(Accept), WithNotDstPort(53))
+	Expect(ruleNotDstPort.String()).To(Equal("Accept *{*:*->*:!53}"))
 
 	// Negated src net should show with ! prefix
-	ruleNegSrcNet := New(WithAction(Drop), WithNegSrcNet("10.0.0.0/8"))
-	Expect(ruleNegSrcNet.String()).To(Equal("Drop *{!10.0.0.0/8:*->*:*}"))
+	ruleNotSrcNet := New(WithAction(Drop), WithNotSrcNet("10.0.0.0/8"))
+	Expect(ruleNotSrcNet.String()).To(Equal("Drop *{!10.0.0.0/8:*->*:*}"))
 
 	// Negated dst net should show with ! prefix
-	ruleNegDstNet := New(WithAction(Accept), WithNegDstNet("1.1.1.1/32"))
-	Expect(ruleNegDstNet.String()).To(Equal("Accept *{*:*->!1.1.1.1/32:*}"))
+	ruleNotDstNet := New(WithAction(Accept), WithNotDstNet("1.1.1.1/32"))
+	Expect(ruleNotDstNet.String()).To(Equal("Accept *{*:*->!1.1.1.1/32:*}"))
 }
 
 func TestNegatedRuleConfig(t *testing.T) {
@@ -412,17 +412,17 @@ func TestNegatedRuleConfig(t *testing.T) {
 	// Valid negated rule — negated fields populate dedicated Rule fields
 	rule := New(
 		WithAction(Accept),
-		WithNegProto(proto.TCP),
-		WithNegSrcPort(80),
-		WithNegDstPort(443),
-		WithNegSrcNet("10.0.0.0/8"),
-		WithNegDstNet("192.168.0.0/16"),
+		WithNotProto(proto.TCP),
+		WithNotSrcPort(80),
+		WithNotDstPort(443),
+		WithNotSrcNet("10.0.0.0/8"),
+		WithNotDstNet("192.168.0.0/16"),
 	)
-	Expect(rule.NegProto).ToNot(BeNil())
-	Expect(rule.NegSource.Port).ToNot(BeNil())
-	Expect(rule.NegDestination.Port).ToNot(BeNil())
-	Expect(rule.NegSource.Net).ToNot(BeNil())
-	Expect(rule.NegDestination.Net).ToNot(BeNil())
+	Expect(rule.NotProto).ToNot(BeNil())
+	Expect(rule.NotSource.Port).ToNot(BeNil())
+	Expect(rule.NotDestination.Port).ToNot(BeNil())
+	Expect(rule.NotSource.Net).ToNot(BeNil())
+	Expect(rule.NotDestination.Net).ToNot(BeNil())
 	// Positive fields should be nil when only negated values are specified
 	Expect(rule.Proto).To(BeNil())
 	Expect(rule.Source.Port).To(BeNil())
@@ -434,48 +434,48 @@ func TestNegatedRuleConfig(t *testing.T) {
 	ruleCombined := New(
 		WithAction(Accept),
 		WithProto(proto.UDP),
-		WithNegProto(proto.TCP),
+		WithNotProto(proto.TCP),
 		WithSrcPort(12345),
-		WithNegSrcPort(80),
+		WithNotSrcPort(80),
 		WithDstPort(53),
-		WithNegDstPort(443),
+		WithNotDstPort(443),
 		WithSrcNet("10.0.0.0/8"),
-		WithNegSrcNet("10.10.0.0/16"),
+		WithNotSrcNet("10.10.0.0/16"),
 		WithDstNet("1.1.1.0/24"),
-		WithNegDstNet("1.1.1.100/32"),
+		WithNotDstNet("1.1.1.100/32"),
 	)
 	Expect(ruleCombined.Proto).ToNot(BeNil())
-	Expect(ruleCombined.NegProto).ToNot(BeNil())
+	Expect(ruleCombined.NotProto).ToNot(BeNil())
 	Expect(ruleCombined.Source.Port).ToNot(BeNil())
-	Expect(ruleCombined.NegSource.Port).ToNot(BeNil())
+	Expect(ruleCombined.NotSource.Port).ToNot(BeNil())
 	Expect(ruleCombined.Destination.Port).ToNot(BeNil())
-	Expect(ruleCombined.NegDestination.Port).ToNot(BeNil())
+	Expect(ruleCombined.NotDestination.Port).ToNot(BeNil())
 	Expect(ruleCombined.Source.Net).ToNot(BeNil())
-	Expect(ruleCombined.NegSource.Net).ToNot(BeNil())
+	Expect(ruleCombined.NotSource.Net).ToNot(BeNil())
 	Expect(ruleCombined.Destination.Net).ToNot(BeNil())
-	Expect(ruleCombined.NegDestination.Net).ToNot(BeNil())
+	Expect(ruleCombined.NotDestination.Net).ToNot(BeNil())
 }
 
 func TestCombinedPositiveAndNegativeRuleMatch(t *testing.T) {
 	RegisterTestingT(t)
 
 	// Rule matches src in 10.0.0.0/8 but NOT in 10.10.0.0/16
-	rule := New(WithSrcNet("10.0.0.0/8"), WithNegSrcNet("10.10.0.0/16"))
+	rule := New(WithSrcNet("10.0.0.0/8"), WithNotSrcNet("10.10.0.0/16"))
 
 	// In 10.0.0.0/8, not in 10.10.0.0/16 → should match
 	pktMatch := packet.New(packet.WithSrcAddr("10.1.2.3"))
 	Expect(rule.Match(pktMatch)).To(BeTrue())
 
 	// In 10.0.0.0/8 AND in 10.10.0.0/16 → should not match (excluded by neg)
-	pktNegHit := packet.New(packet.WithSrcAddr("10.10.0.5"))
-	Expect(rule.Match(pktNegHit)).To(BeFalse())
+	pktNotHit := packet.New(packet.WithSrcAddr("10.10.0.5"))
+	Expect(rule.Match(pktNotHit)).To(BeFalse())
 
 	// Not in 10.0.0.0/8 at all → should not match (excluded by positive)
 	pktOutside := packet.New(packet.WithSrcAddr("172.16.0.1"))
 	Expect(rule.Match(pktOutside)).To(BeFalse())
 
 	// Rule matches proto 17 AND NOT proto 6 (proto 6 is excluded, proto 17 is required)
-	ruleProto := New(WithProto(proto.UDP), WithNegProto(proto.TCP))
+	ruleProto := New(WithProto(proto.UDP), WithNotProto(proto.TCP))
 	pktProto17 := packet.New(packet.WithProto(proto.UDP))
 	pktProto6 := packet.New(packet.WithProto(proto.TCP))
 	pktProto1 := packet.New(packet.WithProto(proto.ICMP))
@@ -488,11 +488,11 @@ func TestCombinedRuleString(t *testing.T) {
 	RegisterTestingT(t)
 
 	// Combined proto field
-	ruleBoth := New(WithAction(Accept), WithProto(proto.UDP), WithNegProto(proto.TCP))
+	ruleBoth := New(WithAction(Accept), WithProto(proto.UDP), WithNotProto(proto.TCP))
 	Expect(ruleBoth.String()).To(Equal("Accept udp,!tcp{*:*->*:*}"))
 
 	// Combined src net field
-	ruleSrcNet := New(WithAction(Drop), WithSrcNet("10.0.0.0/8"), WithNegSrcNet("10.10.0.0/16"))
+	ruleSrcNet := New(WithAction(Drop), WithSrcNet("10.0.0.0/8"), WithNotSrcNet("10.10.0.0/16"))
 	Expect(ruleSrcNet.String()).To(Equal("Drop *{10.0.0.0/8,!10.10.0.0/16:*->*:*}"))
 }
 
@@ -563,45 +563,45 @@ func TestNamedSetRuleMatchSrcPortSet(t *testing.T) {
 func TestNegatedNamedSetRuleMatch(t *testing.T) {
 	RegisterTestingT(t)
 
-	// NegSrcIPSet: packets whose source is in the set should NOT match.
+	// NotSrcIPSet: packets whose source is in the set should NOT match.
 	srcIPSet := set.NewIPSet()
 	_ = srcIPSet.Add("10.0.0.0/8")
 
-	rNegSrc := New(WithNegSrcIPSet(srcIPSet))
+	rNegSrc := New(WithNotSrcIPSet(srcIPSet))
 	pktInSet := packet.New(packet.WithSrcAddr("10.1.2.3"))
 	pktOutSet := packet.New(packet.WithSrcAddr("192.168.1.1"))
 	Expect(rNegSrc.Match(pktInSet)).To(BeFalse())
 	Expect(rNegSrc.Match(pktOutSet)).To(BeTrue())
 
-	// NegDstIPSet: packets whose destination is in the set should NOT match.
+	// NotDstIPSet: packets whose destination is in the set should NOT match.
 	dstIPSet := set.NewIPSet()
 	_ = dstIPSet.Add("1.1.1.0/24")
 
-	rNegDst := New(WithNegDstIPSet(dstIPSet))
+	rNegDst := New(WithNotDstIPSet(dstIPSet))
 	pktDstIn := packet.New(packet.WithDstAddr("1.1.1.1"))
 	pktDstOut := packet.New(packet.WithDstAddr("2.2.2.2"))
 	Expect(rNegDst.Match(pktDstIn)).To(BeFalse())
 	Expect(rNegDst.Match(pktDstOut)).To(BeTrue())
 
-	// NegSrcPortSet: packets whose source port is in the set should NOT match.
+	// NotSrcPortSet: packets whose source port is in the set should NOT match.
 	srcPortSet := set.NewPortSet()
 	_ = srcPortSet.Add(uint16(55555))
 
-	rNegSrcPort := New(WithNegSrcPortSet(srcPortSet))
+	rNotSrcPort := New(WithNotSrcPortSet(srcPortSet))
 	pktSrcPortIn := packet.New(packet.WithSrcPort(55555))
 	pktSrcPortOut := packet.New(packet.WithSrcPort(12345))
-	Expect(rNegSrcPort.Match(pktSrcPortIn)).To(BeFalse())
-	Expect(rNegSrcPort.Match(pktSrcPortOut)).To(BeTrue())
+	Expect(rNotSrcPort.Match(pktSrcPortIn)).To(BeFalse())
+	Expect(rNotSrcPort.Match(pktSrcPortOut)).To(BeTrue())
 
-	// NegDstPortSet: packets whose destination port is in the set should NOT match.
+	// NotDstPortSet: packets whose destination port is in the set should NOT match.
 	dstPortSet := set.NewPortSet()
 	_ = dstPortSet.Add(uint16(80))
 
-	rNegDstPort := New(WithNegDstPortSet(dstPortSet))
+	rNotDstPort := New(WithNotDstPortSet(dstPortSet))
 	pktDstPortIn := packet.New(packet.WithDstPort(80))
 	pktDstPortOut := packet.New(packet.WithDstPort(443))
-	Expect(rNegDstPort.Match(pktDstPortIn)).To(BeFalse())
-	Expect(rNegDstPort.Match(pktDstPortOut)).To(BeTrue())
+	Expect(rNotDstPort.Match(pktDstPortIn)).To(BeFalse())
+	Expect(rNotDstPort.Match(pktDstPortOut)).To(BeTrue())
 }
 
 func TestCombinedPositiveAndNegativeNamedSetMatch(t *testing.T) {
@@ -614,7 +614,7 @@ func TestCombinedPositiveAndNegativeNamedSetMatch(t *testing.T) {
 	negSet := set.NewIPSet()
 	_ = negSet.Add("10.10.0.0/16")
 
-	r := New(WithSrcIPSet(posSet), WithNegSrcIPSet(negSet))
+	r := New(WithSrcIPSet(posSet), WithNotSrcIPSet(negSet))
 
 	// In 10.0.0.0/8, not in 10.10.0.0/16 → should match
 	Expect(r.Match(packet.New(packet.WithSrcAddr("10.1.2.3")))).To(BeTrue())
@@ -633,11 +633,11 @@ func TestNegatedNamedSetRuleString(t *testing.T) {
 	portSet := set.NewPortSet()
 	_ = portSet.Add(uint16(80))
 
-	// NegSrcIPSet only → srcNet shows as !10.0.0.0/8
-	rNegSrcIP := New(WithAction(Accept), WithNegSrcIPSet(ipSet))
+	// NotSrcIPSet only → srcNet shows as !10.0.0.0/8
+	rNegSrcIP := New(WithAction(Accept), WithNotSrcIPSet(ipSet))
 	Expect(rNegSrcIP.String()).To(Equal("Accept *{!10.0.0.0/8:*->*:*}"))
 
-	// NegDstPortSet only → dstPort shows as !80
-	rNegDstPort := New(WithAction(Drop), WithNegDstPortSet(portSet))
-	Expect(rNegDstPort.String()).To(Equal("Drop *{*:*->*:!80}"))
+	// NotDstPortSet only → dstPort shows as !80
+	rNotDstPort := New(WithAction(Drop), WithNotDstPortSet(portSet))
+	Expect(rNotDstPort.String()).To(Equal("Drop *{*:*->*:!80}"))
 }
