@@ -19,9 +19,9 @@ func TestToRuleWithoutSets(t *testing.T) {
 	Expect(err).To(BeNil())
 	Expect(mRule).ToNot(BeNil())
 	Expect(mRule.Name).To(Equal("allow-http"))
-	Expect(mRule.SrcIPSet).To(BeNil())
+	Expect(mRule.Source.IPSet).To(BeNil())
 	Expect(mRule.DstIPSet).To(BeNil())
-	Expect(mRule.SrcPortSet).To(BeNil())
+	Expect(mRule.Source.PortSet).To(BeNil())
 	Expect(mRule.DstPortSet).To(BeNil())
 }
 
@@ -50,9 +50,9 @@ func TestToRuleWithValidSets(t *testing.T) {
 	mRule, err := r.ToRule(sets)
 	Expect(err).To(BeNil())
 	Expect(mRule).ToNot(BeNil())
-	Expect(mRule.SrcIPSet).To(Equal(sets["my-ips"]))
+	Expect(mRule.Source.IPSet).To(Equal(sets["my-ips"]))
 	Expect(mRule.DstIPSet).To(Equal(sets["my-ips"]))
-	Expect(mRule.SrcPortSet).To(Equal(sets["my-ports"]))
+	Expect(mRule.Source.PortSet).To(Equal(sets["my-ports"]))
 	Expect(mRule.DstPortSet).To(Equal(sets["my-ports"]))
 }
 

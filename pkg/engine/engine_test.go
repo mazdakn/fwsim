@@ -163,9 +163,9 @@ func TestRulesReferencingNamedSets(t *testing.T) {
 	Expect(len(engine.table.Rules)).To(Equal(2))
 
 	rule1 := engine.table.Rules[0]
-	Expect(rule1.SrcIPSet).ToNot(BeNil())
+	Expect(rule1.Source.IPSet).ToNot(BeNil())
 	Expect(rule1.DstPortSet).ToNot(BeNil())
-	Expect(rule1.SrcNet).To(BeNil())
+	Expect(rule1.Source.Net).To(BeNil())
 	Expect(rule1.DstPort).To(BeNil())
 }
 
@@ -280,8 +280,8 @@ func TestLoadRulesFromBytes(t *testing.T) {
 
 	// Verify first rule
 	rule1 := engine.table.Rules[0]
-	Expect(rule1.SrcNet).ToNot(BeNil())
-	Expect(rule1.SrcNet.String()).To(Equal("192.168.1.0/24"))
+	Expect(rule1.Source.Net).ToNot(BeNil())
+	Expect(rule1.Source.Net.String()).To(Equal("192.168.1.0/24"))
 	Expect(rule1.DstNet).ToNot(BeNil())
 	Expect(rule1.DstNet.String()).To(Equal("1.1.1.1/32"))
 	Expect(rule1.Proto).ToNot(BeNil())

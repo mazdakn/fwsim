@@ -69,9 +69,9 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 	}
 
 	if len(r.SrcPort) > 0 {
-		mRule.SrcPort = set.NewPortSet()
+		mRule.Source.Port = set.NewPortSet()
 		for _, port := range r.SrcPort {
-			mRule.SrcPort.Add(port)
+			mRule.Source.Port.Add(port)
 		}
 	}
 
@@ -97,9 +97,9 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 	}
 
 	if len(r.SrcNet) > 0 {
-		mRule.SrcNet = set.NewIPSet()
+		mRule.Source.Net = set.NewIPSet()
 		for _, srcNet := range r.SrcNet {
-			mRule.SrcNet.Add(rule.MustParseCIDR(srcNet))
+			mRule.Source.Net.Add(rule.MustParseCIDR(srcNet))
 		}
 	}
 
@@ -129,7 +129,7 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 		if !ok {
 			return nil, fmt.Errorf("rule %q references unknown set %q", r.Name, r.SrcIPSet)
 		}
-		mRule.SrcIPSet = s
+		mRule.Source.IPSet = s
 	}
 
 	if r.DstIPSet != "" {
@@ -145,7 +145,7 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 		if !ok {
 			return nil, fmt.Errorf("rule %q references unknown set %q", r.Name, r.SrcPortSet)
 		}
-		mRule.SrcPortSet = s
+		mRule.Source.PortSet = s
 	}
 
 	if r.DstPortSet != "" {
