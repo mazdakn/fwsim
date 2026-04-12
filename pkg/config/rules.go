@@ -29,19 +29,19 @@ type Rule struct {
 	Protocol   []proto.Proto `yaml:"proto,omitempty"       validate:"isProtoValid"`
 	SrcPort    []uint16      `yaml:"src_port,omitempty"    validate:"isPortValid"`
 	DstPort    []uint16      `yaml:"dst_port,omitempty"    validate:"isPortValid"`
-	NotSrcNet  []string      `yaml:"neg_src_net,omitempty" validate:"isValidCIDR"`
-	NotDstNet  []string      `yaml:"neg_dst_net,omitempty" validate:"isValidCIDR"`
-	NotProto   []proto.Proto `yaml:"neg_proto,omitempty"   validate:"isProtoValid"`
-	NotSrcPort []uint16      `yaml:"neg_src_port,omitempty" validate:"isPortValid"`
-	NotDstPort []uint16      `yaml:"neg_dst_port,omitempty" validate:"isPortValid"`
+	NotSrcNet  []string      `yaml:"not_src_net,omitempty" validate:"isValidCIDR"`
+	NotDstNet  []string      `yaml:"not_dst_net,omitempty" validate:"isValidCIDR"`
+	NotProto   []proto.Proto `yaml:"not_proto,omitempty"   validate:"isProtoValid"`
+	NotSrcPort []uint16      `yaml:"not_src_port,omitempty" validate:"isPortValid"`
+	NotDstPort []uint16      `yaml:"not_dst_port,omitempty" validate:"isPortValid"`
 	SrcIPSet      string        `yaml:"src_ip_set,omitempty"`
 	DstIPSet      string        `yaml:"dst_ip_set,omitempty"`
 	SrcPortSet    string        `yaml:"src_port_set,omitempty"`
 	DstPortSet    string        `yaml:"dst_port_set,omitempty"`
-	NotSrcIPSet   string        `yaml:"neg_src_ip_set,omitempty"`
-	NotDstIPSet   string        `yaml:"neg_dst_ip_set,omitempty"`
-	NotSrcPortSet string        `yaml:"neg_src_port_set,omitempty"`
-	NotDstPortSet string        `yaml:"neg_dst_port_set,omitempty"`
+	NotSrcIPSet   string        `yaml:"not_src_ip_set,omitempty"`
+	NotDstIPSet   string        `yaml:"not_dst_ip_set,omitempty"`
+	NotSrcPortSet string        `yaml:"not_src_port_set,omitempty"`
+	NotDstPortSet string        `yaml:"not_dst_port_set,omitempty"`
 	Action     string        `yaml:"action,omitempty"      validate:"isValidAction"`
 }
 

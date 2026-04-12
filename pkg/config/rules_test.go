@@ -121,8 +121,8 @@ rules:
   - name: allow-trusted
     src_ip_set: trusted-ips
     dst_port_set: web-ports
-    neg_src_ip_set: blocked-ips
-    neg_dst_port_set: banned-ports
+    not_src_ip_set: blocked-ips
+    not_dst_port_set: banned-ports
     action: Accept
 default_action: Drop
 `

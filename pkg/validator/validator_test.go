@@ -99,7 +99,7 @@ func TestConfigValidateInvalidNotSrcNet(t *testing.T) {
 	}
 	err := c.Validate()
 	Expect(err).ToNot(BeNil())
-	Expect(err.Error()).To(ContainSubstring("invalid neg_src_net"))
+	Expect(err.Error()).To(ContainSubstring("invalid not_src_net"))
 }
 
 func TestConfigValidateInvalidNotDstNet(t *testing.T) {
@@ -113,7 +113,7 @@ func TestConfigValidateInvalidNotDstNet(t *testing.T) {
 	}
 	err := c.Validate()
 	Expect(err).ToNot(BeNil())
-	Expect(err.Error()).To(ContainSubstring("invalid neg_dst_net"))
+	Expect(err.Error()).To(ContainSubstring("invalid not_dst_net"))
 }
 
 func TestConfigValidateInvalidRuleAction(t *testing.T) {

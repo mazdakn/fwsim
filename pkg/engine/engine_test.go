@@ -214,7 +214,7 @@ func TestRulesWithNamedSetsMatch(t *testing.T) {
 const testRulesWithNotSetsYAML = `
 rules:
   - name: allow-non-blocked-src
-    neg_src_ip_set: trusted-ips
+    not_src_ip_set: trusted-ips
     action: Accept
   - name: deny-all
     action: Drop
