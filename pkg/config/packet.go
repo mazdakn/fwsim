@@ -22,8 +22,8 @@ type Packet struct {
 	SrcAddr string      `yaml:"src_addr,omitempty" validate:"isValidIP"`
 	DstAddr string      `yaml:"dst_addr,omitempty" validate:"isValidIP"`
 	Proto   proto.Proto `yaml:"proto,omitempty"    validate:"isProtoValid"`
-	SrcPort port.Port   `yaml:"src_port,omitempty"`
-	DstPort port.Port   `yaml:"dst_port,omitempty"`
+	SrcPort port.Port   `yaml:"src_port,omitempty" validate:"isPortValid"`
+	DstPort port.Port   `yaml:"dst_port,omitempty" validate:"isPortValid"`
 
 	Metadata packet.Metadata `yaml:"metadata,omitempty"`
 }

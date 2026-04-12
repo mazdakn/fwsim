@@ -158,6 +158,24 @@ func TestValidatePort(t *testing.T) {
 	Expect(validator.ValidatePort(100000)).To(BeFalse())
 }
 
+func TestValidatePortValue(t *testing.T) {
+	RegisterTestingT(t)
+
+	// Numeric ports (Name empty) are always valid
+	Expect(validator.ValidatePortValue(port.Port{Number: 0})).To(BeTrue())
+	Expect(validator.ValidatePortValue(port.Port{Number: 80})).To(BeTrue())
+	Expect(validator.ValidatePortValue(port.Port{Number: 65535})).To(BeTrue())
+
+	// Well-known port names are valid
+	Expect(validator.ValidatePortValue(port.Port{Number: 80, Name: "http"})).To(BeTrue())
+	Expect(validator.ValidatePortValue(port.Port{Number: 443, Name: "https"})).To(BeTrue())
+	Expect(validator.ValidatePortValue(port.Port{Number: 22, Name: "ssh"})).To(BeTrue())
+
+	// Unknown names are invalid
+	Expect(validator.ValidatePortValue(port.Port{Name: "notaservice"})).To(BeFalse())
+	Expect(validator.ValidatePortValue(port.Port{Name: "badport"})).To(BeFalse())
+}
+
 func TestValidateProtocol(t *testing.T) {
 	RegisterTestingT(t)
 
@@ -357,6 +375,40 @@ func TestConfigValidateValidRuleWithPortsAndProto(t *testing.T) {
 	Expect(err).To(BeNil())
 }
 
+func TestConfigValidateValidRuleWithNamedPorts(t *testing.T) {
+	RegisterTestingT(t)
+
+	c := &config.RuleConfig{
+		Rules: []config.Rule{
+			{
+				Source:      config.Endpoint{Port: []port.Port{{Number: 22, Name: "ssh"}}},
+				Destination: config.Endpoint{Port: []port.Port{{Number: 80, Name: "http"}, {Number: 443, Name: "https"}}},
+				Action:      "Accept",
+			},
+		},
+		DefaultAction: "Drop",
+	}
+	err := c.Validate()
+	Expect(err).To(BeNil())
+}
+
+func TestConfigValidateRuleWithInvalidPortName(t *testing.T) {
+	RegisterTestingT(t)
+
+	c := &config.RuleConfig{
+		Rules: []config.Rule{
+			{
+				Destination: config.Endpoint{Port: []port.Port{{Name: "notaservice"}}},
+				Action:      "Accept",
+			},
+		},
+		DefaultAction: "Drop",
+	}
+	err := c.Validate()
+	Expect(err).ToNot(BeNil())
+	Expect(err.Error()).To(ContainSubstring("invalid port"))
+}
+
 func TestConfigValidateValidPacketWithPortAndProto(t *testing.T) {
 	RegisterTestingT(t)
 
@@ -367,4 +419,29 @@ func TestConfigValidateValidPacketWithPortAndProto(t *testing.T) {
 	}
 	err := pkts.Validate()
 	Expect(err).To(BeNil())
+}
+
+func TestConfigValidateValidPacketWithNamedPort(t *testing.T) {
+	RegisterTestingT(t)
+
+	pkts := &config.PacketConfig{
+		Packets: []config.Packet{
+			{SrcAddr: "192.168.1.5", DstAddr: "1.1.1.1", Proto: proto.TCP, SrcPort: port.Port{Number: 12345}, DstPort: port.Port{Number: 443, Name: "https"}},
+		},
+	}
+	err := pkts.Validate()
+	Expect(err).To(BeNil())
+}
+
+func TestConfigValidatePacketWithInvalidPortName(t *testing.T) {
+	RegisterTestingT(t)
+
+	pkts := &config.PacketConfig{
+		Packets: []config.Packet{
+			{SrcAddr: "192.168.1.5", DstAddr: "1.1.1.1", DstPort: port.Port{Name: "badservice"}},
+		},
+	}
+	err := pkts.Validate()
+	Expect(err).ToNot(BeNil())
+	Expect(err.Error()).To(ContainSubstring("invalid dst_port"))
 }

@@ -25,7 +25,7 @@ func (rc *RuleConfig) Validate() error {
 // in the YAML configuration.
 type Endpoint struct {
 	Net     []string    `yaml:"net,omitempty"      validate:"isValidCIDR"`
-	Port    []port.Port `yaml:"port,omitempty"`
+	Port    []port.Port `yaml:"port,omitempty"     validate:"isPortValid"`
 	IPSet   string      `yaml:"ip_set,omitempty"`
 	PortSet string      `yaml:"port_set,omitempty"`
 }
