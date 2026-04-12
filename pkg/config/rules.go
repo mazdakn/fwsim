@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/goccy/go-yaml"
@@ -33,11 +34,21 @@ type Rule struct {
 	NegProto   []proto.Proto `yaml:"neg_proto,omitempty"   validate:"isProtoValid"`
 	NegSrcPort []uint16      `yaml:"neg_src_port,omitempty" validate:"isPortValid"`
 	NegDstPort []uint16      `yaml:"neg_dst_port,omitempty" validate:"isPortValid"`
+	SrcIPSet      string        `yaml:"src_ip_set,omitempty"`
+	DstIPSet      string        `yaml:"dst_ip_set,omitempty"`
+	SrcPortSet    string        `yaml:"src_port_set,omitempty"`
+	DstPortSet    string        `yaml:"dst_port_set,omitempty"`
+	NegSrcIPSet   string        `yaml:"neg_src_ip_set,omitempty"`
+	NegDstIPSet   string        `yaml:"neg_dst_ip_set,omitempty"`
+	NegSrcPortSet string        `yaml:"neg_src_port_set,omitempty"`
+	NegDstPortSet string        `yaml:"neg_dst_port_set,omitempty"`
 	Action     string        `yaml:"action,omitempty"      validate:"isValidAction"`
 }
 
 // ToRule converts a RuleConfig into a Rule domain object.
-func (r *Rule) ToRule() *rule.Rule {
+// sets is the map of pre-loaded named sets; any set name referenced by this
+// rule that is not present in sets causes an error.
+func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 	mRule := rule.New()
 	mRule.Name = r.Name
 	mRule.Order = r.Order
@@ -113,7 +124,71 @@ func (r *Rule) ToRule() *rule.Rule {
 		}
 	}
 
-	return mRule
+	if r.SrcIPSet != "" {
+		s, ok := sets[r.SrcIPSet]
+		if !ok {
+			return nil, fmt.Errorf("rule %q references unknown set %q", r.Name, r.SrcIPSet)
+		}
+		mRule.SrcIPSet = s
+	}
+
+	if r.DstIPSet != "" {
+		s, ok := sets[r.DstIPSet]
+		if !ok {
+			return nil, fmt.Errorf("rule %q references unknown set %q", r.Name, r.DstIPSet)
+		}
+		mRule.DstIPSet = s
+	}
+
+	if r.SrcPortSet != "" {
+		s, ok := sets[r.SrcPortSet]
+		if !ok {
+			return nil, fmt.Errorf("rule %q references unknown set %q", r.Name, r.SrcPortSet)
+		}
+		mRule.SrcPortSet = s
+	}
+
+	if r.DstPortSet != "" {
+		s, ok := sets[r.DstPortSet]
+		if !ok {
+			return nil, fmt.Errorf("rule %q references unknown set %q", r.Name, r.DstPortSet)
+		}
+		mRule.DstPortSet = s
+	}
+
+	if r.NegSrcIPSet != "" {
+		s, ok := sets[r.NegSrcIPSet]
+		if !ok {
+			return nil, fmt.Errorf("rule %q references unknown set %q", r.Name, r.NegSrcIPSet)
+		}
+		mRule.NegSrcIPSet = s
+	}
+
+	if r.NegDstIPSet != "" {
+		s, ok := sets[r.NegDstIPSet]
+		if !ok {
+			return nil, fmt.Errorf("rule %q references unknown set %q", r.Name, r.NegDstIPSet)
+		}
+		mRule.NegDstIPSet = s
+	}
+
+	if r.NegSrcPortSet != "" {
+		s, ok := sets[r.NegSrcPortSet]
+		if !ok {
+			return nil, fmt.Errorf("rule %q references unknown set %q", r.Name, r.NegSrcPortSet)
+		}
+		mRule.NegSrcPortSet = s
+	}
+
+	if r.NegDstPortSet != "" {
+		s, ok := sets[r.NegDstPortSet]
+		if !ok {
+			return nil, fmt.Errorf("rule %q references unknown set %q", r.Name, r.NegDstPortSet)
+		}
+		mRule.NegDstPortSet = s
+	}
+
+	return mRule, nil
 }
 
 func RuleConfigFromBytes(data []byte) (*RuleConfig, error) {

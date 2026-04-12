@@ -154,6 +154,54 @@ func WithNegDstNet(cidr string) RuleOption {
 	}
 }
 
+func WithSrcIPSet(s set.Set) RuleOption {
+	return func(r *Rule) {
+		r.SrcIPSet = s
+	}
+}
+
+func WithDstIPSet(s set.Set) RuleOption {
+	return func(r *Rule) {
+		r.DstIPSet = s
+	}
+}
+
+func WithSrcPortSet(s set.Set) RuleOption {
+	return func(r *Rule) {
+		r.SrcPortSet = s
+	}
+}
+
+func WithDstPortSet(s set.Set) RuleOption {
+	return func(r *Rule) {
+		r.DstPortSet = s
+	}
+}
+
+func WithNegSrcIPSet(s set.Set) RuleOption {
+	return func(r *Rule) {
+		r.NegSrcIPSet = s
+	}
+}
+
+func WithNegDstIPSet(s set.Set) RuleOption {
+	return func(r *Rule) {
+		r.NegDstIPSet = s
+	}
+}
+
+func WithNegSrcPortSet(s set.Set) RuleOption {
+	return func(r *Rule) {
+		r.NegSrcPortSet = s
+	}
+}
+
+func WithNegDstPortSet(s set.Set) RuleOption {
+	return func(r *Rule) {
+		r.NegDstPortSet = s
+	}
+}
+
 func WithAction(action Action) RuleOption {
 	return func(r *Rule) {
 		r.Action = action
@@ -198,6 +246,18 @@ type Rule struct {
 	NegSrcPort *set.PortSet
 	NegDstPort *set.PortSet
 
+	// User-defined named sets for matching.
+	SrcIPSet   set.Set
+	DstIPSet   set.Set
+	SrcPortSet set.Set
+	DstPortSet set.Set
+
+	// User-defined named sets for negated matching.
+	NegSrcIPSet   set.Set
+	NegDstIPSet   set.Set
+	NegSrcPortSet set.Set
+	NegDstPortSet set.Set
+
 	Action Action
 
 	packetCount *counter.Counter
@@ -232,6 +292,30 @@ func (r *Rule) Match(pkt *packet.Packet) bool {
 		return false
 	}
 	if r.NegDstNet != nil && r.NegDstNet.Match(pkt.DstAddr) {
+		return false
+	}
+	if !matchNamedSet(r.SrcIPSet, pkt.SrcAddr) {
+		return false
+	}
+	if !matchNamedSet(r.DstIPSet, pkt.DstAddr) {
+		return false
+	}
+	if !matchNamedSet(r.SrcPortSet, pkt.SrcPort) {
+		return false
+	}
+	if !matchNamedSet(r.DstPortSet, pkt.DstPort) {
+		return false
+	}
+	if r.NegSrcIPSet != nil && r.NegSrcIPSet.Match(pkt.SrcAddr) {
+		return false
+	}
+	if r.NegDstIPSet != nil && r.NegDstIPSet.Match(pkt.DstAddr) {
+		return false
+	}
+	if r.NegSrcPortSet != nil && r.NegSrcPortSet.Match(pkt.SrcPort) {
+		return false
+	}
+	if r.NegDstPortSet != nil && r.NegDstPortSet.Match(pkt.DstPort) {
 		return false
 	}
 	// All conditions passed - increment packet counter
@@ -273,6 +357,9 @@ func (r *Rule) String() string {
 	case r.NegSrcPort != nil:
 		srcPort = "!" + r.NegSrcPort.String()
 	}
+	srcPort = appendSetString(srcPort, r.SrcPortSet)
+	srcPort = appendNegSetString(srcPort, r.NegSrcPortSet)
+
 	dstPort := "*"
 	switch {
 	case r.DstPort != nil && r.NegDstPort != nil:
@@ -282,6 +369,9 @@ func (r *Rule) String() string {
 	case r.NegDstPort != nil:
 		dstPort = "!" + r.NegDstPort.String()
 	}
+	dstPort = appendSetString(dstPort, r.DstPortSet)
+	dstPort = appendNegSetString(dstPort, r.NegDstPortSet)
+
 	srcNet := "*"
 	switch {
 	case r.SrcNet != nil && r.NegSrcNet != nil:
@@ -291,6 +381,9 @@ func (r *Rule) String() string {
 	case r.NegSrcNet != nil:
 		srcNet = "!" + r.NegSrcNet.String()
 	}
+	srcNet = appendSetString(srcNet, r.SrcIPSet)
+	srcNet = appendNegSetString(srcNet, r.NegSrcIPSet)
+
 	dstNet := "*"
 	switch {
 	case r.DstNet != nil && r.NegDstNet != nil:
@@ -300,7 +393,51 @@ func (r *Rule) String() string {
 	case r.NegDstNet != nil:
 		dstNet = "!" + r.NegDstNet.String()
 	}
+	dstNet = appendSetString(dstNet, r.DstIPSet)
+	dstNet = appendNegSetString(dstNet, r.NegDstIPSet)
 	return fmt.Sprintf("%s %s{%s:%s->%s:%s}", r.Action, proto, srcNet, srcPort, dstNet, dstPort)
+}
+
+// matchNamedSet returns true if s is nil (no constraint) or if s matches v.
+func matchNamedSet(s set.Set, v any) bool {
+	if s == nil {
+		return true
+	}
+	return s.Match(v)
+}
+
+// appendSetString appends the string representation of s to base, separated
+// by a comma.  If base is "*" (wildcard), s replaces it entirely.
+// If s does not implement fmt.Stringer, base is returned unchanged.
+func appendSetString(base string, s set.Set) string {
+	if s == nil {
+		return base
+	}
+	st, ok := s.(fmt.Stringer)
+	if !ok {
+		return base
+	}
+	if base == "*" {
+		return st.String()
+	}
+	return base + "," + st.String()
+}
+
+// appendNegSetString is like appendSetString but prefixes the set string with
+// "!" to indicate a negated match constraint.
+func appendNegSetString(base string, s set.Set) string {
+	if s == nil {
+		return base
+	}
+	st, ok := s.(fmt.Stringer)
+	if !ok {
+		return base
+	}
+	neg := "!" + st.String()
+	if base == "*" {
+		return neg
+	}
+	return base + "," + neg
 }
 
 func MustParseCIDR(cidr string) *net.IPNet {

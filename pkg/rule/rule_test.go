@@ -7,6 +7,7 @@ import (
 
 	"github.com/mazdakn/fwsim/pkg/packet"
 	"github.com/mazdakn/fwsim/pkg/proto"
+	"github.com/mazdakn/fwsim/pkg/set"
 	. "github.com/onsi/gomega"
 )
 
@@ -493,4 +494,150 @@ func TestCombinedRuleString(t *testing.T) {
 	// Combined src net field
 	ruleSrcNet := New(WithAction(Drop), WithSrcNet("10.0.0.0/8"), WithNegSrcNet("10.10.0.0/16"))
 	Expect(ruleSrcNet.String()).To(Equal("Drop *{10.0.0.0/8,!10.10.0.0/16:*->*:*}"))
+}
+
+func TestNamedSetRuleMatch(t *testing.T) {
+	RegisterTestingT(t)
+
+	ipSet := set.NewIPSet()
+	_ = ipSet.Add("10.0.0.0/8")
+
+	portSet := set.NewPortSet()
+	_ = portSet.Add(uint16(80))
+
+	pktMatch := packet.New(
+		packet.WithSrcAddr("10.1.2.3"), packet.WithSrcPort(55555), packet.WithProto(proto.TCP),
+		packet.WithDstAddr("1.1.1.1"), packet.WithDstPort(80),
+	)
+	pktNoMatchIP := packet.New(
+		packet.WithSrcAddr("192.168.1.1"), packet.WithSrcPort(55555), packet.WithProto(proto.TCP),
+		packet.WithDstAddr("1.1.1.1"), packet.WithDstPort(80),
+	)
+	pktNoMatchPort := packet.New(
+		packet.WithSrcAddr("10.1.2.3"), packet.WithSrcPort(55555), packet.WithProto(proto.TCP),
+		packet.WithDstAddr("1.1.1.1"), packet.WithDstPort(443),
+	)
+
+	r := New(WithSrcIPSet(ipSet), WithDstPortSet(portSet))
+	Expect(r.Match(pktMatch)).To(BeTrue())
+	Expect(r.Match(pktNoMatchIP)).To(BeFalse())
+	Expect(r.Match(pktNoMatchPort)).To(BeFalse())
+}
+
+func TestNamedSetRuleMatchDstIPSet(t *testing.T) {
+	RegisterTestingT(t)
+
+	ipSet := set.NewIPSet()
+	_ = ipSet.Add("1.1.1.0/24")
+
+	pktMatch := packet.New(
+		packet.WithSrcAddr("10.1.2.3"), packet.WithDstAddr("1.1.1.1"),
+	)
+	pktNoMatch := packet.New(
+		packet.WithSrcAddr("10.1.2.3"), packet.WithDstAddr("2.2.2.2"),
+	)
+
+	r := New(WithDstIPSet(ipSet))
+	Expect(r.Match(pktMatch)).To(BeTrue())
+	Expect(r.Match(pktNoMatch)).To(BeFalse())
+}
+
+func TestNamedSetRuleMatchSrcPortSet(t *testing.T) {
+	RegisterTestingT(t)
+
+	portSet := set.NewPortSet()
+	_ = portSet.Add(uint16(55555))
+
+	pktMatch := packet.New(
+		packet.WithSrcPort(55555),
+	)
+	pktNoMatch := packet.New(
+		packet.WithSrcPort(12345),
+	)
+
+	r := New(WithSrcPortSet(portSet))
+	Expect(r.Match(pktMatch)).To(BeTrue())
+	Expect(r.Match(pktNoMatch)).To(BeFalse())
+}
+
+func TestNegatedNamedSetRuleMatch(t *testing.T) {
+	RegisterTestingT(t)
+
+	// NegSrcIPSet: packets whose source is in the set should NOT match.
+	srcIPSet := set.NewIPSet()
+	_ = srcIPSet.Add("10.0.0.0/8")
+
+	rNegSrc := New(WithNegSrcIPSet(srcIPSet))
+	pktInSet := packet.New(packet.WithSrcAddr("10.1.2.3"))
+	pktOutSet := packet.New(packet.WithSrcAddr("192.168.1.1"))
+	Expect(rNegSrc.Match(pktInSet)).To(BeFalse())
+	Expect(rNegSrc.Match(pktOutSet)).To(BeTrue())
+
+	// NegDstIPSet: packets whose destination is in the set should NOT match.
+	dstIPSet := set.NewIPSet()
+	_ = dstIPSet.Add("1.1.1.0/24")
+
+	rNegDst := New(WithNegDstIPSet(dstIPSet))
+	pktDstIn := packet.New(packet.WithDstAddr("1.1.1.1"))
+	pktDstOut := packet.New(packet.WithDstAddr("2.2.2.2"))
+	Expect(rNegDst.Match(pktDstIn)).To(BeFalse())
+	Expect(rNegDst.Match(pktDstOut)).To(BeTrue())
+
+	// NegSrcPortSet: packets whose source port is in the set should NOT match.
+	srcPortSet := set.NewPortSet()
+	_ = srcPortSet.Add(uint16(55555))
+
+	rNegSrcPort := New(WithNegSrcPortSet(srcPortSet))
+	pktSrcPortIn := packet.New(packet.WithSrcPort(55555))
+	pktSrcPortOut := packet.New(packet.WithSrcPort(12345))
+	Expect(rNegSrcPort.Match(pktSrcPortIn)).To(BeFalse())
+	Expect(rNegSrcPort.Match(pktSrcPortOut)).To(BeTrue())
+
+	// NegDstPortSet: packets whose destination port is in the set should NOT match.
+	dstPortSet := set.NewPortSet()
+	_ = dstPortSet.Add(uint16(80))
+
+	rNegDstPort := New(WithNegDstPortSet(dstPortSet))
+	pktDstPortIn := packet.New(packet.WithDstPort(80))
+	pktDstPortOut := packet.New(packet.WithDstPort(443))
+	Expect(rNegDstPort.Match(pktDstPortIn)).To(BeFalse())
+	Expect(rNegDstPort.Match(pktDstPortOut)).To(BeTrue())
+}
+
+func TestCombinedPositiveAndNegativeNamedSetMatch(t *testing.T) {
+	RegisterTestingT(t)
+
+	// Match src in 10.0.0.0/8 named set but NOT in 10.10.0.0/16 named set.
+	posSet := set.NewIPSet()
+	_ = posSet.Add("10.0.0.0/8")
+
+	negSet := set.NewIPSet()
+	_ = negSet.Add("10.10.0.0/16")
+
+	r := New(WithSrcIPSet(posSet), WithNegSrcIPSet(negSet))
+
+	// In 10.0.0.0/8, not in 10.10.0.0/16 → should match
+	Expect(r.Match(packet.New(packet.WithSrcAddr("10.1.2.3")))).To(BeTrue())
+	// In 10.0.0.0/8 AND in 10.10.0.0/16 → excluded by neg
+	Expect(r.Match(packet.New(packet.WithSrcAddr("10.10.0.5")))).To(BeFalse())
+	// Not in 10.0.0.0/8 at all → excluded by positive
+	Expect(r.Match(packet.New(packet.WithSrcAddr("172.16.0.1")))).To(BeFalse())
+}
+
+func TestNegatedNamedSetRuleString(t *testing.T) {
+	RegisterTestingT(t)
+
+	ipSet := set.NewIPSet()
+	_ = ipSet.Add("10.0.0.0/8")
+
+	portSet := set.NewPortSet()
+	_ = portSet.Add(uint16(80))
+
+	// NegSrcIPSet only → srcNet shows as !10.0.0.0/8
+	rNegSrcIP := New(WithAction(Accept), WithNegSrcIPSet(ipSet))
+	Expect(rNegSrcIP.String()).To(Equal("Accept *{!10.0.0.0/8:*->*:*}"))
+
+	// NegDstPortSet only → dstPort shows as !80
+	rNegDstPort := New(WithAction(Drop), WithNegDstPortSet(portSet))
+	Expect(rNegDstPort.String()).To(Equal("Drop *{*:*->*:!80}"))
 }

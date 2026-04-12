@@ -36,16 +36,16 @@ func New(conf Config) *Engine {
 }
 
 func (e *Engine) ConfigFromFile() error {
+	if e.Config.SetsFile != "" {
+		if err := e.ConfigSetsFromFile(); err != nil {
+			return err
+		}
+	}
 	if err := e.ConfigRulesFromFile(); err != nil {
 		return err
 	}
 	if err := e.ConfigPacketsFromFile(); err != nil {
 		return err
-	}
-	if e.Config.SetsFile != "" {
-		if err := e.ConfigSetsFromFile(); err != nil {
-			return err
-		}
 	}
 	return nil
 }
@@ -57,7 +57,11 @@ func (e *Engine) ConfigRulesFromBytes(data []byte) error {
 	}
 	e.table = table.New("main", rule.MustParseAction(rc.DefaultAction))
 	for _, r := range rc.Rules {
-		e.table.AddRule(r.ToRule())
+		mRule, err := r.ToRule(e.sets)
+		if err != nil {
+			return fmt.Errorf("failed to load rules: %w", err)
+		}
+		e.table.AddRule(mRule)
 	}
 	return nil
 }
@@ -70,7 +74,11 @@ func (e *Engine) ConfigRulesFromFile() error {
 	}
 	e.table = table.New("main", rule.MustParseAction(rc.DefaultAction))
 	for _, r := range rc.Rules {
-		e.table.AddRule(r.ToRule())
+		mRule, err := r.ToRule(e.sets)
+		if err != nil {
+			return fmt.Errorf("failed to load rules from %s: %w", file, err)
+		}
+		e.table.AddRule(mRule)
 	}
 	return nil
 }

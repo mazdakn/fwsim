@@ -137,6 +137,138 @@ func TestLoadSetsFromBytes(t *testing.T) {
 	Expect(sets).To(HaveKey("allowed-protos"))
 }
 
+const testRulesWithSetsYAML = `
+rules:
+  - name: allow-trusted-to-web
+    src_ip_set: trusted-ips
+    dst_port_set: web-ports
+    action: Accept
+  - name: deny-all
+    action: Drop
+default_action: Drop
+`
+
+func TestRulesReferencingNamedSets(t *testing.T) {
+	RegisterTestingT(t)
+
+	engine := New(Config{})
+
+	// Sets must be loaded before rules that reference them.
+	err := engine.ConfigSetsFromBytes([]byte(testSetsYAML))
+	Expect(err).To(BeNil())
+
+	err = engine.ConfigRulesFromBytes([]byte(testRulesWithSetsYAML))
+	Expect(err).To(BeNil())
+
+	Expect(len(engine.table.Rules)).To(Equal(2))
+
+	rule1 := engine.table.Rules[0]
+	Expect(rule1.SrcIPSet).ToNot(BeNil())
+	Expect(rule1.DstPortSet).ToNot(BeNil())
+	Expect(rule1.SrcNet).To(BeNil())
+	Expect(rule1.DstPort).To(BeNil())
+}
+
+func TestRulesReferencingUnknownSetError(t *testing.T) {
+	RegisterTestingT(t)
+
+	engine := New(Config{})
+
+	// No sets loaded — referencing a set should return an error.
+	err := engine.ConfigRulesFromBytes([]byte(testRulesWithSetsYAML))
+	Expect(err).ToNot(BeNil())
+	Expect(err.Error()).To(ContainSubstring("unknown set"))
+}
+
+func TestRulesWithNamedSetsMatch(t *testing.T) {
+	RegisterTestingT(t)
+
+	engine := New(Config{})
+	err := engine.ConfigSetsFromBytes([]byte(testSetsYAML))
+	Expect(err).To(BeNil())
+
+	err = engine.ConfigRulesFromBytes([]byte(testRulesWithSetsYAML))
+	Expect(err).To(BeNil())
+
+	// Packet from trusted-ips (192.168.1.0/24) to web-ports (80,443,8080) → Accept
+	pkts, err := config.PacketsFromBytes([]byte(testPacketsYAML))
+	Expect(err).To(BeNil())
+
+	// First packet: src 192.168.1.5 dst 1.1.1.1:80 → matches rule 1 (Accept)
+	m := &match.Match{Packet: pkts[0]}
+	engine.RunTest(m)
+	Expect(m.Result.Verdict).To(Equal(rule.Accept))
+
+	// Second packet: src 10.0.0.1 dst 2.2.2.2:8080 → src is in trusted-ips (10.0.0.0/8),
+	// dst port 8080 is in web-ports → matches rule 1 (Accept)
+	m = &match.Match{Packet: pkts[1]}
+	engine.RunTest(m)
+	Expect(m.Result.Verdict).To(Equal(rule.Accept))
+
+	// Third packet: src 172.16.0.1 → NOT in trusted-ips → falls through to deny-all (Drop)
+	m = &match.Match{Packet: pkts[2]}
+	engine.RunTest(m)
+	Expect(m.Result.Verdict).To(Equal(rule.Drop))
+}
+
+const testRulesWithNegSetsYAML = `
+rules:
+  - name: allow-non-blocked-src
+    neg_src_ip_set: trusted-ips
+    action: Accept
+  - name: deny-all
+    action: Drop
+default_action: Drop
+`
+
+func TestRulesReferencingNegatedNamedSets(t *testing.T) {
+	RegisterTestingT(t)
+
+	engine := New(Config{})
+	err := engine.ConfigSetsFromBytes([]byte(testSetsYAML))
+	Expect(err).To(BeNil())
+
+	err = engine.ConfigRulesFromBytes([]byte(testRulesWithNegSetsYAML))
+	Expect(err).To(BeNil())
+
+	Expect(len(engine.table.Rules)).To(Equal(2))
+	Expect(engine.table.Rules[0].NegSrcIPSet).ToNot(BeNil())
+}
+
+func TestRulesWithNegatedNamedSetsMatch(t *testing.T) {
+	RegisterTestingT(t)
+
+	engine := New(Config{})
+	err := engine.ConfigSetsFromBytes([]byte(testSetsYAML))
+	Expect(err).To(BeNil())
+
+	err = engine.ConfigRulesFromBytes([]byte(testRulesWithNegSetsYAML))
+	Expect(err).To(BeNil())
+
+	pkts, err := config.PacketsFromBytes([]byte(testPacketsYAML))
+	Expect(err).To(BeNil())
+
+	// First packet: src 192.168.1.5 — in trusted-ips → negated, rule1 does NOT match → deny-all (Drop)
+	m := &match.Match{Packet: pkts[0]}
+	engine.RunTest(m)
+	Expect(m.Result.Verdict).To(Equal(rule.Drop))
+
+	// Third packet: src 172.16.0.1 — NOT in trusted-ips → rule1 matches (Accept)
+	m = &match.Match{Packet: pkts[2]}
+	engine.RunTest(m)
+	Expect(m.Result.Verdict).To(Equal(rule.Accept))
+}
+
+func TestRulesReferencingUnknownNegatedSetError(t *testing.T) {
+	RegisterTestingT(t)
+
+	engine := New(Config{})
+	// No sets loaded — negated set reference must fail at load time.
+	err := engine.ConfigRulesFromBytes([]byte(testRulesWithNegSetsYAML))
+	Expect(err).ToNot(BeNil())
+	Expect(err.Error()).To(ContainSubstring("unknown set"))
+}
+
 func TestLoadRulesFromBytes(t *testing.T) {
 	RegisterTestingT(t)
 
