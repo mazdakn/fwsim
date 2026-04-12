@@ -264,16 +264,16 @@ func (r *Rule) Match(pkt *packet.Packet) bool {
 	if r.NegDstNet != nil && r.NegDstNet.Match(pkt.DstAddr) {
 		return false
 	}
-	if r.SrcIPSet != nil && !r.SrcIPSet.Match(pkt.SrcAddr) {
+	if !matchNamedSet(r.SrcIPSet, pkt.SrcAddr) {
 		return false
 	}
-	if r.DstIPSet != nil && !r.DstIPSet.Match(pkt.DstAddr) {
+	if !matchNamedSet(r.DstIPSet, pkt.DstAddr) {
 		return false
 	}
-	if r.SrcPortSet != nil && !r.SrcPortSet.Match(pkt.SrcPort) {
+	if !matchNamedSet(r.SrcPortSet, pkt.SrcPort) {
 		return false
 	}
-	if r.DstPortSet != nil && !r.DstPortSet.Match(pkt.DstPort) {
+	if !matchNamedSet(r.DstPortSet, pkt.DstPort) {
 		return false
 	}
 	// All conditions passed - increment packet counter
@@ -315,15 +315,8 @@ func (r *Rule) String() string {
 	case r.NegSrcPort != nil:
 		srcPort = "!" + r.NegSrcPort.String()
 	}
-	if r.SrcPortSet != nil {
-		if st, ok := r.SrcPortSet.(fmt.Stringer); ok {
-			if srcPort == "*" {
-				srcPort = st.String()
-			} else {
-				srcPort = srcPort + "," + st.String()
-			}
-		}
-	}
+	srcPort = appendSetString(srcPort, r.SrcPortSet)
+
 	dstPort := "*"
 	switch {
 	case r.DstPort != nil && r.NegDstPort != nil:
@@ -333,15 +326,8 @@ func (r *Rule) String() string {
 	case r.NegDstPort != nil:
 		dstPort = "!" + r.NegDstPort.String()
 	}
-	if r.DstPortSet != nil {
-		if st, ok := r.DstPortSet.(fmt.Stringer); ok {
-			if dstPort == "*" {
-				dstPort = st.String()
-			} else {
-				dstPort = dstPort + "," + st.String()
-			}
-		}
-	}
+	dstPort = appendSetString(dstPort, r.DstPortSet)
+
 	srcNet := "*"
 	switch {
 	case r.SrcNet != nil && r.NegSrcNet != nil:
@@ -351,15 +337,8 @@ func (r *Rule) String() string {
 	case r.NegSrcNet != nil:
 		srcNet = "!" + r.NegSrcNet.String()
 	}
-	if r.SrcIPSet != nil {
-		if st, ok := r.SrcIPSet.(fmt.Stringer); ok {
-			if srcNet == "*" {
-				srcNet = st.String()
-			} else {
-				srcNet = srcNet + "," + st.String()
-			}
-		}
-	}
+	srcNet = appendSetString(srcNet, r.SrcIPSet)
+
 	dstNet := "*"
 	switch {
 	case r.DstNet != nil && r.NegDstNet != nil:
@@ -369,16 +348,33 @@ func (r *Rule) String() string {
 	case r.NegDstNet != nil:
 		dstNet = "!" + r.NegDstNet.String()
 	}
-	if r.DstIPSet != nil {
-		if st, ok := r.DstIPSet.(fmt.Stringer); ok {
-			if dstNet == "*" {
-				dstNet = st.String()
-			} else {
-				dstNet = dstNet + "," + st.String()
-			}
-		}
-	}
+	dstNet = appendSetString(dstNet, r.DstIPSet)
 	return fmt.Sprintf("%s %s{%s:%s->%s:%s}", r.Action, proto, srcNet, srcPort, dstNet, dstPort)
+}
+
+// matchNamedSet returns true if s is nil (no constraint) or if s matches v.
+func matchNamedSet(s set.Set, v any) bool {
+	if s == nil {
+		return true
+	}
+	return s.Match(v)
+}
+
+// appendSetString appends the string representation of s to base, separated
+// by a comma.  If base is "*" (wildcard), s replaces it entirely.
+// If s does not implement fmt.Stringer, base is returned unchanged.
+func appendSetString(base string, s set.Set) string {
+	if s == nil {
+		return base
+	}
+	st, ok := s.(fmt.Stringer)
+	if !ok {
+		return base
+	}
+	if base == "*" {
+		return st.String()
+	}
+	return base + "," + st.String()
 }
 
 func MustParseCIDR(cidr string) *net.IPNet {
