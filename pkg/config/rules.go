@@ -39,14 +39,14 @@ func (e *Endpoint) toEndpoint(ruleName string, sets map[string]set.Set) (rule.En
 	if len(e.Net) > 0 {
 		ep.Net = set.NewIPSet()
 		for _, n := range e.Net {
-			ep.Net.Add(rule.MustParseCIDR(n))
+			_ = ep.Net.Add(rule.MustParseCIDR(n))
 		}
 	}
 
 	if len(e.Port) > 0 {
 		ep.Port = set.NewPortSet()
 		for _, p := range e.Port {
-			ep.Port.Add(p)
+			_ = ep.Port.Add(p)
 		}
 	}
 
@@ -94,14 +94,14 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 	if len(r.Protocol) > 0 {
 		mRule.Proto = set.NewProtoSet()
 		for _, proto := range r.Protocol {
-			mRule.Proto.Add(proto)
+			_ = mRule.Proto.Add(proto)
 		}
 	}
 
 	if len(r.NotProto) > 0 {
 		mRule.NotProto = set.NewProtoSet()
 		for _, proto := range r.NotProto {
-			mRule.NotProto.Add(proto)
+			_ = mRule.NotProto.Add(proto)
 		}
 	}
 

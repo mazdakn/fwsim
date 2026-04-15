@@ -104,7 +104,7 @@ func (p *PortSet) String() string {
 		entries = append(entries, entry{port, port})
 	}
 	for _, r := range sorted {
-		entries = append(entries, entry{r.start, r.end})
+		entries = append(entries, entry(r))
 	}
 	sort.Slice(entries, func(i, j int) bool {
 		if entries[i].start != entries[j].start {

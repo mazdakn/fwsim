@@ -75,7 +75,7 @@ func TestPortSetAdd(t *testing.T) {
 
 	ps := NewPortSet()
 
-	ps.Add(uint16(80))
+	Expect(ps.Add(uint16(80))).To(Succeed())
 	Expect(ps.Match(uint16(80))).To(BeTrue())
 	Expect(ps.Match(uint16(443))).To(BeFalse())
 }
@@ -85,8 +85,8 @@ func TestPortSetDelete(t *testing.T) {
 
 	ps := NewPortSet()
 
-	ps.Add(uint16(80))
-	ps.Add(uint16(443))
+	Expect(ps.Add(uint16(80))).To(Succeed())
+	Expect(ps.Add(uint16(443))).To(Succeed())
 	Expect(ps.Match(uint16(80))).To(BeTrue())
 
 	ps.Delete(uint16(80))
@@ -101,7 +101,7 @@ func TestPortSetMatch(t *testing.T) {
 
 	Expect(ps.Match(uint16(80))).To(BeFalse())
 
-	ps.Add(uint16(80))
+	Expect(ps.Add(uint16(80))).To(Succeed())
 	Expect(ps.Match(uint16(80))).To(BeTrue())
 	Expect(ps.Match(uint16(8080))).To(BeFalse())
 }
@@ -110,7 +110,7 @@ func TestPortSetStringOnePort(t *testing.T) {
 	RegisterTestingT(t)
 
 	ps := NewPortSet()
-	ps.Add(uint16(80))
+	Expect(ps.Add(uint16(80))).To(Succeed())
 	Expect(ps.String()).To(Equal("80"))
 }
 
@@ -118,8 +118,8 @@ func TestPortSetStringMultiplePorts(t *testing.T) {
 	RegisterTestingT(t)
 
 	ps := NewPortSet()
-	ps.Add(uint16(443))
-	ps.Add(uint16(80))
+	Expect(ps.Add(uint16(443))).To(Succeed())
+	Expect(ps.Add(uint16(80))).To(Succeed())
 	Expect(ps.String()).To(Equal("{80,443}"))
 }
 
@@ -179,7 +179,7 @@ func TestProtoSetAdd(t *testing.T) {
 
 	ps := NewProtoSet()
 
-	ps.Add(proto.TCP)
+	Expect(ps.Add(proto.TCP)).To(Succeed())
 	Expect(ps.Match(proto.TCP)).To(BeTrue())
 	Expect(ps.Match(proto.UDP)).To(BeFalse())
 }
@@ -189,8 +189,8 @@ func TestProtoSetDelete(t *testing.T) {
 
 	ps := NewProtoSet()
 
-	ps.Add(proto.TCP)
-	ps.Add(proto.UDP)
+	Expect(ps.Add(proto.TCP)).To(Succeed())
+	Expect(ps.Add(proto.UDP)).To(Succeed())
 	Expect(ps.Match(proto.TCP)).To(BeTrue())
 
 	ps.Delete(proto.TCP)
@@ -205,7 +205,7 @@ func TestProtoSetMatch(t *testing.T) {
 
 	Expect(ps.Match(proto.TCP)).To(BeFalse())
 
-	ps.Add(proto.TCP)
+	Expect(ps.Add(proto.TCP)).To(Succeed())
 	Expect(ps.Match(proto.TCP)).To(BeTrue())
 	Expect(ps.Match(proto.UDP)).To(BeFalse())
 }
@@ -214,7 +214,7 @@ func TestProtoSetStringOneProto(t *testing.T) {
 	RegisterTestingT(t)
 
 	ps := NewProtoSet()
-	ps.Add(proto.TCP)
+	Expect(ps.Add(proto.TCP)).To(Succeed())
 	Expect(ps.String()).To(Equal("tcp"))
 }
 
@@ -222,8 +222,8 @@ func TestProtoSetStringMultipleProtos(t *testing.T) {
 	RegisterTestingT(t)
 
 	ps := NewProtoSet()
-	ps.Add(proto.UDP)
-	ps.Add(proto.TCP)
+	Expect(ps.Add(proto.UDP)).To(Succeed())
+	Expect(ps.Add(proto.TCP)).To(Succeed())
 	Expect(ps.String()).To(Equal("{tcp,udp}"))
 }
 
@@ -233,7 +233,7 @@ func TestIPSetAdd(t *testing.T) {
 	s := NewIPSet()
 	_, ipnet, err := net.ParseCIDR("10.0.0.0/8")
 	Expect(err).ToNot(HaveOccurred())
-	s.Add(ipnet)
+	Expect(s.Add(ipnet)).To(Succeed())
 	Expect(s.Match(net.ParseIP("10.1.2.3"))).To(BeTrue())
 	Expect(s.Match(net.ParseIP("192.168.0.1"))).To(BeFalse())
 }
@@ -246,8 +246,8 @@ func TestIPSetDelete(t *testing.T) {
 	Expect(err).ToNot(HaveOccurred())
 	_, net2, err := net.ParseCIDR("192.168.0.0/16")
 	Expect(err).ToNot(HaveOccurred())
-	s.Add(net1)
-	s.Add(net2)
+	Expect(s.Add(net1)).To(Succeed())
+	Expect(s.Add(net2)).To(Succeed())
 	Expect(s.Match(net.ParseIP("10.1.2.3"))).To(BeTrue())
 
 	s.Delete(net1)
@@ -263,7 +263,7 @@ func TestIPSetMatch(t *testing.T) {
 
 	_, ipnet, err := net.ParseCIDR("10.0.0.0/8")
 	Expect(err).ToNot(HaveOccurred())
-	s.Add(ipnet)
+	Expect(s.Add(ipnet)).To(Succeed())
 	Expect(s.Match(net.ParseIP("10.0.0.1"))).To(BeTrue())
 	Expect(s.Match(net.ParseIP("172.16.0.1"))).To(BeFalse())
 }
@@ -276,8 +276,8 @@ func TestIPSetMatchMultipleNets(t *testing.T) {
 	Expect(err).ToNot(HaveOccurred())
 	_, net2, err := net.ParseCIDR("192.168.0.0/16")
 	Expect(err).ToNot(HaveOccurred())
-	s.Add(net1)
-	s.Add(net2)
+	Expect(s.Add(net1)).To(Succeed())
+	Expect(s.Add(net2)).To(Succeed())
 	Expect(s.Match(net.ParseIP("10.1.2.3"))).To(BeTrue())
 	Expect(s.Match(net.ParseIP("192.168.1.1"))).To(BeTrue())
 	Expect(s.Match(net.ParseIP("172.16.0.1"))).To(BeFalse())
@@ -289,7 +289,7 @@ func TestIPSetStringOneNet(t *testing.T) {
 	s := NewIPSet()
 	_, ipnet, err := net.ParseCIDR("10.0.0.0/8")
 	Expect(err).ToNot(HaveOccurred())
-	s.Add(ipnet)
+	Expect(s.Add(ipnet)).To(Succeed())
 	Expect(s.String()).To(Equal("10.0.0.0/8"))
 }
 
@@ -301,7 +301,7 @@ func TestIPSetStringMultipleNets(t *testing.T) {
 	Expect(err).ToNot(HaveOccurred())
 	_, net2, err := net.ParseCIDR("10.0.0.0/8")
 	Expect(err).ToNot(HaveOccurred())
-	s.Add(net1)
-	s.Add(net2)
+	Expect(s.Add(net1)).To(Succeed())
+	Expect(s.Add(net2)).To(Succeed())
 	Expect(s.String()).To(Equal("{10.0.0.0/8,192.168.0.0/16}"))
 }

@@ -69,7 +69,7 @@ func WithProto(p proto.Proto) RuleOption {
 		if r.Proto == nil {
 			r.Proto = set.NewProtoSet()
 		}
-		r.Proto.Add(p)
+		_ = r.Proto.Add(p)
 	}
 }
 
@@ -78,7 +78,7 @@ func WithSrcPort(port uint16) RuleOption {
 		if r.Source.Port == nil {
 			r.Source.Port = set.NewPortSet()
 		}
-		r.Source.Port.Add(port)
+		_ = r.Source.Port.Add(port)
 	}
 }
 
@@ -87,7 +87,7 @@ func WithDstPort(port uint16) RuleOption {
 		if r.Destination.Port == nil {
 			r.Destination.Port = set.NewPortSet()
 		}
-		r.Destination.Port.Add(port)
+		_ = r.Destination.Port.Add(port)
 	}
 }
 
@@ -96,7 +96,7 @@ func WithSrcNet(cidr string) RuleOption {
 		if r.Source.Net == nil {
 			r.Source.Net = set.NewIPSet()
 		}
-		r.Source.Net.Add(MustParseCIDR(cidr))
+		_ = r.Source.Net.Add(MustParseCIDR(cidr))
 	}
 }
 
@@ -105,7 +105,7 @@ func WithDstNet(cidr string) RuleOption {
 		if r.Destination.Net == nil {
 			r.Destination.Net = set.NewIPSet()
 		}
-		r.Destination.Net.Add(MustParseCIDR(cidr))
+		_ = r.Destination.Net.Add(MustParseCIDR(cidr))
 	}
 }
 
@@ -114,7 +114,7 @@ func WithNotProto(p proto.Proto) RuleOption {
 		if r.NotProto == nil {
 			r.NotProto = set.NewProtoSet()
 		}
-		r.NotProto.Add(p)
+		_ = r.NotProto.Add(p)
 	}
 }
 
@@ -123,7 +123,7 @@ func WithNotSrcPort(port uint16) RuleOption {
 		if r.NotSource.Port == nil {
 			r.NotSource.Port = set.NewPortSet()
 		}
-		r.NotSource.Port.Add(port)
+		_ = r.NotSource.Port.Add(port)
 	}
 }
 
@@ -132,7 +132,7 @@ func WithNotDstPort(port uint16) RuleOption {
 		if r.NotDestination.Port == nil {
 			r.NotDestination.Port = set.NewPortSet()
 		}
-		r.NotDestination.Port.Add(port)
+		_ = r.NotDestination.Port.Add(port)
 	}
 }
 
@@ -141,7 +141,7 @@ func WithNotSrcNet(cidr string) RuleOption {
 		if r.NotSource.Net == nil {
 			r.NotSource.Net = set.NewIPSet()
 		}
-		r.NotSource.Net.Add(MustParseCIDR(cidr))
+		_ = r.NotSource.Net.Add(MustParseCIDR(cidr))
 	}
 }
 
@@ -150,7 +150,7 @@ func WithNotDstNet(cidr string) RuleOption {
 		if r.NotDestination.Net == nil {
 			r.NotDestination.Net = set.NewIPSet()
 		}
-		r.NotDestination.Net.Add(MustParseCIDR(cidr))
+		_ = r.NotDestination.Net.Add(MustParseCIDR(cidr))
 	}
 }
 
