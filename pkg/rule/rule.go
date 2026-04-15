@@ -62,172 +62,185 @@ func MustParseAction(s string) Action {
 	}
 }
 
-type RuleOption func(*Rule)
+type RuleOption func(*Rule) error
 
 func WithProto(p proto.Proto) RuleOption {
-	return func(r *Rule) {
+	return func(r *Rule) error {
 		if r.Proto == nil {
 			r.Proto = set.NewProtoSet()
 		}
-		_ = r.Proto.Add(p)
+		return r.Proto.Add(p)
 	}
 }
 
 func WithSrcPort(port uint16) RuleOption {
-	return func(r *Rule) {
+	return func(r *Rule) error {
 		if r.Source.Port == nil {
 			r.Source.Port = set.NewPortSet()
 		}
-		_ = r.Source.Port.Add(port)
+		return r.Source.Port.Add(port)
 	}
 }
 
 func WithDstPort(port uint16) RuleOption {
-	return func(r *Rule) {
+	return func(r *Rule) error {
 		if r.Destination.Port == nil {
 			r.Destination.Port = set.NewPortSet()
 		}
-		_ = r.Destination.Port.Add(port)
+		return r.Destination.Port.Add(port)
 	}
 }
 
 func WithSrcNet(cidr string) RuleOption {
-	return func(r *Rule) {
+	return func(r *Rule) error {
 		if r.Source.Net == nil {
 			r.Source.Net = set.NewIPSet()
 		}
-		_ = r.Source.Net.Add(MustParseCIDR(cidr))
+		return r.Source.Net.Add(MustParseCIDR(cidr))
 	}
 }
 
 func WithDstNet(cidr string) RuleOption {
-	return func(r *Rule) {
+	return func(r *Rule) error {
 		if r.Destination.Net == nil {
 			r.Destination.Net = set.NewIPSet()
 		}
-		_ = r.Destination.Net.Add(MustParseCIDR(cidr))
+		return r.Destination.Net.Add(MustParseCIDR(cidr))
 	}
 }
 
 func WithNotProto(p proto.Proto) RuleOption {
-	return func(r *Rule) {
+	return func(r *Rule) error {
 		if r.NotProto == nil {
 			r.NotProto = set.NewProtoSet()
 		}
-		_ = r.NotProto.Add(p)
+		return r.NotProto.Add(p)
 	}
 }
 
 func WithNotSrcPort(port uint16) RuleOption {
-	return func(r *Rule) {
+	return func(r *Rule) error {
 		if r.NotSource.Port == nil {
 			r.NotSource.Port = set.NewPortSet()
 		}
-		_ = r.NotSource.Port.Add(port)
+		return r.NotSource.Port.Add(port)
 	}
 }
 
 func WithNotDstPort(port uint16) RuleOption {
-	return func(r *Rule) {
+	return func(r *Rule) error {
 		if r.NotDestination.Port == nil {
 			r.NotDestination.Port = set.NewPortSet()
 		}
-		_ = r.NotDestination.Port.Add(port)
+		return r.NotDestination.Port.Add(port)
 	}
 }
 
 func WithNotSrcNet(cidr string) RuleOption {
-	return func(r *Rule) {
+	return func(r *Rule) error {
 		if r.NotSource.Net == nil {
 			r.NotSource.Net = set.NewIPSet()
 		}
-		_ = r.NotSource.Net.Add(MustParseCIDR(cidr))
+		return r.NotSource.Net.Add(MustParseCIDR(cidr))
 	}
 }
 
 func WithNotDstNet(cidr string) RuleOption {
-	return func(r *Rule) {
+	return func(r *Rule) error {
 		if r.NotDestination.Net == nil {
 			r.NotDestination.Net = set.NewIPSet()
 		}
-		_ = r.NotDestination.Net.Add(MustParseCIDR(cidr))
+		return r.NotDestination.Net.Add(MustParseCIDR(cidr))
 	}
 }
 
 func WithSrcIPSet(s set.Set) RuleOption {
-	return func(r *Rule) {
+	return func(r *Rule) error {
 		r.Source.IPSet = s
+		return nil
 	}
 }
 
 func WithDstIPSet(s set.Set) RuleOption {
-	return func(r *Rule) {
+	return func(r *Rule) error {
 		r.Destination.IPSet = s
+		return nil
 	}
 }
 
 func WithSrcPortSet(s set.Set) RuleOption {
-	return func(r *Rule) {
+	return func(r *Rule) error {
 		r.Source.PortSet = s
+		return nil
 	}
 }
 
 func WithDstPortSet(s set.Set) RuleOption {
-	return func(r *Rule) {
+	return func(r *Rule) error {
 		r.Destination.PortSet = s
+		return nil
 	}
 }
 
 func WithNotSrcIPSet(s set.Set) RuleOption {
-	return func(r *Rule) {
+	return func(r *Rule) error {
 		r.NotSource.IPSet = s
+		return nil
 	}
 }
 
 func WithNotDstIPSet(s set.Set) RuleOption {
-	return func(r *Rule) {
+	return func(r *Rule) error {
 		r.NotDestination.IPSet = s
+		return nil
 	}
 }
 
 func WithNotSrcPortSet(s set.Set) RuleOption {
-	return func(r *Rule) {
+	return func(r *Rule) error {
 		r.NotSource.PortSet = s
+		return nil
 	}
 }
 
 func WithNotDstPortSet(s set.Set) RuleOption {
-	return func(r *Rule) {
+	return func(r *Rule) error {
 		r.NotDestination.PortSet = s
+		return nil
 	}
 }
 
 func WithAction(action Action) RuleOption {
-	return func(r *Rule) {
+	return func(r *Rule) error {
 		r.Action = action
+		return nil
 	}
 }
 
 func WithName(name string) RuleOption {
-	return func(r *Rule) {
+	return func(r *Rule) error {
 		r.Name = name
+		return nil
 	}
 }
 
 func WithOrder(order uint64) RuleOption {
-	return func(r *Rule) {
+	return func(r *Rule) error {
 		r.Order = order
+		return nil
 	}
 }
 
-func New(opts ...RuleOption) *Rule {
+func New(opts ...RuleOption) (*Rule, error) {
 	r := Rule{
 		packetCount: counter.New(),
 	}
 	for _, o := range opts {
-		o(&r)
+		if err := o(&r); err != nil {
+			return nil, err
+		}
 	}
-	return &r
+	return &r, nil
 }
 
 // Endpoint groups the network and port match criteria for one traffic direction.

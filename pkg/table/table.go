@@ -17,18 +17,22 @@ type Table struct {
 	logCtx        *logrus.Entry
 }
 
-func New(name string, defaultAction rule.Action) *Table {
+func New(name string, defaultAction rule.Action) (*Table, error) {
+	defaultRule, err := rule.New(
+		rule.WithAction(defaultAction),
+		rule.WithName(fmt.Sprintf("table %s default action", name)),
+	)
+	if err != nil {
+		return nil, err
+	}
 	return &Table{
-		Name: name,
-		DefaultAction: rule.New(
-			rule.WithAction(defaultAction),
-			rule.WithName(fmt.Sprintf("table %s default action", name)),
-		),
+		Name:          name,
+		DefaultAction: defaultRule,
 		logCtx: logrus.WithFields(logrus.Fields{
 			"name":          name,
 			"defaultAction": defaultAction,
 		}),
-	}
+	}, nil
 }
 
 func (t *Table) AddRule(r *rule.Rule) {

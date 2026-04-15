@@ -90,7 +90,10 @@ type Rule struct {
 // sets is the map of pre-loaded named sets; any set name referenced by this
 // rule that is not present in sets causes an error.
 func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
-	mRule := rule.New()
+	mRule, err := rule.New()
+	if err != nil {
+		return nil, err
+	}
 	mRule.Name = r.Name
 	mRule.Order = r.Order
 	mRule.Action = rule.MustParseAction(r.Action)
@@ -113,7 +116,6 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 		}
 	}
 
-	var err error
 	mRule.Source, err = r.Source.toEndpoint(r.Name, sets)
 	if err != nil {
 		return nil, err

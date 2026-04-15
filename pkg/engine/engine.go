@@ -55,7 +55,10 @@ func (e *Engine) ConfigRulesFromBytes(data []byte) error {
 	if err != nil {
 		return fmt.Errorf("failed to parse rules: %w", err)
 	}
-	e.table = table.New("main", rule.MustParseAction(rc.DefaultAction))
+	e.table, err = table.New("main", rule.MustParseAction(rc.DefaultAction))
+	if err != nil {
+		return fmt.Errorf("failed to create table: %w", err)
+	}
 	for _, r := range rc.Rules {
 		mRule, err := r.ToRule(e.sets)
 		if err != nil {
@@ -72,7 +75,10 @@ func (e *Engine) ConfigRulesFromFile() error {
 	if err != nil {
 		return fmt.Errorf("failed to read rules from %s: %w", file, err)
 	}
-	e.table = table.New("main", rule.MustParseAction(rc.DefaultAction))
+	e.table, err = table.New("main", rule.MustParseAction(rc.DefaultAction))
+	if err != nil {
+		return fmt.Errorf("failed to create table: %w", err)
+	}
 	for _, r := range rc.Rules {
 		mRule, err := r.ToRule(e.sets)
 		if err != nil {
