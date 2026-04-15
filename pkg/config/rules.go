@@ -39,14 +39,18 @@ func (e *Endpoint) toEndpoint(ruleName string, sets map[string]set.Set) (rule.En
 	if len(e.Net) > 0 {
 		ep.Net = set.NewIPSet()
 		for _, n := range e.Net {
-			_ = ep.Net.Add(rule.MustParseCIDR(n))
+			if err := ep.Net.Add(rule.MustParseCIDR(n)); err != nil {
+				return ep, err
+			}
 		}
 	}
 
 	if len(e.Port) > 0 {
 		ep.Port = set.NewPortSet()
 		for _, p := range e.Port {
-			_ = ep.Port.Add(p)
+			if err := ep.Port.Add(p); err != nil {
+				return ep, err
+			}
 		}
 	}
 
@@ -94,14 +98,18 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 	if len(r.Protocol) > 0 {
 		mRule.Proto = set.NewProtoSet()
 		for _, proto := range r.Protocol {
-			_ = mRule.Proto.Add(proto)
+			if err := mRule.Proto.Add(proto); err != nil {
+				return nil, err
+			}
 		}
 	}
 
 	if len(r.NotProto) > 0 {
 		mRule.NotProto = set.NewProtoSet()
 		for _, proto := range r.NotProto {
-			_ = mRule.NotProto.Add(proto)
+			if err := mRule.NotProto.Add(proto); err != nil {
+				return nil, err
+			}
 		}
 	}
 
