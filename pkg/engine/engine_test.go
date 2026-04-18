@@ -1,14 +1,33 @@
-package engine
+package engine_test
 
 import (
 	"testing"
 
 	"github.com/mazdakn/fwsim/pkg/config"
+	enginepkg "github.com/mazdakn/fwsim/pkg/engine"
 	"github.com/mazdakn/fwsim/pkg/match"
 	"github.com/mazdakn/fwsim/pkg/proto"
 	"github.com/mazdakn/fwsim/pkg/rule"
 	. "github.com/onsi/gomega"
 )
+
+func loadRulesFromBytes(e *enginepkg.Engine, data []byte) error {
+	tbl, err := config.ConfigRulesFromBytes(data, e.Sets())
+	if err != nil {
+		return err
+	}
+	e.SetTable(tbl)
+	return nil
+}
+
+func loadSetsFromBytes(e *enginepkg.Engine, data []byte) error {
+	sets, err := config.ConfigSetsFromBytes(data)
+	if err != nil {
+		return err
+	}
+	e.SetSets(sets)
+	return nil
+}
 
 const testRulesYAML = `
 rules:
@@ -132,8 +151,8 @@ packets:
 func TestEngineWithNamedPortsInRulesAndPackets(t *testing.T) {
 	RegisterTestingT(t)
 
-	engine := New(Config{})
-	err := engine.ConfigRulesFromBytes([]byte(testRulesNamedPortYAML))
+	engine := enginepkg.New()
+	err := loadRulesFromBytes(engine, []byte(testRulesNamedPortYAML))
 	Expect(err).To(BeNil())
 
 	pkts, err := config.PacketsFromBytes([]byte(testPacketsNamedPortYAML))
@@ -169,9 +188,9 @@ sets:
 func TestEngineWithNamedPortsInSets(t *testing.T) {
 	RegisterTestingT(t)
 
-	engine := New(Config{})
+	engine := enginepkg.New()
 
-	err := engine.ConfigSetsFromBytes([]byte(testSetsNamedPortYAML))
+	err := loadSetsFromBytes(engine, []byte(testSetsNamedPortYAML))
 	Expect(err).To(BeNil())
 
 	const rulesWithNamedPortSetYAML = `
@@ -184,7 +203,7 @@ rules:
     action: Drop
 default_action: Drop
 `
-	err = engine.ConfigRulesFromBytes([]byte(rulesWithNamedPortSetYAML))
+	err = loadRulesFromBytes(engine, []byte(rulesWithNamedPortSetYAML))
 	Expect(err).To(BeNil())
 
 	pkts, err := config.PacketsFromBytes([]byte(testPacketsNamedPortYAML))
@@ -209,15 +228,15 @@ default_action: Drop
 func TestNew(t *testing.T) {
 	RegisterTestingT(t)
 
-	engine := New(Config{})
+	engine := enginepkg.New()
 	Expect(engine).ToNot(BeNil())
 }
 
 func TestPacketsFromBytesAndMatch(t *testing.T) {
 	RegisterTestingT(t)
 
-	engine := New(Config{})
-	err := engine.ConfigRulesFromBytes([]byte(testRulesYAML))
+	engine := enginepkg.New()
+	err := loadRulesFromBytes(engine, []byte(testRulesYAML))
 	Expect(err).To(BeNil())
 
 	pkts, err := config.PacketsFromBytes([]byte(testPacketsYAML))
@@ -243,11 +262,11 @@ func TestPacketsFromBytesAndMatch(t *testing.T) {
 func TestLoadSetsFromBytes(t *testing.T) {
 	RegisterTestingT(t)
 
-	engine := New(Config{})
-	err := engine.ConfigRulesFromBytes([]byte(testRulesYAML))
+	engine := enginepkg.New()
+	err := loadRulesFromBytes(engine, []byte(testRulesYAML))
 	Expect(err).To(BeNil())
 
-	err = engine.ConfigSetsFromBytes([]byte(testSetsYAML))
+	err = loadSetsFromBytes(engine, []byte(testSetsYAML))
 	Expect(err).To(BeNil())
 
 	sets := engine.Sets()
@@ -273,18 +292,18 @@ default_action: Drop
 func TestRulesReferencingNamedSets(t *testing.T) {
 	RegisterTestingT(t)
 
-	engine := New(Config{})
+	engine := enginepkg.New()
 
 	// Sets must be loaded before rules that reference them.
-	err := engine.ConfigSetsFromBytes([]byte(testSetsYAML))
+	err := loadSetsFromBytes(engine, []byte(testSetsYAML))
 	Expect(err).To(BeNil())
 
-	err = engine.ConfigRulesFromBytes([]byte(testRulesWithSetsYAML))
+	err = loadRulesFromBytes(engine, []byte(testRulesWithSetsYAML))
 	Expect(err).To(BeNil())
 
-	Expect(len(engine.table.Rules)).To(Equal(2))
+	Expect(len(engine.Table().Rules)).To(Equal(2))
 
-	rule1 := engine.table.Rules[0]
+	rule1 := engine.Table().Rules[0]
 	Expect(rule1.Source.IPSet).ToNot(BeNil())
 	Expect(rule1.Destination.PortSet).ToNot(BeNil())
 	Expect(rule1.Source.Net).To(BeNil())
@@ -294,10 +313,10 @@ func TestRulesReferencingNamedSets(t *testing.T) {
 func TestRulesReferencingUnknownSetError(t *testing.T) {
 	RegisterTestingT(t)
 
-	engine := New(Config{})
+	engine := enginepkg.New()
 
 	// No sets loaded — referencing a set should return an error.
-	err := engine.ConfigRulesFromBytes([]byte(testRulesWithSetsYAML))
+	err := loadRulesFromBytes(engine, []byte(testRulesWithSetsYAML))
 	Expect(err).ToNot(BeNil())
 	Expect(err.Error()).To(ContainSubstring("unknown set"))
 }
@@ -305,11 +324,11 @@ func TestRulesReferencingUnknownSetError(t *testing.T) {
 func TestRulesWithNamedSetsMatch(t *testing.T) {
 	RegisterTestingT(t)
 
-	engine := New(Config{})
-	err := engine.ConfigSetsFromBytes([]byte(testSetsYAML))
+	engine := enginepkg.New()
+	err := loadSetsFromBytes(engine, []byte(testSetsYAML))
 	Expect(err).To(BeNil())
 
-	err = engine.ConfigRulesFromBytes([]byte(testRulesWithSetsYAML))
+	err = loadRulesFromBytes(engine, []byte(testRulesWithSetsYAML))
 	Expect(err).To(BeNil())
 
 	// Packet from trusted-ips (192.168.1.0/24) to web-ports (80,443,8080) → Accept
@@ -347,25 +366,25 @@ default_action: Drop
 func TestRulesReferencingNegatedNamedSets(t *testing.T) {
 	RegisterTestingT(t)
 
-	engine := New(Config{})
-	err := engine.ConfigSetsFromBytes([]byte(testSetsYAML))
+	engine := enginepkg.New()
+	err := loadSetsFromBytes(engine, []byte(testSetsYAML))
 	Expect(err).To(BeNil())
 
-	err = engine.ConfigRulesFromBytes([]byte(testRulesWithNotSetsYAML))
+	err = loadRulesFromBytes(engine, []byte(testRulesWithNotSetsYAML))
 	Expect(err).To(BeNil())
 
-	Expect(len(engine.table.Rules)).To(Equal(2))
-	Expect(engine.table.Rules[0].NotSource.IPSet).ToNot(BeNil())
+	Expect(len(engine.Table().Rules)).To(Equal(2))
+	Expect(engine.Table().Rules[0].NotSource.IPSet).ToNot(BeNil())
 }
 
 func TestRulesWithNegatedNamedSetsMatch(t *testing.T) {
 	RegisterTestingT(t)
 
-	engine := New(Config{})
-	err := engine.ConfigSetsFromBytes([]byte(testSetsYAML))
+	engine := enginepkg.New()
+	err := loadSetsFromBytes(engine, []byte(testSetsYAML))
 	Expect(err).To(BeNil())
 
-	err = engine.ConfigRulesFromBytes([]byte(testRulesWithNotSetsYAML))
+	err = loadRulesFromBytes(engine, []byte(testRulesWithNotSetsYAML))
 	Expect(err).To(BeNil())
 
 	pkts, err := config.PacketsFromBytes([]byte(testPacketsYAML))
@@ -385,9 +404,9 @@ func TestRulesWithNegatedNamedSetsMatch(t *testing.T) {
 func TestRulesReferencingUnknownNegatedSetError(t *testing.T) {
 	RegisterTestingT(t)
 
-	engine := New(Config{})
+	engine := enginepkg.New()
 	// No sets loaded — negated set reference must fail at load time.
-	err := engine.ConfigRulesFromBytes([]byte(testRulesWithNotSetsYAML))
+	err := loadRulesFromBytes(engine, []byte(testRulesWithNotSetsYAML))
 	Expect(err).ToNot(BeNil())
 	Expect(err.Error()).To(ContainSubstring("unknown set"))
 }
@@ -395,14 +414,14 @@ func TestRulesReferencingUnknownNegatedSetError(t *testing.T) {
 func TestLoadRulesFromBytes(t *testing.T) {
 	RegisterTestingT(t)
 
-	engine := New(Config{})
-	err := engine.ConfigRulesFromBytes([]byte(testRulesYAML))
+	engine := enginepkg.New()
+	err := loadRulesFromBytes(engine, []byte(testRulesYAML))
 	Expect(err).To(BeNil())
 
-	Expect(len(engine.table.Rules)).To(Equal(3))
+	Expect(len(engine.Table().Rules)).To(Equal(3))
 
 	// Verify first rule
-	rule1 := engine.table.Rules[0]
+	rule1 := engine.Table().Rules[0]
 	Expect(rule1.Source.Net).ToNot(BeNil())
 	Expect(rule1.Source.Net.String()).To(Equal("192.168.1.0/24"))
 	Expect(rule1.Destination.Net).ToNot(BeNil())
@@ -412,7 +431,7 @@ func TestLoadRulesFromBytes(t *testing.T) {
 	Expect(rule1.Action.String()).To(Equal("Accept"))
 
 	// Verify second rule
-	rule2 := engine.table.Rules[1]
+	rule2 := engine.Table().Rules[1]
 	Expect(rule2.Destination.Net).ToNot(BeNil())
 	Expect(rule2.Destination.Net.String()).To(Equal("1.1.1.1/32"))
 	Expect(rule2.Proto).ToNot(BeNil())
@@ -420,5 +439,5 @@ func TestLoadRulesFromBytes(t *testing.T) {
 	Expect(rule2.Action.String()).To(Equal("Drop"))
 
 	// Verify default action is set
-	Expect(engine.table.DefaultAction.Action.String()).To(Equal("Accept"))
+	Expect(engine.Table().DefaultAction.Action.String()).To(Equal("Accept"))
 }
