@@ -1,18 +1,236 @@
-package engine_test
+package engine
 
 import (
+	"fmt"
 	"testing"
 
-	"github.com/mazdakn/fwsim/pkg/config"
-	enginepkg "github.com/mazdakn/fwsim/pkg/engine"
+	"github.com/goccy/go-yaml"
 	"github.com/mazdakn/fwsim/pkg/match"
+	"github.com/mazdakn/fwsim/pkg/packet"
+	"github.com/mazdakn/fwsim/pkg/port"
 	"github.com/mazdakn/fwsim/pkg/proto"
 	"github.com/mazdakn/fwsim/pkg/rule"
+	"github.com/mazdakn/fwsim/pkg/set"
+	"github.com/mazdakn/fwsim/pkg/table"
 	. "github.com/onsi/gomega"
 )
 
-func loadRulesFromBytes(e *enginepkg.Engine, data []byte) error {
-	tbl, err := config.ConfigRulesFromBytes(data, e.Sets())
+type testRuleConfig struct {
+	Rules         []testRule `yaml:"rules,omitempty"`
+	DefaultAction string     `yaml:"default_action,omitempty"`
+}
+
+type testEndpoint struct {
+	Net       []string    `yaml:"net,omitempty"`
+	Port      []port.Port `yaml:"port,omitempty"`
+	IPSet     string      `yaml:"ip_set,omitempty"`
+	PortSet   string      `yaml:"port_set,omitempty"`
+	IPPortSet string      `yaml:"ipport_set,omitempty"`
+}
+
+func (e *testEndpoint) toEndpoint(ruleName string, sets map[string]set.Set) (rule.Endpoint, error) {
+	var ep rule.Endpoint
+	if len(e.Net) > 0 {
+		ep.Net = set.NewIPSet()
+		for _, n := range e.Net {
+			if err := ep.Net.Add(rule.MustParseCIDR(n)); err != nil {
+				return rule.Endpoint{}, err
+			}
+		}
+	}
+	if len(e.Port) > 0 {
+		ep.Port = set.NewPortSet()
+		for _, p := range e.Port {
+			if err := ep.Port.Add(p); err != nil {
+				return rule.Endpoint{}, err
+			}
+		}
+	}
+	if e.IPSet != "" {
+		s, ok := sets[e.IPSet]
+		if !ok {
+			return ep, fmt.Errorf("rule %q references unknown set %q", ruleName, e.IPSet)
+		}
+		ep.IPSet = s
+	}
+	if e.PortSet != "" {
+		s, ok := sets[e.PortSet]
+		if !ok {
+			return ep, fmt.Errorf("rule %q references unknown set %q", ruleName, e.PortSet)
+		}
+		ep.PortSet = s
+	}
+	if e.IPPortSet != "" {
+		s, ok := sets[e.IPPortSet]
+		if !ok {
+			return ep, fmt.Errorf("rule %q references unknown set %q", ruleName, e.IPPortSet)
+		}
+		ep.IPPortSet = s
+	}
+	return ep, nil
+}
+
+type testRule struct {
+	Name           string        `yaml:"name,omitempty"`
+	Order          uint64        `yaml:"order,omitempty"`
+	Source         testEndpoint  `yaml:"src,omitempty"`
+	Destination    testEndpoint  `yaml:"dst,omitempty"`
+	Protocol       []proto.Proto `yaml:"proto,omitempty"`
+	NotSource      testEndpoint  `yaml:"not_src,omitempty"`
+	NotDestination testEndpoint  `yaml:"not_dst,omitempty"`
+	NotProto       []proto.Proto `yaml:"not_proto,omitempty"`
+	Action         string        `yaml:"action,omitempty"`
+}
+
+func (r *testRule) toRule(sets map[string]set.Set) (*rule.Rule, error) {
+	mRule := rule.New()
+	mRule.Name = r.Name
+	mRule.Order = r.Order
+	mRule.Action = rule.MustParseAction(r.Action)
+
+	if len(r.Protocol) > 0 {
+		mRule.Proto = set.NewProtoSet()
+		for _, p := range r.Protocol {
+			if err := mRule.Proto.Add(p); err != nil {
+				return nil, err
+			}
+		}
+	}
+	if len(r.NotProto) > 0 {
+		mRule.NotProto = set.NewProtoSet()
+		for _, p := range r.NotProto {
+			if err := mRule.NotProto.Add(p); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	var err error
+	mRule.Source, err = r.Source.toEndpoint(r.Name, sets)
+	if err != nil {
+		return nil, err
+	}
+	mRule.Destination, err = r.Destination.toEndpoint(r.Name, sets)
+	if err != nil {
+		return nil, err
+	}
+	mRule.NotSource, err = r.NotSource.toEndpoint(r.Name, sets)
+	if err != nil {
+		return nil, err
+	}
+	mRule.NotDestination, err = r.NotDestination.toEndpoint(r.Name, sets)
+	if err != nil {
+		return nil, err
+	}
+	return mRule, nil
+}
+
+func rulesTableFromBytes(data []byte, sets map[string]set.Set) (*table.Table, error) {
+	if sets == nil {
+		sets = map[string]set.Set{}
+	}
+	var rc testRuleConfig
+	if err := yaml.Unmarshal(data, &rc); err != nil {
+		return nil, err
+	}
+	tbl := table.New("main", rule.MustParseAction(rc.DefaultAction))
+	for _, r := range rc.Rules {
+		mRule, err := r.toRule(sets)
+		if err != nil {
+			return nil, err
+		}
+		tbl.AddRule(mRule)
+	}
+	return tbl, nil
+}
+
+type testSetConfig struct {
+	Sets []testSet `yaml:"sets,omitempty"`
+}
+
+type testSet struct {
+	Name    string   `yaml:"name,omitempty"`
+	Type    string   `yaml:"type,omitempty"`
+	Members []string `yaml:"members,omitempty"`
+}
+
+func (s *testSet) toSet() (set.Set, error) {
+	var result set.Set
+	switch s.Type {
+	case "ip":
+		result = set.NewIPSet()
+	case "port":
+		result = set.NewPortSet()
+	case "proto":
+		result = set.NewProtoSet()
+	case "ipport":
+		result = set.NewIPPortSet()
+	default:
+		return nil, fmt.Errorf("unknown set type %q", s.Type)
+	}
+	for _, member := range s.Members {
+		if err := result.Add(member); err != nil {
+			return nil, fmt.Errorf("set %q: invalid member %q: %w", s.Name, member, err)
+		}
+	}
+	return result, nil
+}
+
+func setsFromBytes(data []byte) (map[string]set.Set, error) {
+	var sc testSetConfig
+	if err := yaml.Unmarshal(data, &sc); err != nil {
+		return nil, err
+	}
+	sets := make(map[string]set.Set, len(sc.Sets))
+	for _, s := range sc.Sets {
+		namedSet, err := s.toSet()
+		if err != nil {
+			return nil, err
+		}
+		sets[s.Name] = namedSet
+	}
+	return sets, nil
+}
+
+type testPacketConfig struct {
+	Packets []testPacket `yaml:"packets,omitempty"`
+}
+
+type testPacket struct {
+	SrcAddr string      `yaml:"src_addr,omitempty"`
+	DstAddr string      `yaml:"dst_addr,omitempty"`
+	Proto   proto.Proto `yaml:"proto,omitempty"`
+	SrcPort port.Port   `yaml:"src_port,omitempty"`
+	DstPort port.Port   `yaml:"dst_port,omitempty"`
+
+	Metadata packet.Metadata `yaml:"metadata,omitempty"`
+}
+
+func (p *testPacket) toPacket() *packet.Packet {
+	return packet.New(
+		packet.WithName(p.Metadata.Name),
+		packet.WithSrcAddr(p.SrcAddr),
+		packet.WithDstAddr(p.DstAddr),
+		packet.WithProto(p.Proto),
+		packet.WithSrcPort(p.SrcPort.Resolve()),
+		packet.WithDstPort(p.DstPort.Resolve()),
+	)
+}
+
+func packetsFromBytes(data []byte) ([]*packet.Packet, error) {
+	var pc testPacketConfig
+	if err := yaml.Unmarshal(data, &pc); err != nil {
+		return nil, err
+	}
+	pkts := make([]*packet.Packet, 0, len(pc.Packets))
+	for _, p := range pc.Packets {
+		pkts = append(pkts, p.toPacket())
+	}
+	return pkts, nil
+}
+
+func loadRulesFromBytes(e *Engine, data []byte) error {
+	tbl, err := rulesTableFromBytes(data, e.Sets())
 	if err != nil {
 		return err
 	}
@@ -20,8 +238,8 @@ func loadRulesFromBytes(e *enginepkg.Engine, data []byte) error {
 	return nil
 }
 
-func loadSetsFromBytes(e *enginepkg.Engine, data []byte) error {
-	sets, err := config.ConfigSetsFromBytes(data)
+func loadSetsFromBytes(e *Engine, data []byte) error {
+	sets, err := setsFromBytes(data)
 	if err != nil {
 		return err
 	}
@@ -151,11 +369,11 @@ packets:
 func TestEngineWithNamedPortsInRulesAndPackets(t *testing.T) {
 	RegisterTestingT(t)
 
-	engine := enginepkg.New()
+	engine := New()
 	err := loadRulesFromBytes(engine, []byte(testRulesNamedPortYAML))
 	Expect(err).To(BeNil())
 
-	pkts, err := config.PacketsFromBytes([]byte(testPacketsNamedPortYAML))
+	pkts, err := packetsFromBytes([]byte(testPacketsNamedPortYAML))
 	Expect(err).To(BeNil())
 	Expect(pkts).To(HaveLen(3))
 
@@ -188,7 +406,7 @@ sets:
 func TestEngineWithNamedPortsInSets(t *testing.T) {
 	RegisterTestingT(t)
 
-	engine := enginepkg.New()
+	engine := New()
 
 	err := loadSetsFromBytes(engine, []byte(testSetsNamedPortYAML))
 	Expect(err).To(BeNil())
@@ -206,7 +424,7 @@ default_action: Drop
 	err = loadRulesFromBytes(engine, []byte(rulesWithNamedPortSetYAML))
 	Expect(err).To(BeNil())
 
-	pkts, err := config.PacketsFromBytes([]byte(testPacketsNamedPortYAML))
+	pkts, err := packetsFromBytes([]byte(testPacketsNamedPortYAML))
 	Expect(err).To(BeNil())
 
 	// Packet to port "http" (80) → in named-web-ports → Accept
@@ -228,18 +446,18 @@ default_action: Drop
 func TestNew(t *testing.T) {
 	RegisterTestingT(t)
 
-	engine := enginepkg.New()
+	engine := New()
 	Expect(engine).ToNot(BeNil())
 }
 
 func TestPacketsFromBytesAndMatch(t *testing.T) {
 	RegisterTestingT(t)
 
-	engine := enginepkg.New()
+	engine := New()
 	err := loadRulesFromBytes(engine, []byte(testRulesYAML))
 	Expect(err).To(BeNil())
 
-	pkts, err := config.PacketsFromBytes([]byte(testPacketsYAML))
+	pkts, err := packetsFromBytes([]byte(testPacketsYAML))
 	Expect(err).To(BeNil())
 	Expect(len(pkts)).To(Equal(5))
 
@@ -262,7 +480,7 @@ func TestPacketsFromBytesAndMatch(t *testing.T) {
 func TestLoadSetsFromBytes(t *testing.T) {
 	RegisterTestingT(t)
 
-	engine := enginepkg.New()
+	engine := New()
 	err := loadRulesFromBytes(engine, []byte(testRulesYAML))
 	Expect(err).To(BeNil())
 
@@ -292,7 +510,7 @@ default_action: Drop
 func TestRulesReferencingNamedSets(t *testing.T) {
 	RegisterTestingT(t)
 
-	engine := enginepkg.New()
+	engine := New()
 
 	// Sets must be loaded before rules that reference them.
 	err := loadSetsFromBytes(engine, []byte(testSetsYAML))
@@ -313,7 +531,7 @@ func TestRulesReferencingNamedSets(t *testing.T) {
 func TestRulesReferencingUnknownSetError(t *testing.T) {
 	RegisterTestingT(t)
 
-	engine := enginepkg.New()
+	engine := New()
 
 	// No sets loaded — referencing a set should return an error.
 	err := loadRulesFromBytes(engine, []byte(testRulesWithSetsYAML))
@@ -324,7 +542,7 @@ func TestRulesReferencingUnknownSetError(t *testing.T) {
 func TestRulesWithNamedSetsMatch(t *testing.T) {
 	RegisterTestingT(t)
 
-	engine := enginepkg.New()
+	engine := New()
 	err := loadSetsFromBytes(engine, []byte(testSetsYAML))
 	Expect(err).To(BeNil())
 
@@ -332,7 +550,7 @@ func TestRulesWithNamedSetsMatch(t *testing.T) {
 	Expect(err).To(BeNil())
 
 	// Packet from trusted-ips (192.168.1.0/24) to web-ports (80,443,8080) → Accept
-	pkts, err := config.PacketsFromBytes([]byte(testPacketsYAML))
+	pkts, err := packetsFromBytes([]byte(testPacketsYAML))
 	Expect(err).To(BeNil())
 
 	// First packet: src 192.168.1.5 dst 1.1.1.1:80 → matches rule 1 (Accept)
@@ -366,7 +584,7 @@ default_action: Drop
 func TestRulesReferencingNegatedNamedSets(t *testing.T) {
 	RegisterTestingT(t)
 
-	engine := enginepkg.New()
+	engine := New()
 	err := loadSetsFromBytes(engine, []byte(testSetsYAML))
 	Expect(err).To(BeNil())
 
@@ -380,14 +598,14 @@ func TestRulesReferencingNegatedNamedSets(t *testing.T) {
 func TestRulesWithNegatedNamedSetsMatch(t *testing.T) {
 	RegisterTestingT(t)
 
-	engine := enginepkg.New()
+	engine := New()
 	err := loadSetsFromBytes(engine, []byte(testSetsYAML))
 	Expect(err).To(BeNil())
 
 	err = loadRulesFromBytes(engine, []byte(testRulesWithNotSetsYAML))
 	Expect(err).To(BeNil())
 
-	pkts, err := config.PacketsFromBytes([]byte(testPacketsYAML))
+	pkts, err := packetsFromBytes([]byte(testPacketsYAML))
 	Expect(err).To(BeNil())
 
 	// First packet: src 192.168.1.5 — in trusted-ips → negated, rule1 does NOT match → deny-all (Drop)
@@ -404,7 +622,7 @@ func TestRulesWithNegatedNamedSetsMatch(t *testing.T) {
 func TestRulesReferencingUnknownNegatedSetError(t *testing.T) {
 	RegisterTestingT(t)
 
-	engine := enginepkg.New()
+	engine := New()
 	// No sets loaded — negated set reference must fail at load time.
 	err := loadRulesFromBytes(engine, []byte(testRulesWithNotSetsYAML))
 	Expect(err).ToNot(BeNil())
@@ -414,7 +632,7 @@ func TestRulesReferencingUnknownNegatedSetError(t *testing.T) {
 func TestLoadRulesFromBytes(t *testing.T) {
 	RegisterTestingT(t)
 
-	engine := enginepkg.New()
+	engine := New()
 	err := loadRulesFromBytes(engine, []byte(testRulesYAML))
 	Expect(err).To(BeNil())
 
