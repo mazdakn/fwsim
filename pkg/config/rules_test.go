@@ -120,12 +120,16 @@ rules:
   - name: allow-trusted
     src:
       ip_set: trusted-ips
+      ipport_set: src-ipports
     dst:
       port_set: web-ports
+      ipport_set: dst-ipports
     not_src:
       ip_set: blocked-ips
+      ipport_set: blocked-src-ipports
     not_dst:
       port_set: banned-ports
+      ipport_set: blocked-dst-ipports
     action: Accept
 default_action: Drop
 `
@@ -134,9 +138,13 @@ default_action: Drop
 	Expect(rc).ToNot(BeNil())
 	Expect(rc.Rules).To(HaveLen(1))
 	Expect(rc.Rules[0].Source.IPSet).To(Equal("trusted-ips"))
+	Expect(rc.Rules[0].Source.IPPortSet).To(Equal("src-ipports"))
 	Expect(rc.Rules[0].Destination.PortSet).To(Equal("web-ports"))
+	Expect(rc.Rules[0].Destination.IPPortSet).To(Equal("dst-ipports"))
 	Expect(rc.Rules[0].NotSource.IPSet).To(Equal("blocked-ips"))
+	Expect(rc.Rules[0].NotSource.IPPortSet).To(Equal("blocked-src-ipports"))
 	Expect(rc.Rules[0].NotDestination.PortSet).To(Equal("banned-ports"))
+	Expect(rc.Rules[0].NotDestination.IPPortSet).To(Equal("blocked-dst-ipports"))
 }
 
 func TestToRuleWithValidNegatedSets(t *testing.T) {
@@ -243,4 +251,48 @@ func TestToRuleWithNameOnlyPorts(t *testing.T) {
 	Expect(mRule.Destination.Port.Match(uint16(80))).To(BeTrue())
 	Expect(mRule.Destination.Port.Match(uint16(443))).To(BeTrue())
 	Expect(mRule.Destination.Port.Match(uint16(22))).To(BeFalse())
+}
+
+func TestToRuleWithValidIPPortSets(t *testing.T) {
+	RegisterTestingT(t)
+
+	ipPortSet := set.NewIPPortSet()
+	_ = ipPortSet.Add("10.0.0.0/8,tcp,80")
+
+	sets := map[string]set.Set{
+		"svc-tuples": ipPortSet,
+	}
+
+	r := &Rule{
+		Name:           "tuple-rule",
+		Source:         Endpoint{IPPortSet: "svc-tuples"},
+		Destination:    Endpoint{IPPortSet: "svc-tuples"},
+		NotSource:      Endpoint{IPPortSet: "svc-tuples"},
+		NotDestination: Endpoint{IPPortSet: "svc-tuples"},
+		Action:         "Accept",
+	}
+	mRule, err := r.ToRule(sets)
+	Expect(err).To(BeNil())
+	Expect(mRule).ToNot(BeNil())
+	Expect(mRule.Source.IPPortSet).To(Equal(sets["svc-tuples"]))
+	Expect(mRule.Destination.IPPortSet).To(Equal(sets["svc-tuples"]))
+	Expect(mRule.NotSource.IPPortSet).To(Equal(sets["svc-tuples"]))
+	Expect(mRule.NotDestination.IPPortSet).To(Equal(sets["svc-tuples"]))
+}
+
+func TestToRuleWithUnknownIPPortSet(t *testing.T) {
+	RegisterTestingT(t)
+
+	r := &Rule{
+		Name:           "bad",
+		Source:         Endpoint{IPPortSet: "missing"},
+		Destination:    Endpoint{IPPortSet: "missing"},
+		NotSource:      Endpoint{IPPortSet: "missing"},
+		NotDestination: Endpoint{IPPortSet: "missing"},
+		Action:         "Accept",
+	}
+	mRule, err := r.ToRule(nil)
+	Expect(err).ToNot(BeNil())
+	Expect(err.Error()).To(ContainSubstring("unknown set"))
+	Expect(mRule).To(BeNil())
 }

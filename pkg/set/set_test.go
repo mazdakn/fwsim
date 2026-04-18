@@ -328,3 +328,42 @@ func TestIPSetStringMultipleNets(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(s.String()).To(Equal("{10.0.0.0/8,192.168.0.0/16}"))
 }
+
+func TestIPPortSetMatch(t *testing.T) {
+	RegisterTestingT(t)
+
+	s := NewIPPortSet()
+	Expect(s.Add("10.0.0.0/8,tcp,80")).To(Succeed())
+	Expect(s.Add("192.168.1.10,udp,1024-65535")).To(Succeed())
+	Expect(s.Add("2001:db8::/64,icmp,0")).To(Succeed())
+
+	Expect(s.Match(IPPortTuple{
+		IP:    net.ParseIP("10.1.2.3"),
+		Proto: proto.TCP,
+		Port:  80,
+	})).To(BeTrue())
+	Expect(s.Match(IPPortTuple{
+		IP:    net.ParseIP("10.1.2.3"),
+		Proto: proto.TCP,
+		Port:  443,
+	})).To(BeFalse())
+	Expect(s.Match(IPPortTuple{
+		IP:    net.ParseIP("192.168.1.10"),
+		Proto: proto.UDP,
+		Port:  8080,
+	})).To(BeTrue())
+	Expect(s.Match(IPPortTuple{
+		IP:    net.ParseIP("2001:db8::1"),
+		Proto: proto.ICMP,
+		Port:  0,
+	})).To(BeTrue())
+}
+
+func TestIPPortSetAddInvalid(t *testing.T) {
+	RegisterTestingT(t)
+
+	s := NewIPPortSet()
+	Expect(s.Add("10.0.0.0/8,tcp")).ToNot(Succeed())
+	Expect(s.Add("10.0.0.0/8,notproto,80")).ToNot(Succeed())
+	Expect(s.Add("10.0.0.0/8,tcp,notport")).ToNot(Succeed())
+}

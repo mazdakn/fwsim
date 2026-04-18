@@ -659,3 +659,43 @@ func TestNegatedNamedSetRuleString(t *testing.T) {
 	rNotDstPort := New(WithAction(Drop), WithNotDstPortSet(portSet))
 	Expect(rNotDstPort.String()).To(Equal("Drop *{*:*->*:!80}"))
 }
+
+func TestIPPortSetRuleMatch(t *testing.T) {
+	RegisterTestingT(t)
+
+	srcSet := set.NewIPPortSet()
+	_ = srcSet.Add("10.0.0.0/8,tcp,1000-2000")
+	dstSet := set.NewIPPortSet()
+	_ = dstSet.Add("1.1.1.1,tcp,443")
+
+	r := New(WithSrcIPPortSet(srcSet), WithDstIPPortSet(dstSet))
+
+	Expect(r.Match(packet.New(
+		packet.WithSrcAddr("10.1.2.3"), packet.WithSrcPort(1500), packet.WithProto(proto.TCP),
+		packet.WithDstAddr("1.1.1.1"), packet.WithDstPort(443),
+	))).To(BeTrue())
+
+	Expect(r.Match(packet.New(
+		packet.WithSrcAddr("10.1.2.3"), packet.WithSrcPort(999), packet.WithProto(proto.TCP),
+		packet.WithDstAddr("1.1.1.1"), packet.WithDstPort(443),
+	))).To(BeFalse())
+}
+
+func TestNegatedIPPortSetRuleMatch(t *testing.T) {
+	RegisterTestingT(t)
+
+	negSet := set.NewIPPortSet()
+	_ = negSet.Add("10.0.0.0/8,udp,53")
+
+	r := New(WithNotSrcIPPortSet(negSet), WithNotDstIPPortSet(negSet))
+
+	Expect(r.Match(packet.New(
+		packet.WithSrcAddr("10.1.2.3"), packet.WithSrcPort(53), packet.WithProto(proto.UDP),
+		packet.WithDstAddr("10.2.3.4"), packet.WithDstPort(53),
+	))).To(BeFalse())
+
+	Expect(r.Match(packet.New(
+		packet.WithSrcAddr("10.1.2.3"), packet.WithSrcPort(53), packet.WithProto(proto.TCP),
+		packet.WithDstAddr("10.2.3.4"), packet.WithDstPort(53),
+	))).To(BeTrue())
+}
