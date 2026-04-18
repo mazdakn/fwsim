@@ -328,4 +328,3 @@ func TestIPSetStringMultipleNets(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(s.String()).To(Equal("{10.0.0.0/8,192.168.0.0/16}"))
 }
-
