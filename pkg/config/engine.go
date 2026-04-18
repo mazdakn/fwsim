@@ -5,9 +5,13 @@ import (
 
 	"github.com/mazdakn/fwsim/pkg/engine"
 	"github.com/mazdakn/fwsim/pkg/match"
+	"github.com/mazdakn/fwsim/pkg/packet"
 	"github.com/mazdakn/fwsim/pkg/rule"
+	"github.com/mazdakn/fwsim/pkg/set"
 	"github.com/mazdakn/fwsim/pkg/table"
 )
+
+const mainTableName = "main"
 
 type Config struct {
 	// Rule input
@@ -40,13 +44,9 @@ func ConfigRulesFromBytes(e *engine.Engine, data []byte) error {
 	if err != nil {
 		return fmt.Errorf("failed to parse rules: %w", err)
 	}
-	tbl := table.New("main", rule.MustParseAction(rc.DefaultAction))
-	for _, r := range rc.Rules {
-		mRule, err := r.ToRule(e.Sets())
-		if err != nil {
-			return fmt.Errorf("failed to load rules: %w", err)
-		}
-		tbl.AddRule(mRule)
+	tbl, err := toTable(rc, e.Sets())
+	if err != nil {
+		return fmt.Errorf("failed to load rules: %w", err)
 	}
 	e.SetTable(tbl)
 	return nil
@@ -57,13 +57,9 @@ func ConfigRulesFromFile(e *engine.Engine, file string) error {
 	if err != nil {
 		return fmt.Errorf("failed to read rules from %s: %w", file, err)
 	}
-	tbl := table.New("main", rule.MustParseAction(rc.DefaultAction))
-	for _, r := range rc.Rules {
-		mRule, err := r.ToRule(e.Sets())
-		if err != nil {
-			return fmt.Errorf("failed to load rules from %s: %w", file, err)
-		}
-		tbl.AddRule(mRule)
+	tbl, err := toTable(rc, e.Sets())
+	if err != nil {
+		return fmt.Errorf("failed to load rules from %s: %w", file, err)
 	}
 	e.SetTable(tbl)
 	return nil
@@ -74,13 +70,7 @@ func ConfigPacketsFromBytes(e *engine.Engine, data []byte) error {
 	if err != nil {
 		return fmt.Errorf("failed to parse packets: %w", err)
 	}
-	matches := make([]*match.Match, 0, len(pkts))
-	for _, p := range pkts {
-		matches = append(matches, &match.Match{
-			Packet: p,
-		})
-	}
-	e.SetMatches(matches)
+	e.SetMatches(toMatches(pkts))
 	return nil
 }
 
@@ -89,13 +79,7 @@ func ConfigPacketsFromFile(e *engine.Engine, file string) error {
 	if err != nil {
 		return fmt.Errorf("failed to read packets from %s: %w", file, err)
 	}
-	matches := make([]*match.Match, 0, len(pkts))
-	for _, p := range pkts {
-		matches = append(matches, &match.Match{
-			Packet: p,
-		})
-	}
-	e.SetMatches(matches)
+	e.SetMatches(toMatches(pkts))
 	return nil
 }
 
@@ -115,4 +99,26 @@ func ConfigSetsFromFile(e *engine.Engine, file string) error {
 	}
 	e.SetSets(sets)
 	return nil
+}
+
+func toTable(rc *RuleConfig, sets map[string]set.Set) (*table.Table, error) {
+	tbl := table.New(mainTableName, rule.MustParseAction(rc.DefaultAction))
+	for _, r := range rc.Rules {
+		mRule, err := r.ToRule(sets)
+		if err != nil {
+			return nil, err
+		}
+		tbl.AddRule(mRule)
+	}
+	return tbl, nil
+}
+
+func toMatches(pkts []*packet.Packet) []*match.Match {
+	matches := make([]*match.Match, 0, len(pkts))
+	for _, p := range pkts {
+		matches = append(matches, &match.Match{
+			Packet: p,
+		})
+	}
+	return matches
 }

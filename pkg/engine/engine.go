@@ -14,7 +14,8 @@ type Engine struct {
 
 func New() *Engine {
 	return &Engine{
-		sets: map[string]set.Set{},
+		matches: []*match.Match{},
+		sets:    map[string]set.Set{},
 	}
 }
 
