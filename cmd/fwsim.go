@@ -16,18 +16,15 @@ import (
 )
 
 const (
-	defaultInputFile   = "rules.yaml"
-	defaultPacketsFile = "packets.yaml"
+	defaultInputDir = "."
 )
 
 var (
-	inputFile   string
-	packetsFile string
-	setsFile    string
-	rootCmd     = &cobra.Command{
+	inputDir string
+	rootCmd  = &cobra.Command{
 		Use:   "fwsim",
 		Short: "Firewall simulator",
-		Long:  `fwsim is a firewall simulator that processes rules and packets from an input file.`,
+		Long:  `fwsim is a firewall simulator that processes resources from YAML files in an input directory.`,
 	}
 	evaluateCmd = &cobra.Command{
 		Use:   "evaluate",
@@ -38,7 +35,7 @@ var (
 	runCmd = &cobra.Command{
 		Use:   "run",
 		Short: "Run packets from a file against firewall rules",
-		Long:  `Load packets from an input file and evaluate each one against firewall rules.`,
+		Long:  `Load packets from YAML resource files and evaluate each one against firewall rules.`,
 		Run:   runPackets,
 	}
 )
@@ -53,7 +50,7 @@ var (
 )
 
 func init() {
-	rootCmd.PersistentFlags().StringVarP(&inputFile, "file", "f", defaultInputFile, "input file with all rules and packets")
+	rootCmd.PersistentFlags().StringVarP(&inputDir, "dir", "d", defaultInputDir, "input directory containing YAML resource files")
 
 	// Add evaluate subcommand
 	rootCmd.AddCommand(evaluateCmd)
@@ -84,8 +81,6 @@ func init() {
 
 	// Add run subcommand
 	rootCmd.AddCommand(runCmd)
-	runCmd.Flags().StringVarP(&packetsFile, "packets", "p", defaultPacketsFile, "input file with packet information")
-	runCmd.Flags().StringVarP(&setsFile, "sets", "s", "", "input file with set definitions")
 }
 
 func runEvaluate(cmd *cobra.Command, args []string) {
@@ -110,11 +105,9 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 	}
 
 	// Create engine and load rules
-	resources, err := config.ConfigFromFile(config.Config{
-		RulesFile: inputFile,
-	})
+	resources, err := config.ConfigFromDir(inputDir)
 	if err != nil {
-		logrus.WithError(err).Errorf("failed to load rules from %s", inputFile)
+		logrus.WithError(err).Errorf("failed to load resources from %s", inputDir)
 		os.Exit(1)
 	}
 	e := engine.New(resources)
@@ -131,13 +124,9 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 
 func runPackets(cmd *cobra.Command, args []string) {
 	// Create engine and load rules
-	resources, err := config.ConfigFromFile(config.Config{
-		RulesFile:   inputFile,
-		PacketsFile: packetsFile,
-		SetsFile:    setsFile,
-	})
+	resources, err := config.ConfigFromDir(inputDir)
 	if err != nil {
-		logrus.WithError(err).Errorf("failed to load rules from %s", inputFile)
+		logrus.WithError(err).Errorf("failed to load resources from %s", inputDir)
 		os.Exit(1)
 	}
 	e := engine.New(resources)
