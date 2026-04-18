@@ -26,6 +26,12 @@ type ResourceFile struct {
 	Resources []Resource `yaml:"resources"`
 }
 
+type pendingRule struct {
+	resource Resource
+	file     string
+	index    int
+}
+
 // ConfigFromDir reads all YAML files in a directory and loads resources
 // (rules, sets, packets) from them.
 func ConfigFromDir(dir string) (engine.Resources, error) {
@@ -51,7 +57,12 @@ func ConfigFromDir(dir string) (engine.Resources, error) {
 	}
 	sort.Strings(fileNames)
 
-	var allResources []Resource
+	ruleConfigs := make([]pendingRule, 0)
+	pkts := make([]*packet.Packet, 0)
+	resources := engine.Resources{
+		Sets: map[string]set.Set{},
+	}
+
 	for _, fileName := range fileNames {
 		path := filepath.Join(dir, fileName)
 		data, err := os.ReadFile(path)
@@ -63,48 +74,44 @@ func ConfigFromDir(dir string) (engine.Resources, error) {
 		if err != nil {
 			return engine.Resources{}, fmt.Errorf("failed to parse resource file %s: %w", path, err)
 		}
-		allResources = append(allResources, fileResources...)
-	}
 
-	resources := engine.Resources{
-		Sets: map[string]set.Set{},
-	}
-
-	ruleConfigs := make([]Rule, 0)
-	pkts := make([]*packet.Packet, 0)
-
-	for i, r := range allResources {
-		if err := r.validate(i); err != nil {
-			return engine.Resources{}, err
-		}
-
-		switch r.Type {
-		case "set":
-			s, err := parseSetResource(r)
-			if err != nil {
+		for i, r := range fileResources {
+			if err := r.validate(path, i); err != nil {
 				return engine.Resources{}, err
 			}
-			resources.Sets[r.Name] = s
-		case "rule":
-			rc, err := parseRuleResource(r)
-			if err != nil {
-				return engine.Resources{}, err
+
+			switch r.Type {
+			case "set":
+				s, err := parseSetResource(r)
+				if err != nil {
+					return engine.Resources{}, fmt.Errorf("%s: %w", resourceContext(path, i), err)
+				}
+				resources.Sets[r.Name] = s
+			case "rule":
+				ruleConfigs = append(ruleConfigs, pendingRule{
+					resource: r,
+					file:     path,
+					index:    i,
+				})
+			case "packet":
+				p, err := parsePacketResource(r)
+				if err != nil {
+					return engine.Resources{}, fmt.Errorf("%s: %w", resourceContext(path, i), err)
+				}
+				pkts = append(pkts, p.ToPacket())
 			}
-			ruleConfigs = append(ruleConfigs, *rc)
-		case "packet":
-			p, err := parsePacketResource(r)
-			if err != nil {
-				return engine.Resources{}, err
-			}
-			pkts = append(pkts, p.ToPacket())
 		}
 	}
 
 	tbl := table.New(mainTableName, rule.Drop)
-	for _, rc := range ruleConfigs {
+	for _, pending := range ruleConfigs {
+		rc, err := parseRuleResource(pending.resource)
+		if err != nil {
+			return engine.Resources{}, fmt.Errorf("%s: %w", resourceContext(pending.file, pending.index), err)
+		}
 		mRule, err := rc.ToRule(resources.Sets)
 		if err != nil {
-			return engine.Resources{}, fmt.Errorf("failed to load rule %q: %w", rc.Name, err)
+			return engine.Resources{}, fmt.Errorf("%s: failed to load rule %q: %w", resourceContext(pending.file, pending.index), rc.Name, err)
 		}
 		tbl.AddRule(mRule)
 	}
@@ -114,21 +121,21 @@ func ConfigFromDir(dir string) (engine.Resources, error) {
 	return resources, nil
 }
 
-func (r Resource) validate(index int) error {
+func (r Resource) validate(file string, index int) error {
 	if strings.TrimSpace(r.Type) == "" {
-		return fmt.Errorf("resource[%d]: type is required", index)
+		return fmt.Errorf("%s: type is required", resourceContext(file, index))
 	}
 	if strings.TrimSpace(r.Name) == "" {
-		return fmt.Errorf("resource[%d]: name is required", index)
+		return fmt.Errorf("%s: name is required", resourceContext(file, index))
 	}
 	if r.Spec == nil {
-		return fmt.Errorf("resource[%d]: spec is required", index)
+		return fmt.Errorf("%s: spec is required", resourceContext(file, index))
 	}
 	switch r.Type {
 	case "packet", "rule", "set":
 		return nil
 	default:
-		return fmt.Errorf("resource[%d]: unsupported type %q", index, r.Type)
+		return fmt.Errorf("%s: unsupported type %q", resourceContext(file, index), r.Type)
 	}
 }
 
@@ -198,4 +205,8 @@ func unmarshalSpec(spec any, out any) error {
 		return err
 	}
 	return nil
+}
+
+func resourceContext(file string, index int) string {
+	return fmt.Sprintf("resource[%d] in %s", index, file)
 }

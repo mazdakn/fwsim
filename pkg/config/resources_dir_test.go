@@ -111,16 +111,54 @@ func TestConfigFromDirAcceptsResourceArrayFile(t *testing.T) {
 func TestConfigFromDirRequiresTypeNameAndSpec(t *testing.T) {
 	RegisterTestingT(t)
 
-	dir := t.TempDir()
-	badYAML := `
+	t.Run("type required", func(t *testing.T) {
+		RegisterTestingT(t)
+
+		dir := t.TempDir()
+		badYAML := `
 resources:
   - name: missing-type
     spec:
       action: Accept
 `
-	Expect(os.WriteFile(filepath.Join(dir, "bad.yaml"), []byte(badYAML), 0o644)).To(Succeed())
+		Expect(os.WriteFile(filepath.Join(dir, "bad.yaml"), []byte(badYAML), 0o644)).To(Succeed())
 
-	_, err := ConfigFromDir(dir)
-	Expect(err).ToNot(BeNil())
-	Expect(err.Error()).To(ContainSubstring("type is required"))
+		_, err := ConfigFromDir(dir)
+		Expect(err).ToNot(BeNil())
+		Expect(err.Error()).To(ContainSubstring("type is required"))
+	})
+
+	t.Run("name required", func(t *testing.T) {
+		RegisterTestingT(t)
+
+		dir := t.TempDir()
+		badYAML := `
+resources:
+  - type: rule
+    spec:
+      action: Accept
+`
+		Expect(os.WriteFile(filepath.Join(dir, "bad.yaml"), []byte(badYAML), 0o644)).To(Succeed())
+
+		_, err := ConfigFromDir(dir)
+		Expect(err).ToNot(BeNil())
+		Expect(err.Error()).To(ContainSubstring("name is required"))
+	})
+
+	t.Run("spec required", func(t *testing.T) {
+		RegisterTestingT(t)
+
+		dir := t.TempDir()
+		badYAML := `
+resources:
+  - type: packet
+    name: missing-spec
+`
+		Expect(os.WriteFile(filepath.Join(dir, "bad.yaml"), []byte(badYAML), 0o644)).To(Succeed())
+
+		_, err := ConfigFromDir(dir)
+		Expect(err).ToNot(BeNil())
+		Expect(err.Error()).To(ContainSubstring("spec is required"))
+	})
+
 }
