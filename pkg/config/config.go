@@ -40,13 +40,11 @@ func ConfigFromFile(conf Config) (engine.Resources, error) {
 		resources.Sets = sets
 	}
 
-	if conf.RulesFile != "" {
-		tbl, err := ConfigRulesFromFile(conf.RulesFile, resources.Sets)
-		if err != nil {
-			return engine.Resources{}, err
-		}
-		resources.Table = tbl
+	tbl, err := ConfigRulesFromFile(conf.RulesFile, resources.Sets)
+	if err != nil {
+		return engine.Resources{}, err
 	}
+	resources.Table = tbl
 
 	if conf.PacketsFile != "" {
 		pkts, err := ConfigPacketsFromFile(conf.PacketsFile)
@@ -64,7 +62,7 @@ func ConfigRulesFromBytes(data []byte, sets map[string]set.Set) (*table.Table, e
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse rules: %w", err)
 	}
-	tbl, err := toTable(rc, normalizeSets(sets))
+	tbl, err := toTable(rc, sets)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load rules: %w", err)
 	}
@@ -76,7 +74,7 @@ func ConfigRulesFromFile(file string, sets map[string]set.Set) (*table.Table, er
 	if err != nil {
 		return nil, fmt.Errorf("failed to read rules from %s: %w", file, err)
 	}
-	tbl, err := toTable(rc, normalizeSets(sets))
+	tbl, err := toTable(rc, sets)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load rules from %s: %w", file, err)
 	}
@@ -116,6 +114,10 @@ func ConfigSetsFromFile(file string) (map[string]set.Set, error) {
 }
 
 func toTable(rc *RuleConfig, sets map[string]set.Set) (*table.Table, error) {
+	if sets == nil {
+		sets = map[string]set.Set{}
+	}
+
 	tbl := table.New(mainTableName, rule.MustParseAction(rc.DefaultAction))
 	for _, r := range rc.Rules {
 		mRule, err := r.ToRule(sets)
@@ -125,11 +127,4 @@ func toTable(rc *RuleConfig, sets map[string]set.Set) (*table.Table, error) {
 		tbl.AddRule(mRule)
 	}
 	return tbl, nil
-}
-
-func normalizeSets(sets map[string]set.Set) map[string]set.Set {
-	if sets == nil {
-		return map[string]set.Set{}
-	}
-	return sets
 }
