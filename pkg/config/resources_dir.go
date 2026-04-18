@@ -30,7 +30,7 @@ type ResourceFile struct {
 // (rules, sets, packets) from them.
 func ConfigFromDir(dir string) (engine.Resources, error) {
 	if strings.TrimSpace(dir) == "" {
-		return engine.Resources{}, fmt.Errorf("input directory is required")
+		return engine.Resources{}, fmt.Errorf("input directory (--dir) is required")
 	}
 
 	entries, err := os.ReadDir(dir)

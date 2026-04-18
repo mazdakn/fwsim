@@ -55,7 +55,7 @@ resources:
 	Expect(resources.Table.Rules).To(HaveLen(1))
 	Expect(resources.Table.Rules[0].Name).To(Equal("allow-trusted"))
 	Expect(resources.Packets).To(HaveLen(1))
-	Expect(resources.Packets[0].Name).To(Equal("from-trusted"))
+	Expect(resources.Packets[0].Metadata.Name).To(Equal("from-trusted"))
 }
 
 func TestConfigFromDirAcceptsSingleResourceFile(t *testing.T) {
@@ -77,6 +77,35 @@ spec:
 	Expect(err).To(BeNil())
 	Expect(resources.Sets).To(HaveLen(1))
 	Expect(resources.Sets).To(HaveKey("web-ports"))
+}
+
+func TestConfigFromDirAcceptsResourceArrayFile(t *testing.T) {
+	RegisterTestingT(t)
+
+	dir := t.TempDir()
+	resourceArrayYAML := `
+- type: set
+  name: app-ports
+  spec:
+    type: port
+    members:
+      - "8080"
+- type: packet
+  name: test-packet
+  spec:
+    src_addr: 10.0.0.1
+    dst_addr: 1.1.1.1
+    proto: 6
+    src_port: 30000
+    dst_port: 8080
+`
+	Expect(os.WriteFile(filepath.Join(dir, "array.yaml"), []byte(resourceArrayYAML), 0o644)).To(Succeed())
+
+	resources, err := ConfigFromDir(dir)
+	Expect(err).To(BeNil())
+	Expect(resources.Sets).To(HaveKey("app-ports"))
+	Expect(resources.Packets).To(HaveLen(1))
+	Expect(resources.Packets[0].Metadata.Name).To(Equal("test-packet"))
 }
 
 func TestConfigFromDirRequiresTypeNameAndSpec(t *testing.T) {
