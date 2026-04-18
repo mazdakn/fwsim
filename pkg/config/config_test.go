@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/mazdakn/fwsim/pkg/engine"
 	"github.com/mazdakn/fwsim/pkg/set"
 	. "github.com/onsi/gomega"
 )
@@ -44,7 +45,7 @@ packets:
 
 	resources, err := ConfigFromFile(Config{
 		InputDir:    dir,
-		PacketsFile: "enabled",
+		LoadPackets: true,
 	})
 	Expect(err).To(BeNil())
 	Expect(resources.Table).ToNot(BeNil())
@@ -104,6 +105,15 @@ default_action: Accept
 	Expect(err).To(BeNil())
 	Expect(resources.Table).ToNot(BeNil())
 	Expect(resources.Packets).To(BeNil())
+}
+
+func TestConfigFromFileWithoutInputDir(t *testing.T) {
+	RegisterTestingT(t)
+
+	resources, err := ConfigFromFile(Config{})
+	Expect(err).ToNot(BeNil())
+	Expect(err.Error()).To(ContainSubstring("input directory is required"))
+	Expect(resources).To(Equal(engine.Resources{}))
 }
 
 func TestConfigSetsFromDirDuplicateNames(t *testing.T) {

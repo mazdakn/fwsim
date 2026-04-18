@@ -15,20 +15,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	defaultInputFile   = "rules.yaml"
-	defaultPacketsFile = "packets.yaml"
-)
-
 var (
-	inputDir    string
-	inputFile   string
-	packetsFile string
-	setsFile    string
-	rootCmd     = &cobra.Command{
+	inputDir string
+	rootCmd  = &cobra.Command{
 		Use:   "fwsim",
 		Short: "Firewall simulator",
-		Long:  `fwsim is a firewall simulator that processes rules and packets from an input file.`,
+		Long:  `fwsim is a firewall simulator that processes rules and packets from an input directory.`,
 	}
 	evaluateCmd = &cobra.Command{
 		Use:   "evaluate",
@@ -55,7 +47,9 @@ var (
 
 func init() {
 	rootCmd.PersistentFlags().StringVarP(&inputDir, "dir", "d", "", "base input directory with rules/, sets/, and packets/ subdirectories")
-	rootCmd.PersistentFlags().StringVarP(&inputFile, "file", "f", defaultInputFile, "input file with all rules and packets")
+	if err := rootCmd.MarkPersistentFlagRequired("dir"); err != nil {
+		panic(err)
+	}
 
 	// Add evaluate subcommand
 	rootCmd.AddCommand(evaluateCmd)
@@ -86,8 +80,6 @@ func init() {
 
 	// Add run subcommand
 	rootCmd.AddCommand(runCmd)
-	runCmd.Flags().StringVarP(&packetsFile, "packets", "p", defaultPacketsFile, "input file with packet information")
-	runCmd.Flags().StringVarP(&setsFile, "sets", "s", "", "input file with set definitions")
 }
 
 func runEvaluate(cmd *cobra.Command, args []string) {
@@ -113,11 +105,10 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 
 	// Create engine and load rules
 	resources, err := config.ConfigFromFile(config.Config{
-		InputDir:  inputDir,
-		RulesFile: inputFile,
+		InputDir: inputDir,
 	})
 	if err != nil {
-		logrus.WithError(err).Errorf("failed to load rules from %s", inputFile)
+		logrus.WithError(err).Errorf("failed to load resources from %s", inputDir)
 		os.Exit(1)
 	}
 	e := engine.New(resources)
@@ -136,12 +127,10 @@ func runPackets(cmd *cobra.Command, args []string) {
 	// Create engine and load rules
 	resources, err := config.ConfigFromFile(config.Config{
 		InputDir:    inputDir,
-		RulesFile:   inputFile,
-		PacketsFile: packetsFile,
-		SetsFile:    setsFile,
+		LoadPackets: true,
 	})
 	if err != nil {
-		logrus.WithError(err).Errorf("failed to load rules from %s", inputFile)
+		logrus.WithError(err).Errorf("failed to load resources from %s", inputDir)
 		os.Exit(1)
 	}
 	e := engine.New(resources)
