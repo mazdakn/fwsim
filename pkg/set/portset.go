@@ -96,16 +96,11 @@ func (p *PortSet) String() string {
 
 	// Build a merged sorted list by interleaving individual ports (as
 	// single-element ranges) with the stored ranges, ordering by start value.
-	type entry struct {
-		start, end uint16
-	}
-	entries := make([]entry, 0, len(ports)+len(sorted))
+	entries := make([]portRange, 0, len(ports)+len(sorted))
 	for _, port := range ports {
-		entries = append(entries, entry{port, port})
+		entries = append(entries, portRange{port, port})
 	}
-	for _, r := range sorted {
-		entries = append(entries, entry{r.start, r.end})
-	}
+	entries = append(entries, sorted...)
 	sort.Slice(entries, func(i, j int) bool {
 		if entries[i].start != entries[j].start {
 			return entries[i].start < entries[j].start
