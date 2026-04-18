@@ -24,8 +24,8 @@ func New(resources ...Resources) *Engine {
 		matches: []*match.Match{},
 		sets:    map[string]set.Set{},
 	}
-	if len(resources) > 0 {
-		e.LoadResources(resources[0])
+	for _, resource := range resources {
+		e.LoadResources(resource)
 	}
 	return e
 }
@@ -37,7 +37,9 @@ func (e *Engine) LoadResources(resources Resources) {
 	if resources.Table != nil {
 		e.table = resources.Table
 	}
-	e.matches = toMatches(resources.Packets)
+	if resources.Packets != nil {
+		e.matches = toMatches(resources.Packets)
+	}
 }
 
 func (e *Engine) SetTable(t *table.Table) {
