@@ -310,6 +310,9 @@ type Rule struct {
 }
 
 func (r *Rule) Match(pkt *packet.Packet) bool {
+	srcIPPort := set.IPPortTuple{IP: pkt.SrcAddr, Proto: pkt.Proto, Port: pkt.SrcPort}
+	dstIPPort := set.IPPortTuple{IP: pkt.DstAddr, Proto: pkt.Proto, Port: pkt.DstPort}
+
 	if r.Proto != nil && !r.Proto.Match(pkt.Proto) {
 		return false
 	}
@@ -352,10 +355,10 @@ func (r *Rule) Match(pkt *packet.Packet) bool {
 	if !matchNamedSet(r.Destination.PortSet, pkt.DstPort) {
 		return false
 	}
-	if !matchNamedSet(r.Source.IPPortSet, set.IPPortTuple{IP: pkt.SrcAddr, Proto: pkt.Proto, Port: pkt.SrcPort}) {
+	if !matchNamedSet(r.Source.IPPortSet, srcIPPort) {
 		return false
 	}
-	if !matchNamedSet(r.Destination.IPPortSet, set.IPPortTuple{IP: pkt.DstAddr, Proto: pkt.Proto, Port: pkt.DstPort}) {
+	if !matchNamedSet(r.Destination.IPPortSet, dstIPPort) {
 		return false
 	}
 	if r.NotSource.IPSet != nil && r.NotSource.IPSet.Match(pkt.SrcAddr) {
@@ -370,10 +373,10 @@ func (r *Rule) Match(pkt *packet.Packet) bool {
 	if r.NotDestination.PortSet != nil && r.NotDestination.PortSet.Match(pkt.DstPort) {
 		return false
 	}
-	if r.NotSource.IPPortSet != nil && r.NotSource.IPPortSet.Match(set.IPPortTuple{IP: pkt.SrcAddr, Proto: pkt.Proto, Port: pkt.SrcPort}) {
+	if r.NotSource.IPPortSet != nil && r.NotSource.IPPortSet.Match(srcIPPort) {
 		return false
 	}
-	if r.NotDestination.IPPortSet != nil && r.NotDestination.IPPortSet.Match(set.IPPortTuple{IP: pkt.DstAddr, Proto: pkt.Proto, Port: pkt.DstPort}) {
+	if r.NotDestination.IPPortSet != nil && r.NotDestination.IPPortSet.Match(dstIPPort) {
 		return false
 	}
 	// All conditions passed - increment packet counter
