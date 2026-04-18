@@ -21,6 +21,7 @@ const (
 )
 
 var (
+	inputDir    string
 	inputFile   string
 	packetsFile string
 	setsFile    string
@@ -53,6 +54,7 @@ var (
 )
 
 func init() {
+	rootCmd.PersistentFlags().StringVarP(&inputDir, "dir", "d", "", "base input directory with rules/, sets/, and packets/ subdirectories")
 	rootCmd.PersistentFlags().StringVarP(&inputFile, "file", "f", defaultInputFile, "input file with all rules and packets")
 
 	// Add evaluate subcommand
@@ -111,6 +113,7 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 
 	// Create engine and load rules
 	resources, err := config.ConfigFromFile(config.Config{
+		InputDir:  inputDir,
 		RulesFile: inputFile,
 	})
 	if err != nil {
@@ -132,6 +135,7 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 func runPackets(cmd *cobra.Command, args []string) {
 	// Create engine and load rules
 	resources, err := config.ConfigFromFile(config.Config{
+		InputDir:    inputDir,
 		RulesFile:   inputFile,
 		PacketsFile: packetsFile,
 		SetsFile:    setsFile,
