@@ -35,6 +35,10 @@ func (e *Engine) Sets() map[string]set.Set {
 	return e.sets
 }
 
+func (e *Engine) Table() *table.Table {
+	return e.table
+}
+
 func (e *Engine) RunTest(m *match.Match) {
 	e.table.Match(m)
 }
