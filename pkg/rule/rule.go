@@ -310,9 +310,6 @@ type Rule struct {
 }
 
 func (r *Rule) Match(pkt *packet.Packet) bool {
-	srcIPPort := set.IPPortTuple{IP: pkt.SrcAddr, Port: pkt.SrcPort}
-	dstIPPort := set.IPPortTuple{IP: pkt.DstAddr, Port: pkt.DstPort}
-
 	if r.Proto != nil && !r.Proto.Match(pkt.Proto) {
 		return false
 	}
@@ -355,6 +352,8 @@ func (r *Rule) Match(pkt *packet.Packet) bool {
 	if !matchNamedSet(r.Destination.PortSet, pkt.DstPort) {
 		return false
 	}
+	srcIPPort := set.IPPortTuple{IP: pkt.SrcAddr, Port: pkt.SrcPort}
+	dstIPPort := set.IPPortTuple{IP: pkt.DstAddr, Port: pkt.DstPort}
 	if !matchNamedSet(r.Source.IPPortSet, srcIPPort) {
 		return false
 	}
