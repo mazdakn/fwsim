@@ -20,52 +20,15 @@ type Config struct {
 	// Base directory input. Expects rules/, sets/, packets/ sub-directories.
 	InputDir string
 
-	// Rule input
-	RulesFile string
-
-	// Packet input
-	PacketsFile string
-
-	// Sets input
-	SetsFile string
+	// LoadPackets controls whether packets/ input is loaded.
+	LoadPackets bool
 }
 
 func ConfigFromFile(conf Config) (engine.Resources, error) {
-	if conf.InputDir != "" {
-		return ConfigFromDirectory(conf)
+	if conf.InputDir == "" {
+		return engine.Resources{}, fmt.Errorf("input directory is required")
 	}
-
-	if conf.RulesFile == "" {
-		return engine.Resources{}, fmt.Errorf("rules file is required")
-	}
-
-	resources := engine.Resources{
-		Sets: map[string]set.Set{},
-	}
-
-	if conf.SetsFile != "" {
-		sets, err := ConfigSetsFromFile(conf.SetsFile)
-		if err != nil {
-			return engine.Resources{}, err
-		}
-		resources.Sets = sets
-	}
-
-	tbl, err := ConfigRulesFromFile(conf.RulesFile, resources.Sets)
-	if err != nil {
-		return engine.Resources{}, err
-	}
-	resources.Table = tbl
-
-	if conf.PacketsFile != "" {
-		pkts, err := ConfigPacketsFromFile(conf.PacketsFile)
-		if err != nil {
-			return engine.Resources{}, err
-		}
-		resources.Packets = pkts
-	}
-
-	return resources, nil
+	return ConfigFromDirectory(conf)
 }
 
 func ConfigFromDirectory(conf Config) (engine.Resources, error) {
@@ -85,7 +48,7 @@ func ConfigFromDirectory(conf Config) (engine.Resources, error) {
 	}
 	resources.Table = tbl
 
-	if conf.PacketsFile != "" {
+	if conf.LoadPackets {
 		pkts, err := ConfigPacketsFromDir(filepath.Join(conf.InputDir, "packets"))
 		if err != nil {
 			return engine.Resources{}, err
