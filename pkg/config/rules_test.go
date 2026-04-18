@@ -257,7 +257,7 @@ func TestToRuleWithValidIPPortSets(t *testing.T) {
 	RegisterTestingT(t)
 
 	ipPortSet := set.NewIPPortSet()
-	_ = ipPortSet.Add("10.0.0.0/8,tcp,80")
+	_ = ipPortSet.Add("10.0.0.0/8,80")
 
 	sets := map[string]set.Set{
 		"svc-tuples": ipPortSet,

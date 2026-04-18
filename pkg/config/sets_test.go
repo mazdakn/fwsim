@@ -27,8 +27,8 @@ sets:
   - name: service-tuples
     type: ipport
     members:
-      - "1.1.1.1,tcp,443"
-      - "10.0.0.0/8,udp,53"
+      - "1.1.1.1,443"
+      - "10.0.0.0/8,53"
 `
 
 func TestSetsFromBytes(t *testing.T) {
@@ -113,7 +113,7 @@ func TestSetToSetIPPort(t *testing.T) {
 	s := &Set{
 		Name:    "my-ipports",
 		Type:    "ipport",
-		Members: []string{"10.0.0.0/8,tcp,80", "1.1.1.1,udp,53"},
+		Members: []string{"10.0.0.0/8,80", "1.1.1.1,53"},
 	}
 	result, err := s.ToSet()
 	Expect(err).To(BeNil())

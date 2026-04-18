@@ -664,9 +664,9 @@ func TestIPPortSetRuleMatch(t *testing.T) {
 	RegisterTestingT(t)
 
 	srcSet := set.NewIPPortSet()
-	_ = srcSet.Add("10.0.0.0/8,tcp,1000-2000")
+	_ = srcSet.Add("10.0.0.0/8,1000-2000")
 	dstSet := set.NewIPPortSet()
-	_ = dstSet.Add("1.1.1.1,tcp,443")
+	_ = dstSet.Add("1.1.1.1,443")
 
 	r := New(WithSrcIPPortSet(srcSet), WithDstIPPortSet(dstSet))
 
@@ -685,17 +685,31 @@ func TestNegatedIPPortSetRuleMatch(t *testing.T) {
 	RegisterTestingT(t)
 
 	negSet := set.NewIPPortSet()
-	_ = negSet.Add("10.0.0.0/8,udp,53")
+	_ = negSet.Add("10.0.0.0/8,53")
 
 	r := New(WithNotSrcIPPortSet(negSet), WithNotDstIPPortSet(negSet))
 
+	// src port 53 and dst port 53 both in set → not matched
 	Expect(r.Match(packet.New(
 		packet.WithSrcAddr("10.1.2.3"), packet.WithSrcPort(53), packet.WithProto(proto.UDP),
 		packet.WithDstAddr("10.2.3.4"), packet.WithDstPort(53),
 	))).To(BeFalse())
 
+	// src 10.1.2.3:53 is excluded; any protocol is excluded now
 	Expect(r.Match(packet.New(
 		packet.WithSrcAddr("10.1.2.3"), packet.WithSrcPort(53), packet.WithProto(proto.TCP),
 		packet.WithDstAddr("10.2.3.4"), packet.WithDstPort(53),
+	))).To(BeFalse())
+
+	// src port not in set → src passes; dst also excluded → not matched
+	Expect(r.Match(packet.New(
+		packet.WithSrcAddr("10.1.2.3"), packet.WithSrcPort(80), packet.WithProto(proto.TCP),
+		packet.WithDstAddr("10.2.3.4"), packet.WithDstPort(53),
+	))).To(BeFalse())
+
+	// neither src nor dst in set → matched
+	Expect(r.Match(packet.New(
+		packet.WithSrcAddr("10.1.2.3"), packet.WithSrcPort(80), packet.WithProto(proto.TCP),
+		packet.WithDstAddr("10.2.3.4"), packet.WithDstPort(80),
 	))).To(BeTrue())
 }

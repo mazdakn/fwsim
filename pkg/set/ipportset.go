@@ -8,19 +8,16 @@ import (
 	"strings"
 
 	"github.com/mazdakn/fwsim/pkg/port"
-	"github.com/mazdakn/fwsim/pkg/proto"
 )
 
 // IPPortTuple is a runtime value used to test membership in an IPPortSet.
 type IPPortTuple struct {
-	IP    net.IP
-	Proto proto.Proto
-	Port  uint16
+	IP   net.IP
+	Port uint16
 }
 
 type ipPortMember struct {
 	net   *net.IPNet
-	proto proto.Proto
 	start uint16
 	end   uint16
 }
@@ -30,10 +27,10 @@ func (m ipPortMember) String() string {
 	if m.end > m.start {
 		portExpr = fmt.Sprintf("%d-%d", m.start, m.end)
 	}
-	return fmt.Sprintf("%s,%s,%s", m.net.String(), m.proto.String(), portExpr)
+	return fmt.Sprintf("%s,%s", m.net.String(), portExpr)
 }
 
-// IPPortSet matches an IP, protocol, and port tuple.
+// IPPortSet matches an IP and port pair.
 type IPPortSet struct {
 	members []ipPortMember
 }
@@ -46,7 +43,7 @@ func NewIPPortSet() *IPPortSet {
 }
 
 // Add inserts a value into the set.
-// v must be a string in the form "ip-or-cidr,proto,port-or-range".
+// v must be a string in the form "ip-or-cidr,port-or-range".
 func (s *IPPortSet) Add(v any) error {
 	switch val := v.(type) {
 	case string:
@@ -70,9 +67,6 @@ func (s *IPPortSet) Match(v any) bool {
 	}
 	for _, member := range s.members {
 		if !member.net.Contains(tuple.IP) {
-			continue
-		}
-		if member.proto != tuple.Proto {
 			continue
 		}
 		if tuple.Port < member.start || tuple.Port > member.end {
@@ -101,20 +95,15 @@ func (s *IPPortSet) String() string {
 
 func parseIPPortMember(v string) (ipPortMember, error) {
 	parts := strings.Split(v, ",")
-	if len(parts) != 3 {
-		return ipPortMember{}, fmt.Errorf("invalid ipport member %q: expected format ip-or-cidr,proto,port", v)
+	if len(parts) != 2 {
+		return ipPortMember{}, fmt.Errorf("invalid ipport member %q: expected format ip-or-cidr,port", v)
 	}
 	ipExpr := strings.TrimSpace(parts[0])
-	protoExpr := strings.TrimSpace(parts[1])
-	portExpr := strings.TrimSpace(parts[2])
+	portExpr := strings.TrimSpace(parts[1])
 
 	ipnet, err := parseIPOrCIDR(ipExpr)
 	if err != nil {
 		return ipPortMember{}, fmt.Errorf("invalid ip in %q: %w", v, err)
-	}
-	p, err := proto.Parse(protoExpr)
-	if err != nil {
-		return ipPortMember{}, fmt.Errorf("invalid proto in %q: %w", v, err)
 	}
 	parsedPort, err := port.Parse(portExpr)
 	if err != nil {
@@ -127,7 +116,6 @@ func parseIPPortMember(v string) (ipPortMember, error) {
 	}
 	return ipPortMember{
 		net:   ipnet,
-		proto: *p,
 		start: start,
 		end:   end,
 	}, nil

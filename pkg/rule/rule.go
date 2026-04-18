@@ -310,8 +310,8 @@ type Rule struct {
 }
 
 func (r *Rule) Match(pkt *packet.Packet) bool {
-	srcIPPort := set.IPPortTuple{IP: pkt.SrcAddr, Proto: pkt.Proto, Port: pkt.SrcPort}
-	dstIPPort := set.IPPortTuple{IP: pkt.DstAddr, Proto: pkt.Proto, Port: pkt.DstPort}
+	srcIPPort := set.IPPortTuple{IP: pkt.SrcAddr, Port: pkt.SrcPort}
+	dstIPPort := set.IPPortTuple{IP: pkt.DstAddr, Port: pkt.DstPort}
 
 	if r.Proto != nil && !r.Proto.Match(pkt.Proto) {
 		return false
