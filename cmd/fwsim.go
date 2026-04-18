@@ -110,11 +110,14 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 	}
 
 	// Create engine and load rules
-	e := engine.New()
-	if err := config.ConfigRulesFromFile(e, inputFile); err != nil {
+	resources, err := config.ConfigFromFile(config.Config{
+		RulesFile: inputFile,
+	})
+	if err != nil {
 		logrus.WithError(err).Errorf("failed to load rules from %s", inputFile)
 		os.Exit(1)
 	}
+	e := engine.New(resources)
 
 	// Match packet against rules
 	m := &match.Match{Packet: pkt.ToPacket()}
@@ -128,15 +131,16 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 
 func runPackets(cmd *cobra.Command, args []string) {
 	// Create engine and load rules
-	e := engine.New()
-	if err := config.ConfigFromFile(e, config.Config{
+	resources, err := config.ConfigFromFile(config.Config{
 		RulesFile:   inputFile,
 		PacketsFile: packetsFile,
 		SetsFile:    setsFile,
-	}); err != nil {
+	})
+	if err != nil {
 		logrus.WithError(err).Errorf("failed to load rules from %s", inputFile)
 		os.Exit(1)
 	}
+	e := engine.New(resources)
 
 	// Evaluate each packet
 	for _, m := range e.RunTests() {
