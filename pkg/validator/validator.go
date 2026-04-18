@@ -53,10 +53,10 @@ func ValidateProtocol(proto uint) bool {
 	return proto <= 255
 }
 
-// ValidateSetType returns true if setType is a recognised set type ("ip", "port", "proto").
+// ValidateSetType returns true if setType is a recognised set type ("ip", "port", "proto", "ipport").
 func ValidateSetType(setType string) bool {
 	switch setType {
-	case "ip", "port", "proto":
+	case "ip", "port", "proto", "ipport":
 		return true
 	default:
 		return false

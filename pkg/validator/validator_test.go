@@ -3,9 +3,9 @@ package validator_test
 import (
 	"testing"
 
-	"github.com/mazdakn/fwsim/pkg/proto"
 	"github.com/mazdakn/fwsim/pkg/config"
 	"github.com/mazdakn/fwsim/pkg/port"
+	"github.com/mazdakn/fwsim/pkg/proto"
 	"github.com/mazdakn/fwsim/pkg/validator"
 	. "github.com/onsi/gomega"
 )
@@ -188,6 +188,16 @@ func TestValidateProtocol(t *testing.T) {
 
 	Expect(validator.ValidateProtocol(256)).To(BeFalse())
 	Expect(validator.ValidateProtocol(1000)).To(BeFalse())
+}
+
+func TestValidateSetType(t *testing.T) {
+	RegisterTestingT(t)
+
+	Expect(validator.ValidateSetType("ip")).To(BeTrue())
+	Expect(validator.ValidateSetType("port")).To(BeTrue())
+	Expect(validator.ValidateSetType("proto")).To(BeTrue())
+	Expect(validator.ValidateSetType("ipport")).To(BeTrue())
+	Expect(validator.ValidateSetType("bad")).To(BeFalse())
 }
 
 func TestValidateStructFieldsRecursiveSlice(t *testing.T) {

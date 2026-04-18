@@ -24,6 +24,11 @@ sets:
     members:
       - tcp
       - udp
+  - name: service-tuples
+    type: ipport
+    members:
+      - "1.1.1.1,443"
+      - "10.0.0.0/8,53"
 `
 
 func TestSetsFromBytes(t *testing.T) {
@@ -31,11 +36,12 @@ func TestSetsFromBytes(t *testing.T) {
 
 	sets, err := SetsFromBytes([]byte(testSetsYAML))
 	Expect(err).To(BeNil())
-	Expect(sets).To(HaveLen(3))
+	Expect(sets).To(HaveLen(4))
 
 	Expect(sets).To(HaveKey("trusted-ips"))
 	Expect(sets).To(HaveKey("web-ports"))
 	Expect(sets).To(HaveKey("allowed-protos"))
+	Expect(sets).To(HaveKey("service-tuples"))
 }
 
 func TestSetsFromBytesInvalid(t *testing.T) {
@@ -95,6 +101,19 @@ func TestSetToSetProto(t *testing.T) {
 		Name:    "my-protos",
 		Type:    "proto",
 		Members: []string{"tcp", "udp"},
+	}
+	result, err := s.ToSet()
+	Expect(err).To(BeNil())
+	Expect(result).ToNot(BeNil())
+}
+
+func TestSetToSetIPPort(t *testing.T) {
+	RegisterTestingT(t)
+
+	s := &Set{
+		Name:    "my-ipports",
+		Type:    "ipport",
+		Members: []string{"10.0.0.0/8,80", "1.1.1.1,53"},
 	}
 	result, err := s.ToSet()
 	Expect(err).To(BeNil())

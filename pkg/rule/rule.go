@@ -142,6 +142,18 @@ func WithNotSrcPortSet(s set.Set) RuleOption {
 	}
 }
 
+func WithSrcIPPortSet(s set.Set) RuleOption {
+	return func(r *Rule) {
+		r.Source.IPPortSet = s
+	}
+}
+
+func WithNotSrcIPPortSet(s set.Set) RuleOption {
+	return func(r *Rule) {
+		r.NotSource.IPPortSet = s
+	}
+}
+
 // Destination port options.
 
 func WithDstPort(port uint16) RuleOption {
@@ -175,6 +187,18 @@ func WithDstPortSet(s set.Set) RuleOption {
 func WithNotDstPortSet(s set.Set) RuleOption {
 	return func(r *Rule) {
 		r.NotDestination.PortSet = s
+	}
+}
+
+func WithDstIPPortSet(s set.Set) RuleOption {
+	return func(r *Rule) {
+		r.Destination.IPPortSet = s
+	}
+}
+
+func WithNotDstIPPortSet(s set.Set) RuleOption {
+	return func(r *Rule) {
+		r.NotDestination.IPPortSet = s
 	}
 }
 
@@ -262,10 +286,11 @@ func New(opts ...RuleOption) *Rule {
 
 // Endpoint groups the network and port match criteria for one traffic direction.
 type Endpoint struct {
-	Net     *set.IPSet
-	Port    *set.PortSet
-	IPSet   set.Set
-	PortSet set.Set
+	Net       *set.IPSet
+	Port      *set.PortSet
+	IPSet     set.Set
+	PortSet   set.Set
+	IPPortSet set.Set
 }
 
 type Rule struct {
@@ -327,6 +352,14 @@ func (r *Rule) Match(pkt *packet.Packet) bool {
 	if !matchNamedSet(r.Destination.PortSet, pkt.DstPort) {
 		return false
 	}
+	srcIPPort := set.IPPortTuple{IP: pkt.SrcAddr, Port: pkt.SrcPort}
+	dstIPPort := set.IPPortTuple{IP: pkt.DstAddr, Port: pkt.DstPort}
+	if !matchNamedSet(r.Source.IPPortSet, srcIPPort) {
+		return false
+	}
+	if !matchNamedSet(r.Destination.IPPortSet, dstIPPort) {
+		return false
+	}
 	if r.NotSource.IPSet != nil && r.NotSource.IPSet.Match(pkt.SrcAddr) {
 		return false
 	}
@@ -337,6 +370,12 @@ func (r *Rule) Match(pkt *packet.Packet) bool {
 		return false
 	}
 	if r.NotDestination.PortSet != nil && r.NotDestination.PortSet.Match(pkt.DstPort) {
+		return false
+	}
+	if r.NotSource.IPPortSet != nil && r.NotSource.IPPortSet.Match(srcIPPort) {
+		return false
+	}
+	if r.NotDestination.IPPortSet != nil && r.NotDestination.IPPortSet.Match(dstIPPort) {
 		return false
 	}
 	// All conditions passed - increment packet counter

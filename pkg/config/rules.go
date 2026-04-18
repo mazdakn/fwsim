@@ -24,10 +24,11 @@ func (rc *RuleConfig) Validate() error {
 // Endpoint groups the network and port match criteria for one traffic direction
 // in the YAML configuration.
 type Endpoint struct {
-	Net     []string    `yaml:"net,omitempty"      validate:"isValidCIDR"`
-	Port    []port.Port `yaml:"port,omitempty"     validate:"isPortValid"`
-	IPSet   string      `yaml:"ip_set,omitempty"`
-	PortSet string      `yaml:"port_set,omitempty"`
+	Net       []string    `yaml:"net,omitempty"        validate:"isValidCIDR"`
+	Port      []port.Port `yaml:"port,omitempty"       validate:"isPortValid"`
+	IPSet     string      `yaml:"ip_set,omitempty"`
+	PortSet   string      `yaml:"port_set,omitempty"`
+	IPPortSet string      `yaml:"ipport_set,omitempty"`
 }
 
 // toEndpoint converts an Endpoint config into a rule.Endpoint domain object.
@@ -68,6 +69,13 @@ func (e *Endpoint) toEndpoint(ruleName string, sets map[string]set.Set) (rule.En
 			return ep, fmt.Errorf("rule %q references unknown set %q", ruleName, e.PortSet)
 		}
 		ep.PortSet = s
+	}
+	if e.IPPortSet != "" {
+		s, ok := sets[e.IPPortSet]
+		if !ok {
+			return ep, fmt.Errorf("rule %q references unknown set %q", ruleName, e.IPPortSet)
+		}
+		ep.IPPortSet = s
 	}
 
 	return ep, nil

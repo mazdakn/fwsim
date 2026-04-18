@@ -26,7 +26,7 @@ type Set struct {
 }
 
 // ToSet converts a Set config into the appropriate set.Set implementation
-// based on the Type field ("ip", "port", or "proto").
+// based on the Type field ("ip", "port", "proto", or "ipport").
 func (s *Set) ToSet() (set.Set, error) {
 	var result set.Set
 	switch s.Type {
@@ -36,6 +36,8 @@ func (s *Set) ToSet() (set.Set, error) {
 		result = set.NewPortSet()
 	case "proto":
 		result = set.NewProtoSet()
+	case "ipport":
+		result = set.NewIPPortSet()
 	default:
 		return nil, fmt.Errorf("unknown set type %q", s.Type)
 	}
