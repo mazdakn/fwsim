@@ -50,22 +50,31 @@ packets:
 	Expect(resources.Table).ToNot(BeNil())
 	Expect(resources.Sets).To(HaveLen(1))
 	Expect(resources.Packets).To(HaveLen(1))
+	Expect(resources.Sets).To(HaveKey("web-ports"))
+	Expect(resources.Sets["web-ports"].Match(uint16(80))).To(BeTrue())
+	Expect(resources.Sets["web-ports"].Match(uint16(443))).To(BeTrue())
+	Expect(resources.Packets[0].SrcAddr.String()).To(Equal("10.0.0.1"))
+	Expect(resources.Packets[0].DstAddr.String()).To(Equal("1.1.1.1"))
+	Expect(resources.Packets[0].SrcPort).To(Equal(uint16(12345)))
+	Expect(resources.Packets[0].DstPort).To(Equal(uint16(80)))
 }
 
 func TestConfigRulesFromDirConflictingDefaultAction(t *testing.T) {
 	RegisterTestingT(t)
 
 	dir := t.TempDir()
-	Expect(os.WriteFile(filepath.Join(dir, "a.yaml"), []byte(`
+	rulesDir := filepath.Join(dir, "rules")
+	Expect(os.MkdirAll(rulesDir, 0o755)).To(Succeed())
+	Expect(os.WriteFile(filepath.Join(rulesDir, "a.yaml"), []byte(`
 rules: []
 default_action: Accept
 `), 0o600)).To(Succeed())
-	Expect(os.WriteFile(filepath.Join(dir, "b.yaml"), []byte(`
+	Expect(os.WriteFile(filepath.Join(rulesDir, "b.yaml"), []byte(`
 rules: []
 default_action: Drop
 `), 0o600)).To(Succeed())
 
-	tbl, err := ConfigRulesFromDir(dir, nil)
+	tbl, err := ConfigRulesFromDir(rulesDir, nil)
 	Expect(err).ToNot(BeNil())
 	Expect(err.Error()).To(ContainSubstring("conflicting default_action"))
 	Expect(tbl).To(BeNil())
@@ -77,4 +86,45 @@ func TestConfigSetsFromDirMissingDirectory(t *testing.T) {
 	sets, err := ConfigSetsFromDir(filepath.Join(t.TempDir(), "sets"))
 	Expect(err).To(BeNil())
 	Expect(sets).To(Equal(map[string]set.Set{}))
+}
+
+func TestConfigFromDirectoryWithoutPacketsWhenNotRequested(t *testing.T) {
+	RegisterTestingT(t)
+
+	dir := t.TempDir()
+	Expect(os.MkdirAll(filepath.Join(dir, "rules"), 0o755)).To(Succeed())
+	Expect(os.WriteFile(filepath.Join(dir, "rules", "rules.yaml"), []byte(`
+rules: []
+default_action: Accept
+`), 0o600)).To(Succeed())
+
+	resources, err := ConfigFromFile(Config{
+		InputDir: dir,
+	})
+	Expect(err).To(BeNil())
+	Expect(resources.Table).ToNot(BeNil())
+	Expect(resources.Packets).To(BeNil())
+}
+
+func TestConfigSetsFromDirDuplicateNames(t *testing.T) {
+	RegisterTestingT(t)
+
+	dir := t.TempDir()
+	Expect(os.WriteFile(filepath.Join(dir, "a.yaml"), []byte(`
+sets:
+  - name: dup-set
+    type: port
+    members: ["80"]
+`), 0o600)).To(Succeed())
+	Expect(os.WriteFile(filepath.Join(dir, "b.yaml"), []byte(`
+sets:
+  - name: dup-set
+    type: port
+    members: ["443"]
+`), 0o600)).To(Succeed())
+
+	sets, err := ConfigSetsFromDir(dir)
+	Expect(err).ToNot(BeNil())
+	Expect(err.Error()).To(ContainSubstring("duplicate set"))
+	Expect(sets).To(BeNil())
 }

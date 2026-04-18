@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/mazdakn/fwsim/pkg/engine"
@@ -174,13 +175,13 @@ func ConfigRulesFromDir(dir string, sets map[string]set.Set) (*table.Table, erro
 			merged.DefaultAction = rc.DefaultAction
 			continue
 		}
-		if !strings.EqualFold(merged.DefaultAction, rc.DefaultAction) {
+		if merged.DefaultAction != rc.DefaultAction {
 			return nil, fmt.Errorf("conflicting default_action in %s: %s (expected %s)", file, rc.DefaultAction, merged.DefaultAction)
 		}
 	}
 
 	if merged.DefaultAction == "" {
-		return nil, fmt.Errorf("default_action is required in at least one rules file under %s", dir)
+		return nil, fmt.Errorf("no default_action found in any rules file under %s", dir)
 	}
 	return toTable(merged, sets)
 }
@@ -193,7 +194,7 @@ func ConfigPacketsFromDir(dir string) ([]*packet.Packet, error) {
 	if len(files) == 0 {
 		return nil, fmt.Errorf("no yaml files found in packets directory %s", dir)
 	}
-	pkts := make([]*packet.Packet, 0)
+	var pkts []*packet.Packet
 	for _, file := range files {
 		filePkts, err := ConfigPacketsFromFile(file)
 		if err != nil {
@@ -207,6 +208,7 @@ func ConfigPacketsFromDir(dir string) ([]*packet.Packet, error) {
 func ConfigSetsFromDir(dir string) (map[string]set.Set, error) {
 	files, err := yamlFilesInDir(dir)
 	if err != nil {
+		// Sets are optional; missing directory means no named sets configured.
 		if os.IsNotExist(err) {
 			return map[string]set.Set{}, nil
 		}
@@ -219,6 +221,9 @@ func ConfigSetsFromDir(dir string) (map[string]set.Set, error) {
 			return nil, fmt.Errorf("failed to read sets from %s: %w", file, err)
 		}
 		for name, v := range fileSets {
+			if _, exists := sets[name]; exists {
+				return nil, fmt.Errorf("duplicate set %q found in %s", name, file)
+			}
 			sets[name] = v
 		}
 	}
@@ -230,7 +235,7 @@ func yamlFilesInDir(dir string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	files := make([]string, 0, len(entries))
+	var files []string
 	for _, entry := range entries {
 		if entry.IsDir() {
 			continue
@@ -241,6 +246,7 @@ func yamlFilesInDir(dir string) ([]string, error) {
 		}
 		files = append(files, filepath.Join(dir, entry.Name()))
 	}
+	sort.Strings(files)
 	return files, nil
 }
 
