@@ -32,7 +32,7 @@ Input Directory Structure
 fwsim expects an input directory with:
 
   <dir>/
-    tables/     # one .yaml/.yml file (required; table metadata/default action)
+    tables/     # one .yaml/.yml file (preferred; if absent, falls back to rules default_action)
     rules/      # one or more .yaml/.yml files (required)
     sets/       # optional .yaml/.yml files
     packets/    # .yaml/.yml files (required for "run")

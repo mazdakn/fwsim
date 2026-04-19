@@ -295,7 +295,7 @@ func toTable(rc *RuleConfig, sets map[string]set.Set) (*table.Table, error) {
 
 	action, err := rule.ParseAction(rc.DefaultAction)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("invalid default_action %q: %w", rc.DefaultAction, err)
 	}
 	tbl := table.New(mainTableName, 0, action)
 	for _, r := range rc.Rules {
