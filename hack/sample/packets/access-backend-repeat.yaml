@@ -1,7 +1,0 @@
-metadata:
-  name: access backend
-src_addr: 192.168.1.5
-dst_addr: 1.1.1.1
-proto: 7
-src_port: 30000
-dst_port: 80
