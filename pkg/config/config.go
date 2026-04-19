@@ -15,7 +15,10 @@ import (
 	"github.com/mazdakn/fwsim/pkg/table"
 )
 
-const mainTableName = "main"
+const (
+	mainTableName     = "main"
+	defaultTableOrder = 0
+)
 
 type Config struct {
 	// Base directory input. Expects tables/, rules/, sets/, packets/ sub-directories.
@@ -297,7 +300,7 @@ func toTable(rc *RuleConfig, sets map[string]set.Set) (*table.Table, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid default_action %q: %w", rc.DefaultAction, err)
 	}
-	tbl := table.New(mainTableName, 0, action)
+	tbl := table.New(mainTableName, defaultTableOrder, action)
 	for _, r := range rc.Rules {
 		mRule, err := r.ToRule(sets)
 		if err != nil {
