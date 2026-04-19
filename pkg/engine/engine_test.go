@@ -64,37 +64,33 @@ default_action: Accept
 `
 
 const testPacketsYAML = `
-packets:
-  - name: access backend
-    src_addr: 192.168.1.5
-    dst_addr: 1.1.1.1
-    proto: 7
-    src_port: 30000
-    dst_port: 80
-  - name: access app1
-    src_addr: 10.0.0.1
-    dst_addr: 2.2.2.2
-    proto: 7
-    src_port: 12345
-    dst_port: 8080
-  - name: dns traffic
-    src_addr: 172.16.0.1
-    dst_addr: 8.8.8.8
-    proto: 17
-    src_port: 54321
-    dst_port: 53
-  - name: access backend
-    src_addr: 192.168.1.5
-    dst_addr: 1.1.1.1
-    proto: 7
-    src_port: 30000
-    dst_port: 80
-  - name: dns traffic
-    src_addr: 172.16.0.1
-    dst_addr: 8.8.8.8
-    proto: 17
-    src_port: 54321
-    dst_port: 53
+metadata:
+  name: access backend
+src_addr: 192.168.1.5
+dst_addr: 1.1.1.1
+proto: 7
+src_port: 30000
+dst_port: 80
+`
+
+const testPackets2YAML = `
+metadata:
+  name: access app1
+src_addr: 10.0.0.1
+dst_addr: 2.2.2.2
+proto: 7
+src_port: 12345
+dst_port: 8080
+`
+
+const testPackets3YAML = `
+metadata:
+  name: dns traffic
+src_addr: 172.16.0.1
+dst_addr: 8.8.8.8
+proto: 17
+src_port: 54321
+dst_port: 53
 `
 
 const testSetsYAML = `
@@ -140,25 +136,33 @@ default_action: Drop
 `
 
 const testPacketsNamedPortYAML = `
-packets:
-  - name: http to 1.1.1.1
-    src_addr: 192.168.1.5
-    dst_addr: 1.1.1.1
-    proto: 6
-    src_port: 30000
-    dst_port: http
-  - name: https to 2.2.2.2
-    src_addr: 10.0.0.1
-    dst_addr: 2.2.2.2
-    proto: 6
-    src_port: 12345
-    dst_port: https
-  - name: dns traffic
-    src_addr: 172.16.0.1
-    dst_addr: 8.8.8.8
-    proto: 17
-    src_port: 54321
-    dst_port: dns
+metadata:
+  name: http to 1.1.1.1
+src_addr: 192.168.1.5
+dst_addr: 1.1.1.1
+proto: 6
+src_port: 30000
+dst_port: http
+`
+
+const testPacketsNamedPort2YAML = `
+metadata:
+  name: https to 2.2.2.2
+src_addr: 10.0.0.1
+dst_addr: 2.2.2.2
+proto: 6
+src_port: 12345
+dst_port: https
+`
+
+const testPacketsNamedPort3YAML = `
+metadata:
+  name: dns traffic
+src_addr: 172.16.0.1
+dst_addr: 8.8.8.8
+proto: 17
+src_port: 54321
+dst_port: dns
 `
 
 func TestEngineWithNamedPortsInRulesAndPackets(t *testing.T) {
@@ -168,22 +172,25 @@ func TestEngineWithNamedPortsInRulesAndPackets(t *testing.T) {
 	err := loadRulesFromBytes(engine, []byte(testRulesNamedPortYAML))
 	Expect(err).To(BeNil())
 
-	pkts, err := config.PacketsFromBytes([]byte(testPacketsNamedPortYAML))
+	pkt1, err := config.PacketsFromBytes([]byte(testPacketsNamedPortYAML))
 	Expect(err).To(BeNil())
-	Expect(pkts).To(HaveLen(3))
+	pkt2, err := config.PacketsFromBytes([]byte(testPacketsNamedPort2YAML))
+	Expect(err).To(BeNil())
+	pkt3, err := config.PacketsFromBytes([]byte(testPacketsNamedPort3YAML))
+	Expect(err).To(BeNil())
 
 	// Packet to port "http" (80) → matches allow-http rule (Accept)
-	m := &match.Match{Packet: pkts[0]}
+	m := &match.Match{Packet: pkt1[0]}
 	engine.RunTest(m)
 	Expect(m.Result.Verdict).To(Equal(rule.Accept))
 
 	// Packet to port "https" (443) → matches allow-https rule (Accept)
-	m = &match.Match{Packet: pkts[1]}
+	m = &match.Match{Packet: pkt2[0]}
 	engine.RunTest(m)
 	Expect(m.Result.Verdict).To(Equal(rule.Accept))
 
 	// Packet to port "dns" (53) with proto 17 → no matching rule → deny-all (Drop)
-	m = &match.Match{Packet: pkts[2]}
+	m = &match.Match{Packet: pkt3[0]}
 	engine.RunTest(m)
 	Expect(m.Result.Verdict).To(Equal(rule.Drop))
 }
@@ -218,21 +225,25 @@ default_action: Drop
 	err = loadRulesFromBytes(engine, []byte(rulesWithNamedPortSetYAML))
 	Expect(err).To(BeNil())
 
-	pkts, err := config.PacketsFromBytes([]byte(testPacketsNamedPortYAML))
+	pkt1, err := config.PacketsFromBytes([]byte(testPacketsNamedPortYAML))
+	Expect(err).To(BeNil())
+	pkt2, err := config.PacketsFromBytes([]byte(testPacketsNamedPort2YAML))
+	Expect(err).To(BeNil())
+	pkt3, err := config.PacketsFromBytes([]byte(testPacketsNamedPort3YAML))
 	Expect(err).To(BeNil())
 
 	// Packet to port "http" (80) → in named-web-ports → Accept
-	m := &match.Match{Packet: pkts[0]}
+	m := &match.Match{Packet: pkt1[0]}
 	engine.RunTest(m)
 	Expect(m.Result.Verdict).To(Equal(rule.Accept))
 
 	// Packet to port "https" (443) → in named-web-ports → Accept
-	m = &match.Match{Packet: pkts[1]}
+	m = &match.Match{Packet: pkt2[0]}
 	engine.RunTest(m)
 	Expect(m.Result.Verdict).To(Equal(rule.Accept))
 
 	// Packet to port "dns" (53) → NOT in named-web-ports → deny-all (Drop)
-	m = &match.Match{Packet: pkts[2]}
+	m = &match.Match{Packet: pkt3[0]}
 	engine.RunTest(m)
 	Expect(m.Result.Verdict).To(Equal(rule.Drop))
 }
@@ -251,22 +262,25 @@ func TestPacketsFromBytesAndMatch(t *testing.T) {
 	err := loadRulesFromBytes(engine, []byte(testRulesYAML))
 	Expect(err).To(BeNil())
 
-	pkts, err := config.PacketsFromBytes([]byte(testPacketsYAML))
+	pkt1, err := config.PacketsFromBytes([]byte(testPacketsYAML))
 	Expect(err).To(BeNil())
-	Expect(len(pkts)).To(Equal(5))
+	pkt2, err := config.PacketsFromBytes([]byte(testPackets2YAML))
+	Expect(err).To(BeNil())
+	pkt3, err := config.PacketsFromBytes([]byte(testPackets3YAML))
+	Expect(err).To(BeNil())
 
 	// First packet: src 192.168.1.5 -> dst 1.1.1.1:80 proto 7, src_port 30000 — matches rule 1 (Accept)
-	m := &match.Match{Packet: pkts[0]}
+	m := &match.Match{Packet: pkt1[0]}
 	engine.RunTest(m)
 	Expect(m.Result.Verdict).To(Equal(rule.Accept))
 
 	// Second packet: src 10.0.0.1 -> dst 2.2.2.2:8080 proto 7 — matches rule 3 (Drop)
-	m = &match.Match{Packet: pkts[1]}
+	m = &match.Match{Packet: pkt2[0]}
 	engine.RunTest(m)
 	Expect(m.Result.Verdict).To(Equal(rule.Drop))
 
 	// Third packet: proto 17, no matching rule — default action Accept
-	m = &match.Match{Packet: pkts[2]}
+	m = &match.Match{Packet: pkt3[0]}
 	engine.RunTest(m)
 	Expect(m.Result.Verdict).To(Equal(rule.Accept))
 }
@@ -352,22 +366,26 @@ func TestRulesWithNamedSetsMatch(t *testing.T) {
 	Expect(err).To(BeNil())
 
 	// Packet from trusted-ips (192.168.1.0/24) to web-ports (80,443,8080) → Accept
-	pkts, err := config.PacketsFromBytes([]byte(testPacketsYAML))
+	pkt1, err := config.PacketsFromBytes([]byte(testPacketsYAML))
+	Expect(err).To(BeNil())
+	pkt2, err := config.PacketsFromBytes([]byte(testPackets2YAML))
+	Expect(err).To(BeNil())
+	pkt3, err := config.PacketsFromBytes([]byte(testPackets3YAML))
 	Expect(err).To(BeNil())
 
 	// First packet: src 192.168.1.5 dst 1.1.1.1:80 → matches rule 1 (Accept)
-	m := &match.Match{Packet: pkts[0]}
+	m := &match.Match{Packet: pkt1[0]}
 	engine.RunTest(m)
 	Expect(m.Result.Verdict).To(Equal(rule.Accept))
 
 	// Second packet: src 10.0.0.1 dst 2.2.2.2:8080 → src is in trusted-ips (10.0.0.0/8),
 	// dst port 8080 is in web-ports → matches rule 1 (Accept)
-	m = &match.Match{Packet: pkts[1]}
+	m = &match.Match{Packet: pkt2[0]}
 	engine.RunTest(m)
 	Expect(m.Result.Verdict).To(Equal(rule.Accept))
 
 	// Third packet: src 172.16.0.1 → NOT in trusted-ips → falls through to deny-all (Drop)
-	m = &match.Match{Packet: pkts[2]}
+	m = &match.Match{Packet: pkt3[0]}
 	engine.RunTest(m)
 	Expect(m.Result.Verdict).To(Equal(rule.Drop))
 }
@@ -407,16 +425,18 @@ func TestRulesWithNegatedNamedSetsMatch(t *testing.T) {
 	err = loadRulesFromBytes(engine, []byte(testRulesWithNotSetsYAML))
 	Expect(err).To(BeNil())
 
-	pkts, err := config.PacketsFromBytes([]byte(testPacketsYAML))
+	pkt1, err := config.PacketsFromBytes([]byte(testPacketsYAML))
+	Expect(err).To(BeNil())
+	pkt3, err := config.PacketsFromBytes([]byte(testPackets3YAML))
 	Expect(err).To(BeNil())
 
 	// First packet: src 192.168.1.5 — in trusted-ips → negated, rule1 does NOT match → deny-all (Drop)
-	m := &match.Match{Packet: pkts[0]}
+	m := &match.Match{Packet: pkt1[0]}
 	engine.RunTest(m)
 	Expect(m.Result.Verdict).To(Equal(rule.Drop))
 
 	// Third packet: src 172.16.0.1 — NOT in trusted-ips → rule1 matches (Accept)
-	m = &match.Match{Packet: pkts[2]}
+	m = &match.Match{Packet: pkt3[0]}
 	engine.RunTest(m)
 	Expect(m.Result.Verdict).To(Equal(rule.Accept))
 }

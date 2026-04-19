@@ -34,12 +34,11 @@ members: ["80", "443"]
 `), 0o600)).To(Succeed())
 
 	Expect(os.WriteFile(filepath.Join(dir, "packets", "packets.yaml"), []byte(`
-packets:
-  - src_addr: 10.0.0.1
-    dst_addr: 1.1.1.1
-    proto: 6
-    src_port: 12345
-    dst_port: 80
+src_addr: 10.0.0.1
+dst_addr: 1.1.1.1
+proto: 6
+src_port: 12345
+dst_port: 80
 `), 0o600)).To(Succeed())
 
 	resources, err := ConfigFromFile(Config{
