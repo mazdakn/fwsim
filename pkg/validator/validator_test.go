@@ -251,12 +251,8 @@ func TestValidateStructFieldsRecursiveStruct(t *testing.T) {
 func TestConfigValidateInvalidSrcAddr(t *testing.T) {
 	RegisterTestingT(t)
 
-	pkts := &config.PacketConfig{
-		Packets: []config.Packet{
-			{SrcAddr: "not-an-ip", DstAddr: "1.1.1.1"},
-		},
-	}
-	err := pkts.Validate()
+	pkt := &config.Packet{SrcAddr: "not-an-ip", DstAddr: "1.1.1.1"}
+	err := pkt.Validate()
 	Expect(err).ToNot(BeNil())
 	Expect(err.Error()).To(ContainSubstring("invalid src_addr"))
 }
@@ -264,12 +260,8 @@ func TestConfigValidateInvalidSrcAddr(t *testing.T) {
 func TestConfigValidateInvalidDstAddr(t *testing.T) {
 	RegisterTestingT(t)
 
-	pkts := &config.PacketConfig{
-		Packets: []config.Packet{
-			{SrcAddr: "192.168.1.1", DstAddr: "bad-ip"},
-		},
-	}
-	err := pkts.Validate()
+	pkt := &config.Packet{SrcAddr: "192.168.1.1", DstAddr: "bad-ip"}
+	err := pkt.Validate()
 	Expect(err).ToNot(BeNil())
 	Expect(err.Error()).To(ContainSubstring("invalid dst_addr"))
 }
@@ -277,13 +269,10 @@ func TestConfigValidateInvalidDstAddr(t *testing.T) {
 func TestConfigValidateValidPackets(t *testing.T) {
 	RegisterTestingT(t)
 
-	pkts := &config.PacketConfig{
-		Packets: []config.Packet{
-			{SrcAddr: "192.168.1.5", DstAddr: "1.1.1.1"},
-			{SrcAddr: "2001:db8::1", DstAddr: "2001:db8::2"},
-		},
-	}
-	err := pkts.Validate()
+	err := (&config.Packet{SrcAddr: "192.168.1.5", DstAddr: "1.1.1.1"}).Validate()
+	Expect(err).To(BeNil())
+
+	err = (&config.Packet{SrcAddr: "2001:db8::1", DstAddr: "2001:db8::2"}).Validate()
 	Expect(err).To(BeNil())
 }
 
@@ -424,36 +413,24 @@ func TestConfigValidateRuleWithInvalidPortName(t *testing.T) {
 func TestConfigValidateValidPacketWithPortAndProto(t *testing.T) {
 	RegisterTestingT(t)
 
-	pkts := &config.PacketConfig{
-		Packets: []config.Packet{
-			{SrcAddr: "192.168.1.5", DstAddr: "1.1.1.1", Proto: proto.TCP, SrcPort: port.Port{Number: 30000}, DstPort: port.Port{Number: 80}},
-		},
-	}
-	err := pkts.Validate()
+	pkt := &config.Packet{SrcAddr: "192.168.1.5", DstAddr: "1.1.1.1", Proto: proto.TCP, SrcPort: port.Port{Number: 30000}, DstPort: port.Port{Number: 80}}
+	err := pkt.Validate()
 	Expect(err).To(BeNil())
 }
 
 func TestConfigValidateValidPacketWithNamedPort(t *testing.T) {
 	RegisterTestingT(t)
 
-	pkts := &config.PacketConfig{
-		Packets: []config.Packet{
-			{SrcAddr: "192.168.1.5", DstAddr: "1.1.1.1", Proto: proto.TCP, SrcPort: port.Port{Number: 12345}, DstPort: port.Port{Number: 443, Name: "https"}},
-		},
-	}
-	err := pkts.Validate()
+	pkt := &config.Packet{SrcAddr: "192.168.1.5", DstAddr: "1.1.1.1", Proto: proto.TCP, SrcPort: port.Port{Number: 12345}, DstPort: port.Port{Number: 443, Name: "https"}}
+	err := pkt.Validate()
 	Expect(err).To(BeNil())
 }
 
 func TestConfigValidatePacketWithInvalidPortName(t *testing.T) {
 	RegisterTestingT(t)
 
-	pkts := &config.PacketConfig{
-		Packets: []config.Packet{
-			{SrcAddr: "192.168.1.5", DstAddr: "1.1.1.1", DstPort: port.Port{Name: "badservice"}},
-		},
-	}
-	err := pkts.Validate()
+	pkt := &config.Packet{SrcAddr: "192.168.1.5", DstAddr: "1.1.1.1", DstPort: port.Port{Name: "badservice"}}
+	err := pkt.Validate()
 	Expect(err).ToNot(BeNil())
 	Expect(err.Error()).To(ContainSubstring("invalid dst_port"))
 }
