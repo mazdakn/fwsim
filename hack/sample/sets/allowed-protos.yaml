@@ -1,0 +1,5 @@
+name: allowed-protos
+type: proto
+members:
+  - tcp
+  - udp

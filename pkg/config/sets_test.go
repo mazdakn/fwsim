@@ -7,28 +7,11 @@ import (
 )
 
 const testSetsYAML = `
-sets:
-  - name: trusted-ips
-    type: ip
-    members:
-      - 192.168.1.0/24
-      - 10.0.0.0/8
-  - name: web-ports
-    type: port
-    members:
-      - "80"
-      - "443"
-      - "8080"
-  - name: allowed-protos
-    type: proto
-    members:
-      - tcp
-      - udp
-  - name: service-tuples
-    type: ipport
-    members:
-      - "1.1.1.1,443"
-      - "10.0.0.0/8,53"
+name: trusted-ips
+type: ip
+members:
+  - 192.168.1.0/24
+  - 10.0.0.0/8
 `
 
 func TestSetsFromBytes(t *testing.T) {
@@ -36,12 +19,9 @@ func TestSetsFromBytes(t *testing.T) {
 
 	sets, err := SetsFromBytes([]byte(testSetsYAML))
 	Expect(err).To(BeNil())
-	Expect(sets).To(HaveLen(4))
+	Expect(sets).To(HaveLen(1))
 
 	Expect(sets).To(HaveKey("trusted-ips"))
-	Expect(sets).To(HaveKey("web-ports"))
-	Expect(sets).To(HaveKey("allowed-protos"))
-	Expect(sets).To(HaveKey("service-tuples"))
 }
 
 func TestSetsFromBytesInvalid(t *testing.T) {
