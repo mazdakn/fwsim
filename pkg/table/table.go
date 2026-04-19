@@ -12,20 +12,23 @@ import (
 // Table holds a slice of firewall rules.
 type Table struct {
 	Name          string
+	Order         uint64
 	Rules         []*rule.Rule
 	DefaultAction *rule.Rule
 	logCtx        *logrus.Entry
 }
 
-func New(name string, defaultAction rule.Action) *Table {
+func New(name string, order uint64, defaultAction rule.Action) *Table {
 	return &Table{
-		Name: name,
+		Name:  name,
+		Order: order,
 		DefaultAction: rule.New(
 			rule.WithAction(defaultAction),
 			rule.WithName(fmt.Sprintf("table %s default action", name)),
 		),
 		logCtx: logrus.WithFields(logrus.Fields{
 			"name":          name,
+			"order":         order,
 			"defaultAction": defaultAction,
 		}),
 	}

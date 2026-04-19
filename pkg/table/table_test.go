@@ -12,7 +12,7 @@ import (
 func TestTableAddRuleSortAscending(t *testing.T) {
 	RegisterTestingT(t)
 
-	table := New("test", rule.Drop)
+	table := New("test", 10, rule.Drop)
 
 	// Add rules with different orders
 	rule1 := rule.New(rule.WithName("rule1"), rule.WithOrder(10), rule.WithAction(rule.Accept))
@@ -33,7 +33,7 @@ func TestTableAddRuleSortAscending(t *testing.T) {
 func TestTableAddRuleSortStableForEqualOrders(t *testing.T) {
 	RegisterTestingT(t)
 
-	table := New("test", rule.Drop)
+	table := New("test", 10, rule.Drop)
 
 	// Add rules with the same order (default 0)
 	rule1 := rule.New(rule.WithName("rule1"), rule.WithAction(rule.Accept))
@@ -54,7 +54,7 @@ func TestTableAddRuleSortStableForEqualOrders(t *testing.T) {
 func TestTableMatchUsesAscendingOrder(t *testing.T) {
 	RegisterTestingT(t)
 
-	table := New("test", rule.Drop)
+	table := New("test", 10, rule.Drop)
 
 	pkt := packet.New(
 		packet.WithSrcAddr("10.0.0.1"),

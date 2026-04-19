@@ -58,6 +58,38 @@ dst_port: 80
 	Expect(resources.Packets[0].DstPort).To(Equal(uint16(80)))
 }
 
+func TestConfigFromDirectoryWithTableResource(t *testing.T) {
+	RegisterTestingT(t)
+
+	dir := t.TempDir()
+	Expect(os.MkdirAll(filepath.Join(dir, "tables"), 0o755)).To(Succeed())
+	Expect(os.MkdirAll(filepath.Join(dir, "rules"), 0o755)).To(Succeed())
+
+	Expect(os.WriteFile(filepath.Join(dir, "tables", "main.yaml"), []byte(`
+name: edge-table
+order: 42
+default_action: Drop
+`), 0o600)).To(Succeed())
+
+	Expect(os.WriteFile(filepath.Join(dir, "rules", "rules.yaml"), []byte(`
+rules:
+  - name: allow-http
+    dst:
+      port: [80]
+    action: Accept
+`), 0o600)).To(Succeed())
+
+	resources, err := ConfigFromFile(Config{
+		InputDir: dir,
+	})
+	Expect(err).To(BeNil())
+	Expect(resources.Table).ToNot(BeNil())
+	Expect(resources.Table.Name).To(Equal("edge-table"))
+	Expect(resources.Table.Order).To(Equal(uint64(42)))
+	Expect(resources.Table.DefaultAction.Action.String()).To(Equal("Drop"))
+	Expect(resources.Table.Rules).To(HaveLen(1))
+}
+
 func TestConfigRulesFromDirConflictingDefaultAction(t *testing.T) {
 	RegisterTestingT(t)
 
@@ -133,4 +165,25 @@ members: ["443"]
 	Expect(err).ToNot(BeNil())
 	Expect(err.Error()).To(ContainSubstring("duplicate set"))
 	Expect(sets).To(BeNil())
+}
+
+func TestConfigTableFromDirMultipleFiles(t *testing.T) {
+	RegisterTestingT(t)
+
+	dir := t.TempDir()
+	Expect(os.WriteFile(filepath.Join(dir, "a.yaml"), []byte(`
+name: table-a
+order: 1
+default_action: Accept
+`), 0o600)).To(Succeed())
+	Expect(os.WriteFile(filepath.Join(dir, "b.yaml"), []byte(`
+name: table-b
+order: 2
+default_action: Drop
+`), 0o600)).To(Succeed())
+
+	tbl, err := ConfigTableFromDir(dir)
+	Expect(err).ToNot(BeNil())
+	Expect(err.Error()).To(ContainSubstring("multiple table files"))
+	Expect(tbl).To(BeNil())
 }

@@ -21,6 +21,14 @@ func (rc *RuleConfig) Validate() error {
 	return validator.ValidateStructFields(rc)
 }
 
+type RulesOnlyConfig struct {
+	Rules []Rule `yaml:"rules,omitempty"`
+}
+
+func (rc *RulesOnlyConfig) Validate() error {
+	return validator.ValidateStructFields(rc)
+}
+
 // Endpoint groups the network and port match criteria for one traffic direction
 // in the YAML configuration.
 type Endpoint struct {
@@ -162,4 +170,23 @@ func RuleConfigFromFile(file string) (*RuleConfig, error) {
 		return nil, err
 	}
 	return RuleConfigFromBytes(data)
+}
+
+func RulesOnlyConfigFromBytes(data []byte) (*RulesOnlyConfig, error) {
+	var rc RulesOnlyConfig
+	if err := yaml.Unmarshal(data, &rc); err != nil {
+		return nil, err
+	}
+	if err := rc.Validate(); err != nil {
+		return nil, err
+	}
+	return &rc, nil
+}
+
+func RulesOnlyConfigFromFile(file string) (*RulesOnlyConfig, error) {
+	data, err := os.ReadFile(file)
+	if err != nil {
+		return nil, err
+	}
+	return RulesOnlyConfigFromBytes(data)
 }
