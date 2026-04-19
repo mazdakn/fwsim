@@ -8,6 +8,7 @@ import (
 	"github.com/mazdakn/fwsim/pkg/match"
 	"github.com/mazdakn/fwsim/pkg/proto"
 	"github.com/mazdakn/fwsim/pkg/rule"
+	"github.com/mazdakn/fwsim/pkg/set"
 	. "github.com/onsi/gomega"
 )
 
@@ -25,7 +26,14 @@ func loadSetsFromBytes(e *enginepkg.Engine, data []byte) error {
 	if err != nil {
 		return err
 	}
-	e.SetSets(sets)
+	merged := e.Sets()
+	if merged == nil {
+		merged = map[string]set.Set{}
+	}
+	for name, s := range sets {
+		merged[name] = s
+	}
+	e.SetSets(merged)
 	return nil
 }
 
@@ -90,23 +98,28 @@ packets:
 `
 
 const testSetsYAML = `
-sets:
-  - name: trusted-ips
-    type: ip
-    members:
-      - 192.168.1.0/24
-      - 10.0.0.0/8
-  - name: web-ports
-    type: port
-    members:
-      - "80"
-      - "443"
-      - "8080"
-  - name: allowed-protos
-    type: proto
-    members:
-      - tcp
-      - udp
+name: trusted-ips
+type: ip
+members:
+  - 192.168.1.0/24
+  - 10.0.0.0/8
+`
+
+const testWebPortsSetYAML = `
+name: web-ports
+type: port
+members:
+  - "80"
+  - "443"
+  - "8080"
+`
+
+const testAllowedProtosSetYAML = `
+name: allowed-protos
+type: proto
+members:
+  - tcp
+  - udp
 `
 
 const testRulesNamedPortYAML = `
@@ -176,13 +189,12 @@ func TestEngineWithNamedPortsInRulesAndPackets(t *testing.T) {
 }
 
 const testSetsNamedPortYAML = `
-sets:
-  - name: named-web-ports
-    type: port
-    members:
-      - http
-      - https
-      - ssh
+name: named-web-ports
+type: port
+members:
+  - http
+  - https
+  - ssh
 `
 
 func TestEngineWithNamedPortsInSets(t *testing.T) {
@@ -268,6 +280,10 @@ func TestLoadSetsFromBytes(t *testing.T) {
 
 	err = loadSetsFromBytes(engine, []byte(testSetsYAML))
 	Expect(err).To(BeNil())
+	err = loadSetsFromBytes(engine, []byte(testWebPortsSetYAML))
+	Expect(err).To(BeNil())
+	err = loadSetsFromBytes(engine, []byte(testAllowedProtosSetYAML))
+	Expect(err).To(BeNil())
 
 	sets := engine.Sets()
 	Expect(sets).To(HaveLen(3))
@@ -296,6 +312,8 @@ func TestRulesReferencingNamedSets(t *testing.T) {
 
 	// Sets must be loaded before rules that reference them.
 	err := loadSetsFromBytes(engine, []byte(testSetsYAML))
+	Expect(err).To(BeNil())
+	err = loadSetsFromBytes(engine, []byte(testWebPortsSetYAML))
 	Expect(err).To(BeNil())
 
 	err = loadRulesFromBytes(engine, []byte(testRulesWithSetsYAML))
@@ -326,6 +344,8 @@ func TestRulesWithNamedSetsMatch(t *testing.T) {
 
 	engine := enginepkg.New()
 	err := loadSetsFromBytes(engine, []byte(testSetsYAML))
+	Expect(err).To(BeNil())
+	err = loadSetsFromBytes(engine, []byte(testWebPortsSetYAML))
 	Expect(err).To(BeNil())
 
 	err = loadRulesFromBytes(engine, []byte(testRulesWithSetsYAML))

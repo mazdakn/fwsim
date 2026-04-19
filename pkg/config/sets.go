@@ -9,20 +9,15 @@ import (
 	"github.com/mazdakn/fwsim/pkg/validator"
 )
 
-// SetConfig is the top-level structure for a sets YAML file.
-type SetConfig struct {
-	Sets []Set `yaml:"sets,omitempty"`
-}
-
-func (sc *SetConfig) Validate() error {
-	return validator.ValidateStructFields(sc)
-}
-
 // Set represents the YAML configuration for a named set of values.
 type Set struct {
 	Name    string   `yaml:"name,omitempty"`
 	Type    string   `yaml:"type,omitempty"    validate:"isValidSetType"`
 	Members []string `yaml:"members,omitempty"`
+}
+
+func (s *Set) Validate() error {
+	return validator.ValidateStructFields(s)
 }
 
 // ToSet converts a Set config into the appropriate set.Set implementation
@@ -51,22 +46,20 @@ func (s *Set) ToSet() (set.Set, error) {
 
 // SetsFromBytes parses YAML bytes and returns a map of named set.Set values.
 func SetsFromBytes(data []byte) (map[string]set.Set, error) {
-	var sc SetConfig
-	if err := yaml.Unmarshal(data, &sc); err != nil {
+	var s Set
+	if err := yaml.Unmarshal(data, &s); err != nil {
 		return nil, err
 	}
-	if err := sc.Validate(); err != nil {
+	if err := s.Validate(); err != nil {
 		return nil, err
 	}
-	sets := make(map[string]set.Set, len(sc.Sets))
-	for _, s := range sc.Sets {
-		namedSet, err := s.ToSet()
-		if err != nil {
-			return nil, err
-		}
-		sets[s.Name] = namedSet
+	namedSet, err := s.ToSet()
+	if err != nil {
+		return nil, err
 	}
-	return sets, nil
+	return map[string]set.Set{
+		s.Name: namedSet,
+	}, nil
 }
 
 // SetsFromFile reads a YAML file and returns a map of named set.Set values.

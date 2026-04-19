@@ -28,10 +28,9 @@ default_action: Drop
 `), 0o600)).To(Succeed())
 
 	Expect(os.WriteFile(filepath.Join(dir, "sets", "sets.yaml"), []byte(`
-sets:
-  - name: web-ports
-    type: port
-    members: ["80", "443"]
+name: web-ports
+type: port
+members: ["80", "443"]
 `), 0o600)).To(Succeed())
 
 	Expect(os.WriteFile(filepath.Join(dir, "packets", "packets.yaml"), []byte(`
@@ -121,16 +120,14 @@ func TestConfigSetsFromDirDuplicateNames(t *testing.T) {
 
 	dir := t.TempDir()
 	Expect(os.WriteFile(filepath.Join(dir, "a.yaml"), []byte(`
-sets:
-  - name: dup-set
-    type: port
-    members: ["80"]
+name: dup-set
+type: port
+members: ["80"]
 `), 0o600)).To(Succeed())
 	Expect(os.WriteFile(filepath.Join(dir, "b.yaml"), []byte(`
-sets:
-  - name: dup-set
-    type: port
-    members: ["443"]
+name: dup-set
+type: port
+members: ["443"]
 `), 0o600)).To(Succeed())
 
 	sets, err := ConfigSetsFromDir(dir)
