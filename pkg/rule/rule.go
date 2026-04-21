@@ -402,7 +402,9 @@ func (r *Rule) String() string {
 		srcPort = "!" + r.NotSource.Port.String()
 	}
 	srcPort = appendSetStrings(srcPort, filterEndpointSetsByType(r.Source.Sets, (*set.PortSet)(nil)))
+	srcPort = appendSetStrings(srcPort, filterEndpointSetsByType(r.Source.Sets, (*set.IPPortSet)(nil)))
 	srcPort = appendNotSetStrings(srcPort, filterEndpointSetsByType(r.NotSource.Sets, (*set.PortSet)(nil)))
+	srcPort = appendNotSetStrings(srcPort, filterEndpointSetsByType(r.NotSource.Sets, (*set.IPPortSet)(nil)))
 
 	dstPort := "*"
 	switch {
@@ -414,7 +416,9 @@ func (r *Rule) String() string {
 		dstPort = "!" + r.NotDestination.Port.String()
 	}
 	dstPort = appendSetStrings(dstPort, filterEndpointSetsByType(r.Destination.Sets, (*set.PortSet)(nil)))
+	dstPort = appendSetStrings(dstPort, filterEndpointSetsByType(r.Destination.Sets, (*set.IPPortSet)(nil)))
 	dstPort = appendNotSetStrings(dstPort, filterEndpointSetsByType(r.NotDestination.Sets, (*set.PortSet)(nil)))
+	dstPort = appendNotSetStrings(dstPort, filterEndpointSetsByType(r.NotDestination.Sets, (*set.IPPortSet)(nil)))
 
 	srcNet := "*"
 	switch {
@@ -544,6 +548,10 @@ func filterEndpointSetsByType(sets []set.Set, t any) []set.Set {
 			}
 		case *set.PortSet:
 			if _, ok := s.(*set.PortSet); ok {
+				filtered = append(filtered, s)
+			}
+		case *set.IPPortSet:
+			if _, ok := s.(*set.IPPortSet); ok {
 				filtered = append(filtered, s)
 			}
 		}
