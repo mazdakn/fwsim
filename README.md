@@ -82,13 +82,13 @@ Protocol values:
 Rule Config (rules/*.yaml)
 --------------------------
 Top-level keys:
-  default_action: Accept | Drop
+  default_action: Accept | Drop | Pass
   rules: list of rule entries
 
 Each rule may include:
   name        Human-readable label
   order       Evaluation order (lower first)
-  action      Accept | Drop
+  action      Accept | Drop | Pass
   src / dst:
     net:          list of CIDRs
     port:         list of port numbers
@@ -172,7 +172,7 @@ Output
 ------
 For each packet fwsim prints:
 
-  Packet: <summary>   Verdict: Accept|Drop
+  Packet: <summary>   Verdict: Accept|Drop|Pass
 
   +--------------------------+--------+-----------+
   | Rule                     | Action | Hit Count |

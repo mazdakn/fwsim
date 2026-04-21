@@ -46,6 +46,10 @@ func (t *Table) Match(match *match.Match) {
 		match.Result.Trace = append(match.Result.Trace, r)
 		if r.Match(match.Packet) {
 			t.logCtx.Debugf("Rule %+v matched", r)
+			if r.Action == rule.Pass {
+				t.logCtx.Debugf("Rule %+v action is Pass, continuing evaluation", r)
+				continue
+			}
 			match.Result.Verdict = r.Action
 			return
 		}

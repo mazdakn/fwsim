@@ -32,6 +32,9 @@ func TestValidateAction(t *testing.T) {
 	Expect(validator.ValidateAction("drop")).To(BeTrue())
 	Expect(validator.ValidateAction("Drop")).To(BeTrue())
 	Expect(validator.ValidateAction("DROP")).To(BeTrue())
+	Expect(validator.ValidateAction("pass")).To(BeTrue())
+	Expect(validator.ValidateAction("Pass")).To(BeTrue())
+	Expect(validator.ValidateAction("PASS")).To(BeTrue())
 
 	Expect(validator.ValidateAction("")).To(BeFalse())
 	Expect(validator.ValidateAction("deny")).To(BeFalse())
