@@ -21,12 +21,8 @@ func (rc *RuleConfig) Validate() error {
 	if err := validator.ValidateStructFields(rc); err != nil {
 		return err
 	}
-	defaultAction, err := rule.ParseAction(rc.DefaultAction)
-	if err != nil {
+	if _, err := rule.ParseAction(rc.DefaultAction); err != nil {
 		return err
-	}
-	if defaultAction == rule.Pass {
-		return fmt.Errorf("invalid default_action: Pass")
 	}
 	return nil
 }

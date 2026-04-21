@@ -69,8 +69,7 @@ func TestConfigValidatePassDefaultAction(t *testing.T) {
 
 	c := &config.RuleConfig{DefaultAction: "Pass"}
 	err := c.Validate()
-	Expect(err).ToNot(BeNil())
-	Expect(err.Error()).To(ContainSubstring("invalid default_action"))
+	Expect(err).To(BeNil())
 }
 
 func TestConfigValidateInvalidSrcNet(t *testing.T) {

@@ -17,6 +17,7 @@ const (
 	Accept Action = iota
 	Drop
 	Pass
+	NoMatch
 )
 
 func (a Action) String() string {
@@ -27,6 +28,8 @@ func (a Action) String() string {
 		return "Drop"
 	case Pass:
 		return "Pass"
+	case NoMatch:
+		return "no match"
 	default:
 		return fmt.Sprintf("Undefined(%d)", a)
 	}

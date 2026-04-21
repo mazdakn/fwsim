@@ -82,7 +82,8 @@ Protocol values:
 Rule Config (rules/*.yaml)
 --------------------------
 Top-level keys:
-  default_action: Accept | Drop
+  default_action: Accept | Drop | Pass
+                 (Pass means final verdict is "no match" when no rule decides)
   rules: list of rule entries
 
 Each rule may include:
@@ -173,7 +174,7 @@ Output
 ------
 For each packet fwsim prints:
 
-  Packet: <summary>   Verdict: Accept|Drop
+  Packet: <summary>   Verdict: Accept|Drop|no match
 
   +--------------------------+--------+-----------+
   | Rule                     | Action | Hit Count |
