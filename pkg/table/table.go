@@ -60,5 +60,9 @@ func (t *Table) Match(match *match.Match) {
 	t.logCtx.Debugf("No rule matched, using default action %s", t.DefaultAction.Action.String())
 	t.DefaultAction.IncrementPacketCount()
 	match.Result.Trace = append(match.Result.Trace, t.DefaultAction)
+	if t.DefaultAction.Action == rule.Pass {
+		match.Result.Verdict = rule.NoMatch
+		return
+	}
 	match.Result.Verdict = t.DefaultAction.Action
 }

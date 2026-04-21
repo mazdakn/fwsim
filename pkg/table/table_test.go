@@ -132,3 +132,24 @@ func TestTableMatchPassFallsBackToDefaultAction(t *testing.T) {
 	Expect(m.Result.Trace[0].Name).To(Equal("pass-http"))
 	Expect(m.Result.Trace[1].Name).To(Equal("table test default action"))
 }
+
+func TestTableMatchNoRuleAndDefaultPassReturnsNoMatchVerdict(t *testing.T) {
+	RegisterTestingT(t)
+
+	table := New("test", rule.Pass)
+
+	pkt := packet.New(
+		packet.WithSrcAddr("10.0.0.1"),
+		packet.WithDstAddr("1.1.1.1"),
+		packet.WithProto(6),
+		packet.WithDstPort(80),
+	)
+
+	m := match.Match{Packet: pkt}
+	table.Match(&m)
+
+	Expect(m.Result.Verdict).To(Equal(rule.NoMatch))
+	Expect(m.Result.Trace).To(HaveLen(1))
+	Expect(m.Result.Trace[0].Name).To(Equal("table test default action"))
+	Expect(m.Result.Trace[0].Action).To(Equal(rule.Pass))
+}

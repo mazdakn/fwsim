@@ -311,7 +311,7 @@ func TestToRuleWithUnknownIPPortSet(t *testing.T) {
 	Expect(mRule).To(BeNil())
 }
 
-func TestRuleConfigFromBytesRejectsPassDefaultAction(t *testing.T) {
+func TestRuleConfigFromBytesAcceptsPassDefaultAction(t *testing.T) {
 	RegisterTestingT(t)
 
 	yaml := `
@@ -321,7 +321,7 @@ rules:
 default_action: Pass
 `
 	rc, err := RuleConfigFromBytes([]byte(yaml))
-	Expect(err).ToNot(BeNil())
-	Expect(err.Error()).To(ContainSubstring("invalid default_action"))
-	Expect(rc).To(BeNil())
+	Expect(err).To(BeNil())
+	Expect(rc).ToNot(BeNil())
+	Expect(rc.DefaultAction).To(Equal("Pass"))
 }
