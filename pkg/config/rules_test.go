@@ -6,6 +6,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/mazdakn/fwsim/pkg/port"
+	"github.com/mazdakn/fwsim/pkg/rule"
 	"github.com/mazdakn/fwsim/pkg/set"
 )
 
@@ -53,6 +54,19 @@ func TestToRuleWithValidSets(t *testing.T) {
 	Expect(mRule.Destination.IPSet).To(Equal(sets["my-ips"]))
 	Expect(mRule.Source.PortSet).To(Equal(sets["my-ports"]))
 	Expect(mRule.Destination.PortSet).To(Equal(sets["my-ports"]))
+}
+
+func TestToRuleWithPassAction(t *testing.T) {
+	RegisterTestingT(t)
+
+	r := &Rule{
+		Name:   "continue-http",
+		Action: "Pass",
+	}
+	mRule, err := r.ToRule(nil)
+	Expect(err).To(BeNil())
+	Expect(mRule).ToNot(BeNil())
+	Expect(mRule.Action).To(Equal(rule.Pass))
 }
 
 func TestToRuleWithUnknownSrcIPSet(t *testing.T) {
@@ -295,4 +309,19 @@ func TestToRuleWithUnknownIPPortSet(t *testing.T) {
 	Expect(err).ToNot(BeNil())
 	Expect(err.Error()).To(ContainSubstring("unknown set"))
 	Expect(mRule).To(BeNil())
+}
+
+func TestRuleConfigFromBytesRejectsPassDefaultAction(t *testing.T) {
+	RegisterTestingT(t)
+
+	yaml := `
+rules:
+  - name: continue-http
+    action: Pass
+default_action: Pass
+`
+	rc, err := RuleConfigFromBytes([]byte(yaml))
+	Expect(err).ToNot(BeNil())
+	Expect(err.Error()).To(ContainSubstring("invalid default_action"))
+	Expect(rc).To(BeNil())
 }

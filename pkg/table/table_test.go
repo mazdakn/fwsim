@@ -77,3 +77,58 @@ func TestTableMatchUsesAscendingOrder(t *testing.T) {
 	table.Match(&m)
 	Expect(m.Result.Verdict).To(Equal(rule.Accept))
 }
+
+func TestTableMatchPassContinuesToNextRule(t *testing.T) {
+	RegisterTestingT(t)
+
+	table := New("test", rule.Drop)
+
+	pkt := packet.New(
+		packet.WithSrcAddr("10.0.0.1"),
+		packet.WithDstAddr("1.1.1.1"),
+		packet.WithProto(6),
+		packet.WithDstPort(80),
+	)
+
+	passRule := rule.New(rule.WithName("pass-http"), rule.WithOrder(1), rule.WithAction(rule.Pass),
+		rule.WithProto(6), rule.WithDstPort(80))
+	acceptRule := rule.New(rule.WithName("accept-http"), rule.WithOrder(2), rule.WithAction(rule.Accept),
+		rule.WithProto(6), rule.WithDstPort(80))
+
+	table.AddRule(passRule)
+	table.AddRule(acceptRule)
+
+	m := match.Match{Packet: pkt}
+	table.Match(&m)
+
+	Expect(m.Result.Verdict).To(Equal(rule.Accept))
+	Expect(m.Result.Trace).To(HaveLen(2))
+	Expect(m.Result.Trace[0].Name).To(Equal("pass-http"))
+	Expect(m.Result.Trace[1].Name).To(Equal("accept-http"))
+}
+
+func TestTableMatchPassFallsBackToDefaultAction(t *testing.T) {
+	RegisterTestingT(t)
+
+	table := New("test", rule.Drop)
+
+	pkt := packet.New(
+		packet.WithSrcAddr("10.0.0.1"),
+		packet.WithDstAddr("1.1.1.1"),
+		packet.WithProto(6),
+		packet.WithDstPort(80),
+	)
+
+	passRule := rule.New(rule.WithName("pass-http"), rule.WithOrder(1), rule.WithAction(rule.Pass),
+		rule.WithProto(6), rule.WithDstPort(80))
+
+	table.AddRule(passRule)
+
+	m := match.Match{Packet: pkt}
+	table.Match(&m)
+
+	Expect(m.Result.Verdict).To(Equal(rule.Drop))
+	Expect(m.Result.Trace).To(HaveLen(2))
+	Expect(m.Result.Trace[0].Name).To(Equal("pass-http"))
+	Expect(m.Result.Trace[1].Name).To(Equal("table test default action"))
+}

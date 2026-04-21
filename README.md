@@ -88,7 +88,8 @@ Top-level keys:
 Each rule may include:
   name        Human-readable label
   order       Evaluation order (lower first)
-  action      Accept | Drop
+  action      Accept | Drop | Pass
+              (Pass means "continue evaluating next rules")
   src / dst:
     net:          list of CIDRs
     port:         list of port numbers
