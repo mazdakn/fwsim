@@ -30,11 +30,9 @@ func (rc *RuleConfig) Validate() error {
 // Endpoint groups the network and port match criteria for one traffic direction
 // in the YAML configuration.
 type Endpoint struct {
-	Net       []string    `yaml:"net,omitempty"        validate:"isValidCIDR"`
-	Port      []port.Port `yaml:"port,omitempty"       validate:"isPortValid"`
-	IPSet     string      `yaml:"ip_set,omitempty"`
-	PortSet   string      `yaml:"port_set,omitempty"`
-	IPPortSet string      `yaml:"ipport_set,omitempty"`
+	Net  []string    `yaml:"net,omitempty"        validate:"isValidCIDR"`
+	Port []port.Port `yaml:"port,omitempty"       validate:"isPortValid"`
+	Sets []string    `yaml:"sets,omitempty"`
 }
 
 // toEndpoint converts an Endpoint config into a rule.Endpoint domain object.
@@ -61,27 +59,15 @@ func (e *Endpoint) toEndpoint(ruleName string, sets map[string]set.Set) (rule.En
 		}
 	}
 
-	if e.IPSet != "" {
-		s, ok := sets[e.IPSet]
-		if !ok {
-			return ep, fmt.Errorf("rule %q references unknown set %q", ruleName, e.IPSet)
+	if len(e.Sets) > 0 {
+		ep.Sets = make([]set.Set, 0, len(e.Sets))
+		for _, setName := range e.Sets {
+			s, ok := sets[setName]
+			if !ok {
+				return ep, fmt.Errorf("rule %q references unknown set %q", ruleName, setName)
+			}
+			ep.Sets = append(ep.Sets, s)
 		}
-		ep.IPSet = s
-	}
-
-	if e.PortSet != "" {
-		s, ok := sets[e.PortSet]
-		if !ok {
-			return ep, fmt.Errorf("rule %q references unknown set %q", ruleName, e.PortSet)
-		}
-		ep.PortSet = s
-	}
-	if e.IPPortSet != "" {
-		s, ok := sets[e.IPPortSet]
-		if !ok {
-			return ep, fmt.Errorf("rule %q references unknown set %q", ruleName, e.IPPortSet)
-		}
-		ep.IPPortSet = s
 	}
 
 	return ep, nil

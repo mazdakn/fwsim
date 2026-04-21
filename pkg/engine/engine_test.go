@@ -216,7 +216,7 @@ func TestEngineWithNamedPortsInSets(t *testing.T) {
 rules:
   - name: allow-named-web
     dst:
-      port_set: named-web-ports
+      sets: [named-web-ports]
     action: Accept
   - name: deny-all
     action: Drop
@@ -310,9 +310,9 @@ const testRulesWithSetsYAML = `
 rules:
   - name: allow-trusted-to-web
     src:
-      ip_set: trusted-ips
+      sets: [trusted-ips]
     dst:
-      port_set: web-ports
+      sets: [web-ports]
     action: Accept
   - name: deny-all
     action: Drop
@@ -336,8 +336,8 @@ func TestRulesReferencingNamedSets(t *testing.T) {
 	Expect(len(engine.Table().Rules)).To(Equal(2))
 
 	rule1 := engine.Table().Rules[0]
-	Expect(rule1.Source.IPSet).ToNot(BeNil())
-	Expect(rule1.Destination.PortSet).ToNot(BeNil())
+	Expect(rule1.Source.Sets).To(HaveLen(1))
+	Expect(rule1.Destination.Sets).To(HaveLen(1))
 	Expect(rule1.Source.Net).To(BeNil())
 	Expect(rule1.Destination.Port).To(BeNil())
 }
@@ -394,7 +394,7 @@ const testRulesWithNotSetsYAML = `
 rules:
   - name: allow-non-blocked-src
     not_src:
-      ip_set: trusted-ips
+      sets: [trusted-ips]
     action: Accept
   - name: deny-all
     action: Drop
@@ -412,7 +412,7 @@ func TestRulesReferencingNegatedNamedSets(t *testing.T) {
 	Expect(err).To(BeNil())
 
 	Expect(len(engine.Table().Rules)).To(Equal(2))
-	Expect(engine.Table().Rules[0].NotSource.IPSet).ToNot(BeNil())
+	Expect(engine.Table().Rules[0].NotSource.Sets).To(HaveLen(1))
 }
 
 func TestRulesWithNegatedNamedSetsMatch(t *testing.T) {
