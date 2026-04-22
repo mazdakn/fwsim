@@ -18,11 +18,11 @@ type Table struct {
 	DefaultAction string `yaml:"default_action,omitempty" validate:"isValidAction"`
 }
 
-func (rc *Table) Validate() error {
-	if err := validator.ValidateStructFields(rc); err != nil {
+func (t *Table) Validate() error {
+	if err := validator.ValidateStructFields(t); err != nil {
 		return err
 	}
-	if _, err := rule.ParseAction(rc.DefaultAction); err != nil {
+	if _, err := rule.ParseAction(t.DefaultAction); err != nil {
 		return err
 	}
 	return nil
@@ -139,14 +139,14 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 }
 
 func TableFromBytes(data []byte) (*Table, error) {
-	var rc Table
-	if err := yaml.Unmarshal(data, &rc); err != nil {
+	var t Table
+	if err := yaml.Unmarshal(data, &t); err != nil {
 		return nil, err
 	}
-	if err := rc.Validate(); err != nil {
+	if err := t.Validate(); err != nil {
 		return nil, err
 	}
-	return &rc, nil
+	return &t, nil
 }
 
 func TableFromFile(file string) (*Table, error) {
