@@ -16,6 +16,7 @@ type Action int
 const (
 	Accept Action = iota
 	Drop
+	Pass
 )
 
 func (a Action) String() string {
@@ -24,6 +25,8 @@ func (a Action) String() string {
 		return "Accept"
 	case Drop:
 		return "Drop"
+	case Pass:
+		return "Pass"
 	default:
 		return fmt.Sprintf("Undefined(%d)", a)
 	}
@@ -31,7 +34,7 @@ func (a Action) String() string {
 
 func (a Action) Validate() error {
 	switch a {
-	case Accept, Drop:
+	case Accept, Drop, Pass:
 		return nil
 	default:
 		return fmt.Errorf("undefined action %v", a)
@@ -45,6 +48,8 @@ func ParseAction(s string) (Action, error) {
 		return Accept, nil
 	case "drop":
 		return Drop, nil
+	case "pass":
+		return Pass, nil
 	default:
 		return Action(0), fmt.Errorf("unknown action: %s", s)
 	}
@@ -57,6 +62,8 @@ func MustParseAction(s string) Action {
 		return Accept
 	case "drop":
 		return Drop
+	case "pass":
+		return Pass
 	default:
 		panic(fmt.Sprintf("unknown action: %s", s))
 	}

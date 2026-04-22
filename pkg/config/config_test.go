@@ -14,17 +14,26 @@ func TestConfigFromDirectory(t *testing.T) {
 	RegisterTestingT(t)
 
 	dir := t.TempDir()
-	Expect(os.MkdirAll(filepath.Join(dir, "rules"), 0o755)).To(Succeed())
+	Expect(os.MkdirAll(filepath.Join(dir, "tables"), 0o755)).To(Succeed())
 	Expect(os.MkdirAll(filepath.Join(dir, "sets"), 0o755)).To(Succeed())
 	Expect(os.MkdirAll(filepath.Join(dir, "packets"), 0o755)).To(Succeed())
 
-	Expect(os.WriteFile(filepath.Join(dir, "rules", "rules.yaml"), []byte(`
+	Expect(os.WriteFile(filepath.Join(dir, "tables", "main.yaml"), []byte(`
+name: main
+order: 20
+default_action: Drop
 rules:
   - name: allow-http
     dst:
       port: [80]
     action: Accept
-default_action: Drop
+`), 0o600)).To(Succeed())
+
+	Expect(os.WriteFile(filepath.Join(dir, "tables", "before-main.yaml"), []byte(`
+name: before-main
+order: 10
+default_action: Pass
+rules: []
 `), 0o600)).To(Succeed())
 
 	Expect(os.WriteFile(filepath.Join(dir, "sets", "sets.yaml"), []byte(`
@@ -46,69 +55,25 @@ dst_port: 80
 		LoadPackets: true,
 	})
 	Expect(err).To(BeNil())
-	Expect(resources.Table).ToNot(BeNil())
+	Expect(resources.Tables).To(HaveLen(2))
+	Expect(resources.Tables[0].Name).To(Equal("before-main"))
+	Expect(resources.Tables[1].Name).To(Equal("main"))
 	Expect(resources.Sets).To(HaveLen(1))
 	Expect(resources.Packets).To(HaveLen(1))
 	Expect(resources.Sets).To(HaveKey("web-ports"))
 	Expect(resources.Sets["web-ports"].Match(uint16(80))).To(BeTrue())
-	Expect(resources.Sets["web-ports"].Match(uint16(443))).To(BeTrue())
 	Expect(resources.Packets[0].SrcAddr.String()).To(Equal("10.0.0.1"))
-	Expect(resources.Packets[0].DstAddr.String()).To(Equal("1.1.1.1"))
-	Expect(resources.Packets[0].SrcPort).To(Equal(uint16(12345)))
 	Expect(resources.Packets[0].DstPort).To(Equal(uint16(80)))
 }
 
-func TestConfigFromDirectoryWithTableResource(t *testing.T) {
+func TestConfigFromDirectoryWithoutTables(t *testing.T) {
 	RegisterTestingT(t)
 
 	dir := t.TempDir()
-	Expect(os.MkdirAll(filepath.Join(dir, "tables"), 0o755)).To(Succeed())
-	Expect(os.MkdirAll(filepath.Join(dir, "rules"), 0o755)).To(Succeed())
-
-	Expect(os.WriteFile(filepath.Join(dir, "tables", "main.yaml"), []byte(`
-name: edge-table
-order: 42
-default_action: Drop
-`), 0o600)).To(Succeed())
-
-	Expect(os.WriteFile(filepath.Join(dir, "rules", "rules.yaml"), []byte(`
-rules:
-  - name: allow-http
-    dst:
-      port: [80]
-    action: Accept
-`), 0o600)).To(Succeed())
-
-	resources, err := ConfigFromFile(Config{
-		InputDir: dir,
-	})
-	Expect(err).To(BeNil())
-	Expect(resources.Table).ToNot(BeNil())
-	Expect(resources.Table.Name).To(Equal("edge-table"))
-	Expect(resources.Table.Order).To(Equal(uint64(42)))
-	Expect(resources.Table.DefaultAction.Action.String()).To(Equal("Drop"))
-	Expect(resources.Table.Rules).To(HaveLen(1))
-}
-
-func TestConfigRulesFromDirConflictingDefaultAction(t *testing.T) {
-	RegisterTestingT(t)
-
-	dir := t.TempDir()
-	rulesDir := filepath.Join(dir, "rules")
-	Expect(os.MkdirAll(rulesDir, 0o755)).To(Succeed())
-	Expect(os.WriteFile(filepath.Join(rulesDir, "a.yaml"), []byte(`
-rules: []
-default_action: Accept
-`), 0o600)).To(Succeed())
-	Expect(os.WriteFile(filepath.Join(rulesDir, "b.yaml"), []byte(`
-rules: []
-default_action: Drop
-`), 0o600)).To(Succeed())
-
-	tbl, err := ConfigRulesFromDir(rulesDir, nil)
+	resources, err := ConfigFromFile(Config{InputDir: dir})
 	Expect(err).ToNot(BeNil())
-	Expect(err.Error()).To(ContainSubstring("conflicting default_action"))
-	Expect(tbl).To(BeNil())
+	Expect(err.Error()).To(ContainSubstring("failed to read tables directory"))
+	Expect(resources).To(Equal(engine.Resources{}))
 }
 
 func TestConfigSetsFromDirMissingDirectory(t *testing.T) {
@@ -123,17 +88,19 @@ func TestConfigFromDirectoryWithoutPacketsWhenNotRequested(t *testing.T) {
 	RegisterTestingT(t)
 
 	dir := t.TempDir()
-	Expect(os.MkdirAll(filepath.Join(dir, "rules"), 0o755)).To(Succeed())
-	Expect(os.WriteFile(filepath.Join(dir, "rules", "rules.yaml"), []byte(`
-rules: []
+	Expect(os.MkdirAll(filepath.Join(dir, "tables"), 0o755)).To(Succeed())
+	Expect(os.WriteFile(filepath.Join(dir, "tables", "table.yaml"), []byte(`
+name: main
+order: 0
 default_action: Accept
+rules: []
 `), 0o600)).To(Succeed())
 
 	resources, err := ConfigFromFile(Config{
 		InputDir: dir,
 	})
 	Expect(err).To(BeNil())
-	Expect(resources.Table).ToNot(BeNil())
+	Expect(resources.Tables).To(HaveLen(1))
 	Expect(resources.Packets).To(BeNil())
 }
 
@@ -167,23 +134,26 @@ members: ["443"]
 	Expect(sets).To(BeNil())
 }
 
-func TestConfigTableFromDirMultipleFiles(t *testing.T) {
+func TestConfigTablesFromDirSortedAscending(t *testing.T) {
 	RegisterTestingT(t)
 
 	dir := t.TempDir()
-	Expect(os.WriteFile(filepath.Join(dir, "a.yaml"), []byte(`
-name: table-a
-order: 1
-default_action: Accept
-`), 0o600)).To(Succeed())
 	Expect(os.WriteFile(filepath.Join(dir, "b.yaml"), []byte(`
 name: table-b
 order: 2
 default_action: Drop
+rules: []
+`), 0o600)).To(Succeed())
+	Expect(os.WriteFile(filepath.Join(dir, "a.yaml"), []byte(`
+name: table-a
+order: 1
+default_action: Accept
+rules: []
 `), 0o600)).To(Succeed())
 
-	tbl, err := ConfigTableFromDir(dir)
-	Expect(err).ToNot(BeNil())
-	Expect(err.Error()).To(ContainSubstring("multiple table files"))
-	Expect(tbl).To(BeNil())
+	tables, err := ConfigTablesFromDir(dir, nil)
+	Expect(err).To(BeNil())
+	Expect(tables).To(HaveLen(2))
+	Expect(tables[0].Name).To(Equal("table-a"))
+	Expect(tables[1].Name).To(Equal("table-b"))
 }

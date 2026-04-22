@@ -14,11 +14,17 @@ func TestTableFromBytes(t *testing.T) {
 name: app-table
 order: 100
 default_action: Accept
+rules:
+  - name: allow-http
+    dst:
+      port: [80]
+    action: Accept
 `))
 	Expect(err).To(BeNil())
 	Expect(cfg.Name).To(Equal("app-table"))
 	Expect(cfg.Order).To(Equal(uint64(100)))
 	Expect(cfg.DefaultAction).To(Equal("Accept"))
+	Expect(cfg.Rules).To(HaveLen(1))
 }
 
 func TestTableToTable(t *testing.T) {
@@ -28,12 +34,20 @@ func TestTableToTable(t *testing.T) {
 		Name:          "app-table",
 		Order:         7,
 		DefaultAction: "Drop",
+		Rules: []TableRule{
+			{
+				Name:   "allow-http",
+				Action: "Accept",
+			},
+		},
 	}
-	tbl, err := cfg.ToTable()
+	tbl, err := cfg.ToTable(nil)
 	Expect(err).To(BeNil())
 	Expect(tbl.Name).To(Equal("app-table"))
 	Expect(tbl.Order).To(Equal(uint64(7)))
 	Expect(tbl.DefaultAction.Action).To(Equal(rule.Drop))
+	Expect(tbl.Rules).To(HaveLen(1))
+	Expect(tbl.Rules[0].Action).To(Equal(rule.Accept))
 }
 
 func TestTableFromBytesInvalidDefaultAction(t *testing.T) {

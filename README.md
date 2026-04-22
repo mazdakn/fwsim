@@ -23,7 +23,6 @@ Project Layout
   pkg/                    Engine, parser, matcher, sets, rules
   hack/sample/            Example input data
     tables/
-    rules/
     sets/
     packets/
 
@@ -32,8 +31,7 @@ Input Directory Structure
 fwsim expects an input directory with:
 
   <dir>/
-    tables/     # one .yaml/.yml file (preferred; if absent, falls back to rules default_action)
-    rules/      # one or more .yaml/.yml files (required)
+    tables/     # one or more .yaml/.yml files (required)
     sets/       # optional .yaml/.yml files
     packets/    # .yaml/.yml files (required for "run")
 
@@ -59,7 +57,7 @@ CLI Usage
 ---------
 Base flag (required for all commands):
 
-  -d, --dir <path>   input directory containing tables/, rules/, sets/, packets/
+  -d, --dir <path>   input directory containing tables/, sets/, packets/
 
 Commands
 --------
@@ -81,15 +79,18 @@ Protocol values:
   - Name:   tcp, udp, icmp
   - Number: 0-255
 
-Rule Config (rules/*.yaml)
---------------------------
+Table Config (tables/*.yaml)
+----------------------------
 Top-level keys:
-  rules: list of rule entries
+  name:            Table name
+  order:           Table order (lower first)
+  default_action:  Accept | Drop | Pass
+  rules:           list of rule entries
 
 Each rule may include:
   name        Human-readable label
   order       Evaluation order (lower first)
-  action      Accept | Drop
+  action      Accept | Drop | Pass
   src / dst:
     net:          list of CIDRs
     port:         list of port numbers
@@ -100,8 +101,11 @@ Each rule may include:
   proto:      list of protocol names or numbers
   not_proto:  list of protocols to exclude
 
-Example (hack/sample/rules/simple.yaml):
+Example (hack/sample/tables/main.yaml):
 
+  name: main
+  order: 0
+  default_action: Accept
   rules:
     - name: allow-192.168-to-1.1.1.1
       src:
@@ -118,13 +122,6 @@ Example (hack/sample/rules/simple.yaml):
         port: [80]
       proto: [tcp]
       action: Drop
-Table Config (tables/*.yaml)
-----------------------------
-Top-level keys:
-  name:            Table name
-  order:           Table order (lower first)
-  default_action:  Accept | Drop
-
 Set Config (sets/*.yaml)
 ------------------------
 One set per file:
@@ -178,7 +175,7 @@ Output
 ------
 For each packet fwsim prints:
 
-  Packet: <summary>   Verdict: Accept|Drop
+  Packet: <summary>   Verdict: Accept|Drop|Pass
 
   +--------------------------+--------+-----------+
   | Rule                     | Action | Hit Count |

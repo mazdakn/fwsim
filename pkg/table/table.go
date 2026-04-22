@@ -43,21 +43,20 @@ func (t *Table) AddRule(r *rule.Rule) {
 	t.Rules[i] = r
 }
 
-func (t *Table) Match(match *match.Match) {
+func (t *Table) Match(match *match.Match) rule.Action {
 	t.logCtx.Debugf("Matching packet %+v", match.Packet)
 	for _, r := range t.Rules {
 		match.Result.Trace = append(match.Result.Trace, r)
 		if r.Match(match.Packet) {
 			t.logCtx.Debugf("Rule %+v matched", r)
-			match.Result.Verdict = r.Action
-			return
+			return r.Action
 		}
 	}
 	if t.DefaultAction == nil {
-		panic("No rule matched and no default action is set")
+		return rule.Pass
 	}
 	t.logCtx.Debugf("No rule matched, using default action %s", t.DefaultAction.Action.String())
 	t.DefaultAction.IncrementPacketCount()
 	match.Result.Trace = append(match.Result.Trace, t.DefaultAction)
-	match.Result.Verdict = t.DefaultAction.Action
+	return t.DefaultAction.Action
 }

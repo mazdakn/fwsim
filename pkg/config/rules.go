@@ -2,32 +2,13 @@ package config
 
 import (
 	"fmt"
-	"os"
 
-	"github.com/goccy/go-yaml"
 	"github.com/mazdakn/fwsim/pkg/port"
 	"github.com/mazdakn/fwsim/pkg/proto"
 	"github.com/mazdakn/fwsim/pkg/rule"
 	"github.com/mazdakn/fwsim/pkg/set"
 	"github.com/mazdakn/fwsim/pkg/validator"
 )
-
-type RuleConfig struct {
-	Rules         []Rule `yaml:"rules,omitempty"`
-	DefaultAction string `yaml:"default_action,omitempty" validate:"isValidAction"`
-}
-
-func (rc *RuleConfig) Validate() error {
-	return validator.ValidateStructFields(rc)
-}
-
-type RulesOnlyConfig struct {
-	Rules []Rule `yaml:"rules,omitempty"`
-}
-
-func (rc *RulesOnlyConfig) Validate() error {
-	return validator.ValidateStructFields(rc)
-}
 
 // Endpoint groups the network and port match criteria for one traffic direction
 // in the YAML configuration.
@@ -89,8 +70,8 @@ func (e *Endpoint) toEndpoint(ruleName string, sets map[string]set.Set) (rule.En
 	return ep, nil
 }
 
-// Rule represents the YAML configuration structure for a firewall rule.
-type Rule struct {
+// TableRule represents a firewall rule entry nested under a table definition.
+type TableRule struct {
 	Name           string        `yaml:"name,omitempty"`
 	Order          uint64        `yaml:"order,omitempty"`
 	Source         Endpoint      `yaml:"src,omitempty"`
@@ -102,10 +83,12 @@ type Rule struct {
 	Action         string        `yaml:"action,omitempty"    validate:"isValidAction"`
 }
 
-// ToRule converts a Rule config into a Rule domain object.
-// sets is the map of pre-loaded named sets; any set name referenced by this
-// rule that is not present in sets causes an error.
-func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
+func (r *TableRule) Validate() error {
+	return validator.ValidateStructFields(r)
+}
+
+// ToRule converts a TableRule config into a domain rule.
+func (r *TableRule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 	mRule := rule.New()
 	mRule.Name = r.Name
 	mRule.Order = r.Order
@@ -151,42 +134,4 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 	}
 
 	return mRule, nil
-}
-
-func RuleConfigFromBytes(data []byte) (*RuleConfig, error) {
-	var rc RuleConfig
-	if err := yaml.Unmarshal(data, &rc); err != nil {
-		return nil, err
-	}
-	if err := rc.Validate(); err != nil {
-		return nil, err
-	}
-	return &rc, nil
-}
-
-func RuleConfigFromFile(file string) (*RuleConfig, error) {
-	data, err := os.ReadFile(file)
-	if err != nil {
-		return nil, err
-	}
-	return RuleConfigFromBytes(data)
-}
-
-func RulesOnlyConfigFromBytes(data []byte) (*RulesOnlyConfig, error) {
-	var rc RulesOnlyConfig
-	if err := yaml.Unmarshal(data, &rc); err != nil {
-		return nil, err
-	}
-	if err := rc.Validate(); err != nil {
-		return nil, err
-	}
-	return &rc, nil
-}
-
-func RulesOnlyConfigFromFile(file string) (*RulesOnlyConfig, error) {
-	data, err := os.ReadFile(file)
-	if err != nil {
-		return nil, err
-	}
-	return RulesOnlyConfigFromBytes(data)
 }

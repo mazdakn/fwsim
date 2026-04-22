@@ -1,7 +1,6 @@
 package config
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,18 +9,12 @@ import (
 
 	"github.com/mazdakn/fwsim/pkg/engine"
 	"github.com/mazdakn/fwsim/pkg/packet"
-	"github.com/mazdakn/fwsim/pkg/rule"
 	"github.com/mazdakn/fwsim/pkg/set"
 	"github.com/mazdakn/fwsim/pkg/table"
 )
 
-const (
-	mainTableName     = "main"
-	defaultTableOrder = 0
-)
-
 type Config struct {
-	// Base directory input. Expects tables/, rules/, sets/, packets/ sub-directories.
+	// Base directory input. Expects tables/, sets/, packets/ sub-directories.
 	InputDir string
 
 	// LoadPackets controls whether packets/ input is loaded.
@@ -46,23 +39,11 @@ func ConfigFromDirectory(conf Config) (engine.Resources, error) {
 	}
 	resources.Sets = sets
 
-	tbl, err := ConfigTableFromDir(filepath.Join(conf.InputDir, "tables"))
-	switch {
-	case err == nil:
-		if err := ConfigRulesToTableFromDir(filepath.Join(conf.InputDir, "rules"), resources.Sets, tbl); err != nil {
-			return engine.Resources{}, err
-		}
-		resources.Table = tbl
-	case errors.Is(err, os.ErrNotExist):
-		// Backward compatibility: use default_action from rules if no tables/ directory exists.
-		tbl, err := ConfigRulesFromDir(filepath.Join(conf.InputDir, "rules"), resources.Sets)
-		if err != nil {
-			return engine.Resources{}, err
-		}
-		resources.Table = tbl
-	default:
+	tables, err := ConfigTablesFromDir(filepath.Join(conf.InputDir, "tables"), resources.Sets)
+	if err != nil {
 		return engine.Resources{}, err
 	}
+	resources.Tables = tables
 
 	if conf.LoadPackets {
 		pkts, err := ConfigPacketsFromDir(filepath.Join(conf.InputDir, "packets"))
@@ -73,30 +54,6 @@ func ConfigFromDirectory(conf Config) (engine.Resources, error) {
 	}
 
 	return resources, nil
-}
-
-func ConfigRulesFromBytes(data []byte, sets map[string]set.Set) (*table.Table, error) {
-	rc, err := RuleConfigFromBytes(data)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse rules: %w", err)
-	}
-	tbl, err := toTable(rc, sets)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load rules: %w", err)
-	}
-	return tbl, nil
-}
-
-func ConfigRulesFromFile(file string, sets map[string]set.Set) (*table.Table, error) {
-	rc, err := RuleConfigFromFile(file)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read rules from %s: %w", file, err)
-	}
-	tbl, err := toTable(rc, sets)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load rules from %s: %w", file, err)
-	}
-	return tbl, nil
 }
 
 func ConfigPacketsFromBytes(data []byte) ([]*packet.Packet, error) {
@@ -131,89 +88,31 @@ func ConfigSetsFromFile(file string) (map[string]set.Set, error) {
 	return sets, nil
 }
 
-func ConfigRulesFromDir(dir string, sets map[string]set.Set) (*table.Table, error) {
-	files, err := yamlFilesInDir(dir)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read rules directory %s: %w", dir, err)
-	}
-	if len(files) == 0 {
-		return nil, fmt.Errorf("no yaml files found in rules directory %s", dir)
-	}
-
-	merged := &RuleConfig{}
-	for _, file := range files {
-		rc, err := RuleConfigFromFile(file)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read rules from %s: %w", file, err)
-		}
-		merged.Rules = append(merged.Rules, rc.Rules...)
-		if rc.DefaultAction == "" {
-			continue
-		}
-		if merged.DefaultAction == "" {
-			merged.DefaultAction = rc.DefaultAction
-			continue
-		}
-		if merged.DefaultAction != rc.DefaultAction {
-			return nil, fmt.Errorf("conflicting default_action in %s: %s (expected %s)", file, rc.DefaultAction, merged.DefaultAction)
-		}
-	}
-
-	if merged.DefaultAction == "" {
-		return nil, fmt.Errorf("no default_action found in any rules file under %s", dir)
-	}
-	return toTable(merged, sets)
-}
-
-func ConfigRulesToTableFromDir(dir string, sets map[string]set.Set, tbl *table.Table) error {
-	files, err := yamlFilesInDir(dir)
-	if err != nil {
-		return fmt.Errorf("failed to read rules directory %s: %w", dir, err)
-	}
-	if len(files) == 0 {
-		return fmt.Errorf("no yaml files found in rules directory %s", dir)
-	}
-	for _, file := range files {
-		rc, err := RulesOnlyConfigFromFile(file)
-		if err != nil {
-			return fmt.Errorf("failed to read rules from %s: %w", file, err)
-		}
-		for _, r := range rc.Rules {
-			mRule, err := r.ToRule(sets)
-			if err != nil {
-				return err
-			}
-			tbl.AddRule(mRule)
-		}
-	}
-	return nil
-}
-
-func ConfigTableFromBytes(data []byte) (*table.Table, error) {
+func ConfigTableFromBytes(data []byte, sets map[string]set.Set) (*table.Table, error) {
 	tCfg, err := TableFromBytes(data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse table: %w", err)
 	}
-	tbl, err := tCfg.ToTable()
+	tbl, err := tCfg.ToTable(sets)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load table: %w", err)
 	}
 	return tbl, nil
 }
 
-func ConfigTableFromFile(file string) (*table.Table, error) {
+func ConfigTableFromFile(file string, sets map[string]set.Set) (*table.Table, error) {
 	tCfg, err := TableFromFile(file)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read table from %s: %w", file, err)
 	}
-	tbl, err := tCfg.ToTable()
+	tbl, err := tCfg.ToTable(sets)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load table from %s: %w", file, err)
 	}
 	return tbl, nil
 }
 
-func ConfigTableFromDir(dir string) (*table.Table, error) {
+func ConfigTablesFromDir(dir string, sets map[string]set.Set) ([]*table.Table, error) {
 	files, err := yamlFilesInDir(dir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read tables directory %s: %w", dir, err)
@@ -221,10 +120,18 @@ func ConfigTableFromDir(dir string) (*table.Table, error) {
 	if len(files) == 0 {
 		return nil, fmt.Errorf("no yaml files found in tables directory %s", dir)
 	}
-	if len(files) > 1 {
-		return nil, fmt.Errorf("multiple table files found in tables directory %s; expected exactly one", dir)
+	tables := make([]*table.Table, 0, len(files))
+	for _, file := range files {
+		tbl, err := ConfigTableFromFile(file, sets)
+		if err != nil {
+			return nil, err
+		}
+		tables = append(tables, tbl)
 	}
-	return ConfigTableFromFile(files[0])
+	sort.SliceStable(tables, func(i, j int) bool {
+		return tables[i].Order < tables[j].Order
+	})
+	return tables, nil
 }
 
 func ConfigPacketsFromDir(dir string) ([]*packet.Packet, error) {
@@ -289,24 +196,4 @@ func yamlFilesInDir(dir string) ([]string, error) {
 	}
 	sort.Strings(files)
 	return files, nil
-}
-
-func toTable(rc *RuleConfig, sets map[string]set.Set) (*table.Table, error) {
-	if sets == nil {
-		sets = map[string]set.Set{}
-	}
-
-	action, err := rule.ParseAction(rc.DefaultAction)
-	if err != nil {
-		return nil, fmt.Errorf("invalid default_action %q: %w", rc.DefaultAction, err)
-	}
-	tbl := table.New(mainTableName, defaultTableOrder, action)
-	for _, r := range rc.Rules {
-		mRule, err := r.ToRule(sets)
-		if err != nil {
-			return nil, err
-		}
-		tbl.AddRule(mRule)
-	}
-	return tbl, nil
 }

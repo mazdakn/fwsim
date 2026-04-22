@@ -74,6 +74,6 @@ func TestTableMatchUsesAscendingOrder(t *testing.T) {
 	table.AddRule(lowOrderAccept)
 
 	m := match.Match{Packet: pkt}
-	table.Match(&m)
-	Expect(m.Result.Verdict).To(Equal(rule.Accept))
+	action := table.Match(&m)
+	Expect(action).To(Equal(rule.Accept))
 }
