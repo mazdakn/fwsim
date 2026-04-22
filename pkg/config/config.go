@@ -129,9 +129,6 @@ func ConfigRulesFromDir(dir string, sets map[string]set.Set) (*table.Table, erro
 			return nil, fmt.Errorf("failed to read table from %s: %w", file, err)
 		}
 		merged.Rules = append(merged.Rules, rc.Rules...)
-		if rc.Name == "" {
-			continue
-		}
 		if merged.Name == "" {
 			merged.Name = rc.Name
 		} else if merged.Name != rc.Name {

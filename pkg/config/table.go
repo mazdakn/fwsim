@@ -13,7 +13,7 @@ import (
 )
 
 type Table struct {
-	Name          string `yaml:"name,omitempty"`
+	Name          string `yaml:"name"`
 	Rules         []Rule `yaml:"rules,omitempty"`
 	DefaultAction string `yaml:"default_action,omitempty" validate:"isValidAction"`
 }
