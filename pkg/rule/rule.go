@@ -401,10 +401,10 @@ func (r *Rule) String() string {
 	case r.NotSource.Port != nil:
 		srcPort = "!" + r.NotSource.Port.String()
 	}
-	srcPort = appendSetStrings(srcPort, filterEndpointSetsByType(r.Source.Sets, (*set.PortSet)(nil)))
-	srcPort = appendSetStrings(srcPort, filterEndpointSetsByType(r.Source.Sets, (*set.IPPortSet)(nil)))
-	srcPort = appendNotSetStrings(srcPort, filterEndpointSetsByType(r.NotSource.Sets, (*set.PortSet)(nil)))
-	srcPort = appendNotSetStrings(srcPort, filterEndpointSetsByType(r.NotSource.Sets, (*set.IPPortSet)(nil)))
+	srcPort = appendSetStrings(srcPort, filterEndpointSetsByType(r.Source.Sets, set.TypePort))
+	srcPort = appendSetStrings(srcPort, filterEndpointSetsByType(r.Source.Sets, set.TypeIPPort))
+	srcPort = appendNotSetStrings(srcPort, filterEndpointSetsByType(r.NotSource.Sets, set.TypePort))
+	srcPort = appendNotSetStrings(srcPort, filterEndpointSetsByType(r.NotSource.Sets, set.TypeIPPort))
 
 	dstPort := "*"
 	switch {
@@ -415,10 +415,10 @@ func (r *Rule) String() string {
 	case r.NotDestination.Port != nil:
 		dstPort = "!" + r.NotDestination.Port.String()
 	}
-	dstPort = appendSetStrings(dstPort, filterEndpointSetsByType(r.Destination.Sets, (*set.PortSet)(nil)))
-	dstPort = appendSetStrings(dstPort, filterEndpointSetsByType(r.Destination.Sets, (*set.IPPortSet)(nil)))
-	dstPort = appendNotSetStrings(dstPort, filterEndpointSetsByType(r.NotDestination.Sets, (*set.PortSet)(nil)))
-	dstPort = appendNotSetStrings(dstPort, filterEndpointSetsByType(r.NotDestination.Sets, (*set.IPPortSet)(nil)))
+	dstPort = appendSetStrings(dstPort, filterEndpointSetsByType(r.Destination.Sets, set.TypePort))
+	dstPort = appendSetStrings(dstPort, filterEndpointSetsByType(r.Destination.Sets, set.TypeIPPort))
+	dstPort = appendNotSetStrings(dstPort, filterEndpointSetsByType(r.NotDestination.Sets, set.TypePort))
+	dstPort = appendNotSetStrings(dstPort, filterEndpointSetsByType(r.NotDestination.Sets, set.TypeIPPort))
 
 	srcNet := "*"
 	switch {
@@ -429,8 +429,8 @@ func (r *Rule) String() string {
 	case r.NotSource.Net != nil:
 		srcNet = "!" + r.NotSource.Net.String()
 	}
-	srcNet = appendSetStrings(srcNet, filterEndpointSetsByType(r.Source.Sets, (*set.IPSet)(nil)))
-	srcNet = appendNotSetStrings(srcNet, filterEndpointSetsByType(r.NotSource.Sets, (*set.IPSet)(nil)))
+	srcNet = appendSetStrings(srcNet, filterEndpointSetsByType(r.Source.Sets, set.TypeIP))
+	srcNet = appendNotSetStrings(srcNet, filterEndpointSetsByType(r.NotSource.Sets, set.TypeIP))
 
 	dstNet := "*"
 	switch {
@@ -441,46 +441,50 @@ func (r *Rule) String() string {
 	case r.NotDestination.Net != nil:
 		dstNet = "!" + r.NotDestination.Net.String()
 	}
-	dstNet = appendSetStrings(dstNet, filterEndpointSetsByType(r.Destination.Sets, (*set.IPSet)(nil)))
-	dstNet = appendNotSetStrings(dstNet, filterEndpointSetsByType(r.NotDestination.Sets, (*set.IPSet)(nil)))
+	dstNet = appendSetStrings(dstNet, filterEndpointSetsByType(r.Destination.Sets, set.TypeIP))
+	dstNet = appendNotSetStrings(dstNet, filterEndpointSetsByType(r.NotDestination.Sets, set.TypeIP))
 	return fmt.Sprintf("%s %s{%s:%s->%s:%s}", r.Action, proto, srcNet, srcPort, dstNet, dstPort)
 }
 
-// matchAllNamedSets returns true when every set in sets matches at least one
-// candidate value.
-func matchAllNamedSets(sets []set.Set, candidates ...any) bool {
+// matchAllNamedSets returns true when every set in sets matches the packet
+// value corresponding to the set's type.
+func matchAllNamedSets(sets []set.Set, ip any, port any, ipPort any) bool {
 	for _, s := range sets {
 		if s == nil {
 			continue
 		}
-		matched := false
-		for _, v := range candidates {
-			if s.Match(v) {
-				matched = true
-				break
-			}
-		}
-		if !matched {
+		if !matchNamedSetByType(s, ip, port, ipPort) {
 			return false
 		}
 	}
 	return true
 }
 
-// matchAnyNamedSet returns true when any set in sets matches at least one
-// candidate value.
-func matchAnyNamedSet(sets []set.Set, candidates ...any) bool {
+// matchAnyNamedSet returns true when any set in sets matches the packet value
+// corresponding to the set's type.
+func matchAnyNamedSet(sets []set.Set, ip any, port any, ipPort any) bool {
 	for _, s := range sets {
 		if s == nil {
 			continue
 		}
-		for _, v := range candidates {
-			if s.Match(v) {
-				return true
-			}
+		if matchNamedSetByType(s, ip, port, ipPort) {
+			return true
 		}
 	}
 	return false
+}
+
+func matchNamedSetByType(s set.Set, ip any, port any, ipPort any) bool {
+	switch s.Type() {
+	case set.TypeIP:
+		return s.Match(ip)
+	case set.TypePort:
+		return s.Match(port)
+	case set.TypeIPPort:
+		return s.Match(ipPort)
+	default:
+		return false
+	}
 }
 
 // appendSetString appends the string representation of s to base, separated
@@ -538,22 +542,14 @@ func addEndpointSet(sets []set.Set, s set.Set) []set.Set {
 	return append(sets, s)
 }
 
-func filterEndpointSetsByType(sets []set.Set, t any) []set.Set {
+func filterEndpointSetsByType(sets []set.Set, t set.Type) []set.Set {
 	filtered := make([]set.Set, 0, len(sets))
 	for _, s := range sets {
-		switch t.(type) {
-		case *set.IPSet:
-			if _, ok := s.(*set.IPSet); ok {
-				filtered = append(filtered, s)
-			}
-		case *set.PortSet:
-			if _, ok := s.(*set.PortSet); ok {
-				filtered = append(filtered, s)
-			}
-		case *set.IPPortSet:
-			if _, ok := s.(*set.IPPortSet); ok {
-				filtered = append(filtered, s)
-			}
+		if s == nil {
+			continue
+		}
+		if s.Type() == t {
+			filtered = append(filtered, s)
 		}
 	}
 	return filtered
