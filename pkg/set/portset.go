@@ -75,6 +75,10 @@ func (p *PortSet) Match(v any) bool {
 	return false
 }
 
+func (p *PortSet) Type() Type {
+	return TypePort
+}
+
 // String returns a human-readable representation of the PortSet.
 // A single-entry set renders as its number or range (e.g. "80" or "1024-65535").
 // A multi-entry set renders as a sorted brace-enclosed list (e.g. "{80,443}").

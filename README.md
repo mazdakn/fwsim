@@ -94,9 +94,7 @@ Each rule may include:
   src / dst:
     net:          list of CIDRs
     port:         list of port numbers
-    ip_set:       reference to a named IP set
-    port_set:     reference to a named port set
-    ipport_set:   reference to a named IP:port set
+    sets:         list of named set references (IP, port, or IP:port sets)
   not_src / not_dst  (same shape as src/dst – negate the match)
   proto:      list of protocol names or numbers
   not_proto:  list of protocols to exclude

@@ -47,6 +47,10 @@ func (ps *ProtoSet) Match(v any) bool {
 	return ps.Exists(p)
 }
 
+func (ps *ProtoSet) Type() Type {
+	return TypeProto
+}
+
 // String returns a human-readable representation of the ProtoSet.
 // A single-protocol set renders as its name or number (e.g. "tcp").
 // A multi-protocol set renders as a sorted brace-enclosed list (e.g. "{tcp,udp}").

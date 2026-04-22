@@ -61,6 +61,13 @@ func (s *IPSet) Match(v any) bool {
 // String returns a human-readable representation of the IPSet.
 // A single-network set renders as its CIDR (e.g. "10.0.0.0/8").
 // A multi-network set renders as a sorted brace-enclosed list (e.g. "{10.0.0.0/8,192.168.0.0/16}").
+func (s *IPSet) Type() Type {
+	return TypeIP
+}
+
+// String returns a human-readable representation of the IPSet.
+// A single-network set renders as its CIDR (e.g. "10.0.0.0/8").
+// A multi-network set renders as a sorted brace-enclosed list (e.g. "{10.0.0.0/8,192.168.0.0/16}").
 func (s *IPSet) String() string {
 	cidrs := make([]string, 0, len(s.nets))
 	for cidr := range s.nets {
