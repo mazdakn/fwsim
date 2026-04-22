@@ -13,7 +13,7 @@ import (
 )
 
 func loadRulesFromBytes(e *enginepkg.Engine, data []byte) error {
-	tbl, err := config.ConfigRulesFromBytes(data, e.Sets())
+	tbl, err := config.ConfigTableFromBytes(data, e.Sets())
 	if err != nil {
 		return err
 	}

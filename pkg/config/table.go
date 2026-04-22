@@ -13,7 +13,7 @@ import (
 )
 
 type Table struct {
-	Name          string `yaml:"name"`
+	Name          string `yaml:"name"                   validate:"isNonEmpty"`
 	Rules         []Rule `yaml:"rules,omitempty"`
 	DefaultAction string `yaml:"default_action,omitempty" validate:"isValidAction"`
 }
@@ -21,9 +21,6 @@ type Table struct {
 func (rc *Table) Validate() error {
 	if err := validator.ValidateStructFields(rc); err != nil {
 		return err
-	}
-	if rc.Name == "" {
-		return fmt.Errorf("name is required")
 	}
 	if _, err := rule.ParseAction(rc.DefaultAction); err != nil {
 		return err

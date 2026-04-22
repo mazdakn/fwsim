@@ -57,24 +57,24 @@ func ConfigFromDirectory(conf Config) (engine.Resources, error) {
 	return resources, nil
 }
 
-func ConfigRulesFromBytes(data []byte, sets map[string]set.Set) (*table.Table, error) {
-	rc, err := TableFromBytes(data)
+func ConfigTableFromBytes(data []byte, sets map[string]set.Set) (*table.Table, error) {
+	t, err := TableFromBytes(data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse table: %w", err)
 	}
-	tbl, err := toTable(rc, sets)
+	tbl, err := toTable(t, sets)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load table: %w", err)
 	}
 	return tbl, nil
 }
 
-func ConfigRulesFromFile(file string, sets map[string]set.Set) (*table.Table, error) {
-	rc, err := TableFromFile(file)
+func ConfigTableFromFile(file string, sets map[string]set.Set) (*table.Table, error) {
+	t, err := TableFromFile(file)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read table from %s: %w", file, err)
 	}
-	tbl, err := toTable(rc, sets)
+	tbl, err := toTable(t, sets)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load table from %s: %w", file, err)
 	}
@@ -124,25 +124,25 @@ func ConfigRulesFromDir(dir string, sets map[string]set.Set) (*table.Table, erro
 
 	merged := &Table{}
 	for _, file := range files {
-		rc, err := TableFromFile(file)
+		t, err := TableFromFile(file)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read table from %s: %w", file, err)
 		}
-		merged.Rules = append(merged.Rules, rc.Rules...)
+		merged.Rules = append(merged.Rules, t.Rules...)
 		if merged.Name == "" {
-			merged.Name = rc.Name
-		} else if merged.Name != rc.Name {
-			return nil, fmt.Errorf("conflicting table name in %s: %s (expected %s)", file, rc.Name, merged.Name)
+			merged.Name = t.Name
+		} else if merged.Name != t.Name {
+			return nil, fmt.Errorf("conflicting table name in %s: %s (expected %s)", file, t.Name, merged.Name)
 		}
-		if rc.DefaultAction == "" {
+		if t.DefaultAction == "" {
 			continue
 		}
 		if merged.DefaultAction == "" {
-			merged.DefaultAction = rc.DefaultAction
+			merged.DefaultAction = t.DefaultAction
 			continue
 		}
-		if merged.DefaultAction != rc.DefaultAction {
-			return nil, fmt.Errorf("conflicting default_action in %s: %s (expected %s)", file, rc.DefaultAction, merged.DefaultAction)
+		if merged.DefaultAction != t.DefaultAction {
+			return nil, fmt.Errorf("conflicting default_action in %s: %s (expected %s)", file, t.DefaultAction, merged.DefaultAction)
 		}
 	}
 
@@ -219,13 +219,13 @@ func yamlFilesInDir(dir string) ([]string, error) {
 	return files, nil
 }
 
-func toTable(rc *Table, sets map[string]set.Set) (*table.Table, error) {
+func toTable(t *Table, sets map[string]set.Set) (*table.Table, error) {
 	if sets == nil {
 		sets = map[string]set.Set{}
 	}
 
-	tbl := table.New(rc.Name, rule.MustParseAction(rc.DefaultAction))
-	for _, r := range rc.Rules {
+	tbl := table.New(t.Name, rule.MustParseAction(t.DefaultAction))
+	for _, r := range t.Rules {
 		mRule, err := r.ToRule(sets)
 		if err != nil {
 			return nil, err
