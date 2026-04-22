@@ -77,6 +77,10 @@ func (s *IPPortSet) Match(v any) bool {
 	return false
 }
 
+func (s *IPPortSet) Type() Type {
+	return TypeIPPort
+}
+
 // String returns a human-readable representation of the IPPortSet.
 func (s *IPPortSet) String() string {
 	if len(s.members) == 0 {

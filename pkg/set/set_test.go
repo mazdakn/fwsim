@@ -328,3 +328,12 @@ func TestIPSetStringMultipleNets(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(s.String()).To(Equal("{10.0.0.0/8,192.168.0.0/16}"))
 }
+
+func TestSetTypes(t *testing.T) {
+	RegisterTestingT(t)
+
+	Expect(NewIPSet().Type()).To(Equal(TypeIP))
+	Expect(NewPortSet().Type()).To(Equal(TypePort))
+	Expect(NewProtoSet().Type()).To(Equal(TypeProto))
+	Expect(NewIPPortSet().Type()).To(Equal(TypeIPPort))
+}
