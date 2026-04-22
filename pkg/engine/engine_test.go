@@ -12,7 +12,7 @@ import (
 )
 
 func loadRulesFromBytes(e *enginepkg.Engine, data []byte) error {
-	tbl, err := config.ConfigRulesFromBytes(data, e.Sets())
+	tbl, err := config.ConfigTableFromBytes(data, e.Sets())
 	if err != nil {
 		return err
 	}
@@ -37,6 +37,7 @@ func loadSetsFromBytes(e *enginepkg.Engine, data []byte) error {
 }
 
 const testRulesYAML = `
+name: main
 rules:
   - name: allow-192.168-to-1.1.1.1
     src:
@@ -118,6 +119,7 @@ members:
 `
 
 const testRulesNamedPortYAML = `
+name: main
 rules:
   - name: allow-http
     dst:
@@ -212,6 +214,7 @@ func TestEngineWithNamedPortsInSets(t *testing.T) {
 	Expect(err).To(BeNil())
 
 	const rulesWithNamedPortSetYAML = `
+name: main
 rules:
   - name: allow-named-web
     dst:
@@ -306,6 +309,7 @@ func TestLoadSetsFromBytes(t *testing.T) {
 }
 
 const testRulesWithSetsYAML = `
+name: main
 rules:
   - name: allow-trusted-to-web
     src:
@@ -390,6 +394,7 @@ func TestRulesWithNamedSetsMatch(t *testing.T) {
 }
 
 const testRulesWithNotSetsYAML = `
+name: main
 rules:
   - name: allow-non-blocked-src
     not_src:

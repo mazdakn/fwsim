@@ -12,16 +12,14 @@ import (
 	"github.com/mazdakn/fwsim/pkg/validator"
 )
 
-type RuleConfig struct {
+type Table struct {
+	Name          string `yaml:"name"                   validate:"isNonEmpty"`
 	Rules         []Rule `yaml:"rules,omitempty"`
 	DefaultAction string `yaml:"default_action,omitempty" validate:"isValidAction"`
 }
 
-func (rc *RuleConfig) Validate() error {
-	if err := validator.ValidateStructFields(rc); err != nil {
-		return err
-	}
-	if _, err := rule.ParseAction(rc.DefaultAction); err != nil {
+func (t *Table) Validate() error {
+	if err := validator.ValidateStructFields(t); err != nil {
 		return err
 	}
 	return nil
@@ -137,21 +135,21 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 	return mRule, nil
 }
 
-func RuleConfigFromBytes(data []byte) (*RuleConfig, error) {
-	var rc RuleConfig
-	if err := yaml.Unmarshal(data, &rc); err != nil {
+func TableFromBytes(data []byte) (*Table, error) {
+	var t Table
+	if err := yaml.Unmarshal(data, &t); err != nil {
 		return nil, err
 	}
-	if err := rc.Validate(); err != nil {
+	if err := t.Validate(); err != nil {
 		return nil, err
 	}
-	return &rc, nil
+	return &t, nil
 }
 
-func RuleConfigFromFile(file string) (*RuleConfig, error) {
+func TableFromFile(file string) (*Table, error) {
 	data, err := os.ReadFile(file)
 	if err != nil {
 		return nil, err
 	}
-	return RuleConfigFromBytes(data)
+	return TableFromBytes(data)
 }
