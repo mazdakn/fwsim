@@ -21,11 +21,13 @@ const (
 
 type Verdict int
 
+const VerdictUndefined Verdict = -1
+
 const (
-	VerdictAccept  Verdict = Verdict(Accept)
-	VerdictDrop    Verdict = Verdict(Drop)
-	VerdictPass    Verdict = Verdict(Pass)
-	VerdictNoMatch Verdict = Verdict(Pass) + 1
+	VerdictAccept Verdict = iota
+	VerdictDrop
+	VerdictPass
+	VerdictNoMatch
 )
 
 func (a Action) String() string {
@@ -65,7 +67,7 @@ func VerdictFromAction(a Action) Verdict {
 	case Pass:
 		return VerdictPass
 	default:
-		return Verdict(-1)
+		return VerdictUndefined
 	}
 }
 
