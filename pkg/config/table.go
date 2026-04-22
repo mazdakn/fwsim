@@ -22,9 +22,6 @@ func (t *Table) Validate() error {
 	if err := validator.ValidateStructFields(t); err != nil {
 		return err
 	}
-	if _, err := rule.ParseAction(t.DefaultAction); err != nil {
-		return err
-	}
 	return nil
 }
 
