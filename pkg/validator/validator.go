@@ -77,7 +77,7 @@ func validateByTag(tag, value string) (bool, error) {
 	case "isValidSetType":
 		return ValidateSetType(value), nil
 	case "isNonEmpty":
-		return strings.TrimSpace(value) != "", nil
+		return len(value) > 0, nil
 	default:
 		return false, fmt.Errorf("unknown validation tag: %s", tag)
 	}
