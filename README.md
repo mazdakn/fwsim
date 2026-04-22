@@ -22,7 +22,7 @@ Project Layout
   cmd/fwsim.go            CLI entrypoint
   pkg/                    Engine, parser, matcher, sets, rules
   hack/sample/            Example input data
-    rules/
+    tables/
     sets/
     packets/
 
@@ -31,7 +31,7 @@ Input Directory Structure
 fwsim expects an input directory with:
 
   <dir>/
-    rules/      # one or more .yaml/.yml files (required)
+    tables/     # one or more .yaml/.yml files (required)
     sets/       # optional .yaml/.yml files
     packets/    # .yaml/.yml files (required for "run")
 
@@ -57,7 +57,7 @@ CLI Usage
 ---------
 Base flag (required for all commands):
 
-  -d, --dir <path>   input directory containing rules/, sets/, packets/
+  -d, --dir <path>   input directory containing tables/, sets/, packets/
 
 Commands
 --------
@@ -79,9 +79,10 @@ Protocol values:
   - Name:   tcp, udp, icmp
   - Number: 0-255
 
-Rule Config (rules/*.yaml)
---------------------------
+Table Config (tables/*.yaml)
+----------------------------
 Top-level keys:
+  name: table name
   default_action: Accept | Drop | Pass
                  (Pass means final verdict is "no match" when no rule decides)
   rules: list of rule entries
@@ -99,8 +100,9 @@ Each rule may include:
   proto:      list of protocol names or numbers
   not_proto:  list of protocols to exclude
 
-Example (hack/sample/rules/simple.yaml):
+Example (hack/sample/tables/simple.yaml):
 
+  name: main
   rules:
     - name: allow-192.168-to-1.1.1.1
       src:

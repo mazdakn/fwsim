@@ -44,7 +44,7 @@ func TestValidateAction(t *testing.T) {
 func TestConfigValidateMissingDefaultAction(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &config.RuleConfig{
+	c := &config.Table{Name: "main",
 		Rules: []config.Rule{
 			{Source: config.Endpoint{Net: []string{"192.168.1.0/24"}}, Action: "Accept"},
 		},
@@ -58,7 +58,7 @@ func TestConfigValidateMissingDefaultAction(t *testing.T) {
 func TestConfigValidateInvalidDefaultAction(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &config.RuleConfig{DefaultAction: "badaction"}
+	c := &config.Table{Name: "main", DefaultAction: "badaction"}
 	err := c.Validate()
 	Expect(err).ToNot(BeNil())
 	Expect(err.Error()).To(ContainSubstring("invalid default_action"))
@@ -67,7 +67,7 @@ func TestConfigValidateInvalidDefaultAction(t *testing.T) {
 func TestConfigValidatePassDefaultAction(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &config.RuleConfig{DefaultAction: "Pass"}
+	c := &config.Table{Name: "main", DefaultAction: "Pass"}
 	err := c.Validate()
 	Expect(err).To(BeNil())
 }
@@ -75,7 +75,7 @@ func TestConfigValidatePassDefaultAction(t *testing.T) {
 func TestConfigValidateInvalidSrcNet(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &config.RuleConfig{
+	c := &config.Table{Name: "main",
 		Rules: []config.Rule{
 			{Source: config.Endpoint{Net: []string{"not-a-cidr"}}, Action: "Accept"},
 		},
@@ -89,7 +89,7 @@ func TestConfigValidateInvalidSrcNet(t *testing.T) {
 func TestConfigValidateInvalidDstNet(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &config.RuleConfig{
+	c := &config.Table{Name: "main",
 		Rules: []config.Rule{
 			{Destination: config.Endpoint{Net: []string{"bad-cidr"}}, Action: "Drop"},
 		},
@@ -103,7 +103,7 @@ func TestConfigValidateInvalidDstNet(t *testing.T) {
 func TestConfigValidateInvalidNotSrcNet(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &config.RuleConfig{
+	c := &config.Table{Name: "main",
 		Rules: []config.Rule{
 			{NotSource: config.Endpoint{Net: []string{"256.0.0.0/8"}}, Action: "Drop"},
 		},
@@ -117,7 +117,7 @@ func TestConfigValidateInvalidNotSrcNet(t *testing.T) {
 func TestConfigValidateInvalidNotDstNet(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &config.RuleConfig{
+	c := &config.Table{Name: "main",
 		Rules: []config.Rule{
 			{NotDestination: config.Endpoint{Net: []string{"abc"}}, Action: "Drop"},
 		},
@@ -131,7 +131,7 @@ func TestConfigValidateInvalidNotDstNet(t *testing.T) {
 func TestConfigValidateInvalidRuleAction(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &config.RuleConfig{
+	c := &config.Table{Name: "main",
 		Rules: []config.Rule{
 			{Source: config.Endpoint{Net: []string{"10.0.0.0/8"}}, Action: "unknown"},
 		},
@@ -290,7 +290,7 @@ func TestConfigValidateValidPackets(t *testing.T) {
 func TestConfigValidateValid(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &config.RuleConfig{
+	c := &config.Table{Name: "main",
 		Rules: []config.Rule{
 			{
 				Source:         config.Endpoint{Net: []string{"192.168.1.0/24"}},
@@ -369,7 +369,7 @@ func TestConfigValidateProtoSliceTag(t *testing.T) {
 func TestConfigValidateValidRuleWithPortsAndProto(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &config.RuleConfig{
+	c := &config.Table{Name: "main",
 		Rules: []config.Rule{
 			{
 				Source:         config.Endpoint{Net: []string{"192.168.1.0/24"}, Port: []port.Port{{Number: 30000}}},
@@ -390,7 +390,7 @@ func TestConfigValidateValidRuleWithPortsAndProto(t *testing.T) {
 func TestConfigValidateValidRuleWithNamedPorts(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &config.RuleConfig{
+	c := &config.Table{Name: "main",
 		Rules: []config.Rule{
 			{
 				Source:      config.Endpoint{Port: []port.Port{{Number: 22, Name: "ssh"}}},
@@ -407,7 +407,7 @@ func TestConfigValidateValidRuleWithNamedPorts(t *testing.T) {
 func TestConfigValidateRuleWithInvalidPortName(t *testing.T) {
 	RegisterTestingT(t)
 
-	c := &config.RuleConfig{
+	c := &config.Table{Name: "main",
 		Rules: []config.Rule{
 			{
 				Destination: config.Endpoint{Port: []port.Port{{Name: "notaservice"}}},

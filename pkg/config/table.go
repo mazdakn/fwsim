@@ -12,14 +12,18 @@ import (
 	"github.com/mazdakn/fwsim/pkg/validator"
 )
 
-type RuleConfig struct {
+type Table struct {
+	Name          string `yaml:"name,omitempty"`
 	Rules         []Rule `yaml:"rules,omitempty"`
 	DefaultAction string `yaml:"default_action,omitempty" validate:"isValidAction"`
 }
 
-func (rc *RuleConfig) Validate() error {
+func (rc *Table) Validate() error {
 	if err := validator.ValidateStructFields(rc); err != nil {
 		return err
+	}
+	if rc.Name == "" {
+		return fmt.Errorf("name is required")
 	}
 	if _, err := rule.ParseAction(rc.DefaultAction); err != nil {
 		return err
@@ -137,8 +141,8 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 	return mRule, nil
 }
 
-func RuleConfigFromBytes(data []byte) (*RuleConfig, error) {
-	var rc RuleConfig
+func TableFromBytes(data []byte) (*Table, error) {
+	var rc Table
 	if err := yaml.Unmarshal(data, &rc); err != nil {
 		return nil, err
 	}
@@ -148,10 +152,10 @@ func RuleConfigFromBytes(data []byte) (*RuleConfig, error) {
 	return &rc, nil
 }
 
-func RuleConfigFromFile(file string) (*RuleConfig, error) {
+func TableFromFile(file string) (*Table, error) {
 	data, err := os.ReadFile(file)
 	if err != nil {
 		return nil, err
 	}
-	return RuleConfigFromBytes(data)
+	return TableFromBytes(data)
 }

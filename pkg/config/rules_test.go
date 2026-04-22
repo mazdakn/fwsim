@@ -126,10 +126,11 @@ func TestToRuleWithUnknownDstPortSet(t *testing.T) {
 	Expect(mRule).To(BeNil())
 }
 
-func TestRuleConfigFromBytesWithSetFields(t *testing.T) {
+func TestTableFromBytesWithSetFields(t *testing.T) {
 	RegisterTestingT(t)
 
 	yaml := `
+name: main
 rules:
   - name: allow-trusted
     src:
@@ -143,7 +144,7 @@ rules:
     action: Accept
 default_action: Drop
 `
-	rc, err := RuleConfigFromBytes([]byte(yaml))
+	rc, err := TableFromBytes([]byte(yaml))
 	Expect(err).To(BeNil())
 	Expect(rc).ToNot(BeNil())
 	Expect(rc.Rules).To(HaveLen(1))
@@ -303,16 +304,17 @@ func TestToRuleWithUnknownIPPortSet(t *testing.T) {
 	Expect(mRule).To(BeNil())
 }
 
-func TestRuleConfigFromBytesAcceptsPassDefaultAction(t *testing.T) {
+func TestTableFromBytesAcceptsPassDefaultAction(t *testing.T) {
 	RegisterTestingT(t)
 
 	yaml := `
+name: main
 rules:
   - name: continue-http
     action: Pass
 default_action: Pass
 `
-	rc, err := RuleConfigFromBytes([]byte(yaml))
+	rc, err := TableFromBytes([]byte(yaml))
 	Expect(err).To(BeNil())
 	Expect(rc).ToNot(BeNil())
 	Expect(rc.DefaultAction).To(Equal("Pass"))

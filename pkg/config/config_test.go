@@ -14,11 +14,12 @@ func TestConfigFromDirectory(t *testing.T) {
 	RegisterTestingT(t)
 
 	dir := t.TempDir()
-	Expect(os.MkdirAll(filepath.Join(dir, "rules"), 0o755)).To(Succeed())
+	Expect(os.MkdirAll(filepath.Join(dir, "tables"), 0o755)).To(Succeed())
 	Expect(os.MkdirAll(filepath.Join(dir, "sets"), 0o755)).To(Succeed())
 	Expect(os.MkdirAll(filepath.Join(dir, "packets"), 0o755)).To(Succeed())
 
-	Expect(os.WriteFile(filepath.Join(dir, "rules", "rules.yaml"), []byte(`
+	Expect(os.WriteFile(filepath.Join(dir, "tables", "tables.yaml"), []byte(`
+name: main
 rules:
   - name: allow-http
     dst:
@@ -62,18 +63,20 @@ func TestConfigRulesFromDirConflictingDefaultAction(t *testing.T) {
 	RegisterTestingT(t)
 
 	dir := t.TempDir()
-	rulesDir := filepath.Join(dir, "rules")
-	Expect(os.MkdirAll(rulesDir, 0o755)).To(Succeed())
-	Expect(os.WriteFile(filepath.Join(rulesDir, "a.yaml"), []byte(`
+	tablesDir := filepath.Join(dir, "tables")
+	Expect(os.MkdirAll(tablesDir, 0o755)).To(Succeed())
+	Expect(os.WriteFile(filepath.Join(tablesDir, "a.yaml"), []byte(`
+name: main
 rules: []
 default_action: Accept
 `), 0o600)).To(Succeed())
-	Expect(os.WriteFile(filepath.Join(rulesDir, "b.yaml"), []byte(`
+	Expect(os.WriteFile(filepath.Join(tablesDir, "b.yaml"), []byte(`
+name: main
 rules: []
 default_action: Drop
 `), 0o600)).To(Succeed())
 
-	tbl, err := ConfigRulesFromDir(rulesDir, nil)
+	tbl, err := ConfigRulesFromDir(tablesDir, nil)
 	Expect(err).ToNot(BeNil())
 	Expect(err.Error()).To(ContainSubstring("conflicting default_action"))
 	Expect(tbl).To(BeNil())
@@ -91,8 +94,9 @@ func TestConfigFromDirectoryWithoutPacketsWhenNotRequested(t *testing.T) {
 	RegisterTestingT(t)
 
 	dir := t.TempDir()
-	Expect(os.MkdirAll(filepath.Join(dir, "rules"), 0o755)).To(Succeed())
-	Expect(os.WriteFile(filepath.Join(dir, "rules", "rules.yaml"), []byte(`
+	Expect(os.MkdirAll(filepath.Join(dir, "tables"), 0o755)).To(Succeed())
+	Expect(os.WriteFile(filepath.Join(dir, "tables", "tables.yaml"), []byte(`
+name: main
 rules: []
 default_action: Accept
 `), 0o600)).To(Succeed())
