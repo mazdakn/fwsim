@@ -142,25 +142,25 @@ func WithNotSrcPort(port uint16) RuleOption {
 
 func WithSrcPortSet(s set.Set) RuleOption {
 	return func(r *Rule) {
-		r.Source.Sets = addEndpointSet(r.Source.Sets, s)
+		r.Source.Sets = append(r.Source.Sets, s)
 	}
 }
 
 func WithNotSrcPortSet(s set.Set) RuleOption {
 	return func(r *Rule) {
-		r.NotSource.Sets = addEndpointSet(r.NotSource.Sets, s)
+		r.NotSource.Sets = append(r.NotSource.Sets, s)
 	}
 }
 
 func WithSrcIPPortSet(s set.Set) RuleOption {
 	return func(r *Rule) {
-		r.Source.Sets = addEndpointSet(r.Source.Sets, s)
+		r.Source.Sets = append(r.Source.Sets, s)
 	}
 }
 
 func WithNotSrcIPPortSet(s set.Set) RuleOption {
 	return func(r *Rule) {
-		r.NotSource.Sets = addEndpointSet(r.NotSource.Sets, s)
+		r.NotSource.Sets = append(r.NotSource.Sets, s)
 	}
 }
 
@@ -190,25 +190,25 @@ func WithNotDstPort(port uint16) RuleOption {
 
 func WithDstPortSet(s set.Set) RuleOption {
 	return func(r *Rule) {
-		r.Destination.Sets = addEndpointSet(r.Destination.Sets, s)
+		r.Destination.Sets = append(r.Destination.Sets, s)
 	}
 }
 
 func WithNotDstPortSet(s set.Set) RuleOption {
 	return func(r *Rule) {
-		r.NotDestination.Sets = addEndpointSet(r.NotDestination.Sets, s)
+		r.NotDestination.Sets = append(r.NotDestination.Sets, s)
 	}
 }
 
 func WithDstIPPortSet(s set.Set) RuleOption {
 	return func(r *Rule) {
-		r.Destination.Sets = addEndpointSet(r.Destination.Sets, s)
+		r.Destination.Sets = append(r.Destination.Sets, s)
 	}
 }
 
 func WithNotDstIPPortSet(s set.Set) RuleOption {
 	return func(r *Rule) {
-		r.NotDestination.Sets = addEndpointSet(r.NotDestination.Sets, s)
+		r.NotDestination.Sets = append(r.NotDestination.Sets, s)
 	}
 }
 
@@ -238,13 +238,13 @@ func WithNotSrcNet(cidr string) RuleOption {
 
 func WithSrcIPSet(s set.Set) RuleOption {
 	return func(r *Rule) {
-		r.Source.Sets = addEndpointSet(r.Source.Sets, s)
+		r.Source.Sets = append(r.Source.Sets, s)
 	}
 }
 
 func WithNotSrcIPSet(s set.Set) RuleOption {
 	return func(r *Rule) {
-		r.NotSource.Sets = addEndpointSet(r.NotSource.Sets, s)
+		r.NotSource.Sets = append(r.NotSource.Sets, s)
 	}
 }
 
@@ -274,13 +274,13 @@ func WithNotDstNet(cidr string) RuleOption {
 
 func WithDstIPSet(s set.Set) RuleOption {
 	return func(r *Rule) {
-		r.Destination.Sets = addEndpointSet(r.Destination.Sets, s)
+		r.Destination.Sets = append(r.Destination.Sets, s)
 	}
 }
 
 func WithNotDstIPSet(s set.Set) RuleOption {
 	return func(r *Rule) {
-		r.NotDestination.Sets = addEndpointSet(r.NotDestination.Sets, s)
+		r.NotDestination.Sets = append(r.NotDestination.Sets, s)
 	}
 }
 
@@ -450,9 +450,6 @@ func (r *Rule) String() string {
 // value corresponding to the set's type.
 func matchAllNamedSets(sets []set.Set, ip any, port any, ipPort any) bool {
 	for _, s := range sets {
-		if s == nil {
-			continue
-		}
 		if !matchNamedSetByType(s, ip, port, ipPort) {
 			return false
 		}
@@ -464,9 +461,6 @@ func matchAllNamedSets(sets []set.Set, ip any, port any, ipPort any) bool {
 // corresponding to the set's type.
 func matchAnyNamedSet(sets []set.Set, ip any, port any, ipPort any) bool {
 	for _, s := range sets {
-		if s == nil {
-			continue
-		}
 		if matchNamedSetByType(s, ip, port, ipPort) {
 			return true
 		}
@@ -535,19 +529,9 @@ func appendNotSetStrings(base string, sets []set.Set) string {
 	return base
 }
 
-func addEndpointSet(sets []set.Set, s set.Set) []set.Set {
-	if s == nil {
-		return sets
-	}
-	return append(sets, s)
-}
-
 func filterEndpointSetsByType(sets []set.Set, t set.Type) []set.Set {
 	filtered := make([]set.Set, 0, len(sets))
 	for _, s := range sets {
-		if s == nil {
-			continue
-		}
 		if s.Type() == t {
 			filtered = append(filtered, s)
 		}
