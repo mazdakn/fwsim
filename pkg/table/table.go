@@ -40,17 +40,17 @@ func (t *Table) AddRule(r *rule.Rule) {
 	t.Rules[i] = r
 }
 
-func (t *Table) Match(match *match.Match) {
-	t.logCtx.Debugf("Matching packet %+v", match.Packet)
+func (t *Table) Match(matchContext *match.MatchContext) {
+	t.logCtx.Debugf("Matching packet %+v", matchContext.Packet)
 	for _, r := range t.Rules {
-		match.Result.Trace = append(match.Result.Trace, r)
-		if r.Match(match.Packet) {
+		matchContext.Trace = append(matchContext.Trace, r)
+		if r.Match(matchContext.Packet) {
 			t.logCtx.Debugf("Rule %+v matched", r)
 			if r.Action == rule.Pass {
 				t.logCtx.Debugf("Rule %+v action is Pass, continuing evaluation", r)
 				continue
 			}
-			match.Result.Verdict = r.Action
+			matchContext.Verdict = match.VerdictFromAction(r.Action)
 			return
 		}
 	}
@@ -59,10 +59,10 @@ func (t *Table) Match(match *match.Match) {
 	}
 	t.logCtx.Debugf("No rule matched, using default action %s", t.DefaultAction.Action.String())
 	t.DefaultAction.IncrementPacketCount()
-	match.Result.Trace = append(match.Result.Trace, t.DefaultAction)
+	matchContext.Trace = append(matchContext.Trace, t.DefaultAction)
 	if t.DefaultAction.Action == rule.Pass {
-		match.Result.Verdict = rule.NoMatch
+		matchContext.Verdict = match.NoMatch
 		return
 	}
-	match.Result.Verdict = t.DefaultAction.Action
+	matchContext.Verdict = match.VerdictFromAction(t.DefaultAction.Action)
 }

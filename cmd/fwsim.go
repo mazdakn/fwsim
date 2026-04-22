@@ -114,7 +114,7 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 	e := engine.New(resources)
 
 	// Match packet against rules
-	m := &match.Match{Packet: pkt.ToPacket()}
+	m := &match.MatchContext{Packet: pkt.ToPacket()}
 	e.RunTest(m)
 	printResult(m)
 	fmt.Println()
@@ -145,16 +145,16 @@ func runPackets(cmd *cobra.Command, args []string) {
 	printValidations(e.Validate())
 }
 
-func printResult(m *match.Match) {
-	fmt.Printf("Packet: %s  Verdict: %s\n", m.Packet, m.Result.Verdict)
-	if len(m.Result.Trace) == 0 {
+func printResult(m *match.MatchContext) {
+	fmt.Printf("Packet: %s  Verdict: %s\n", m.Packet, m.Verdict)
+	if len(m.Trace) == 0 {
 		return
 	}
 	t := tablewriter.NewWriter(os.Stdout)
 	t.SetHeader([]string{"Rule", "Action", "Hit Count"})
 	t.SetBorder(true)
 	t.SetRowLine(true)
-	for _, r := range m.Result.Trace {
+	for _, r := range m.Trace {
 		t.Append([]string{
 			r.String(),
 			r.Action.String(),
