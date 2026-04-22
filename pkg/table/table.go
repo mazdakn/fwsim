@@ -53,7 +53,7 @@ func (t *Table) Match(match *match.Match) rule.Action {
 		}
 	}
 	if t.DefaultAction == nil {
-		return rule.Pass
+		panic("No rule matched and no default action is set")
 	}
 	t.logCtx.Debugf("No rule matched, using default action %s", t.DefaultAction.Action.String())
 	t.DefaultAction.IncrementPacketCount()

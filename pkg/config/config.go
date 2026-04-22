@@ -14,7 +14,7 @@ import (
 )
 
 type Config struct {
-	// Base directory input. Expects tables/, sets/, packets/ sub-directories.
+	// Base directory input. Expects tables/, sets/, packets/ subdirectories.
 	InputDir string
 
 	// LoadPackets controls whether packets/ input is loaded.
