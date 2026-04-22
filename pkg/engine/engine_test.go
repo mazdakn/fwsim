@@ -7,7 +7,6 @@ import (
 	enginepkg "github.com/mazdakn/fwsim/pkg/engine"
 	"github.com/mazdakn/fwsim/pkg/match"
 	"github.com/mazdakn/fwsim/pkg/proto"
-	"github.com/mazdakn/fwsim/pkg/rule"
 	"github.com/mazdakn/fwsim/pkg/set"
 	. "github.com/onsi/gomega"
 )
@@ -182,17 +181,17 @@ func TestEngineWithNamedPortsInRulesAndPackets(t *testing.T) {
 	// Packet to port "http" (80) → matches allow-http rule (Accept)
 	m := &match.MatchContext{Packet: pkt1[0]}
 	engine.RunTest(m)
-	Expect(m.Verdict).To(Equal(rule.VerdictAccept))
+	Expect(m.Verdict).To(Equal(match.Accept))
 
 	// Packet to port "https" (443) → matches allow-https rule (Accept)
 	m = &match.MatchContext{Packet: pkt2[0]}
 	engine.RunTest(m)
-	Expect(m.Verdict).To(Equal(rule.VerdictAccept))
+	Expect(m.Verdict).To(Equal(match.Accept))
 
 	// Packet to port "dns" (53) with proto 17 → no matching rule → deny-all (Drop)
 	m = &match.MatchContext{Packet: pkt3[0]}
 	engine.RunTest(m)
-	Expect(m.Verdict).To(Equal(rule.VerdictDrop))
+	Expect(m.Verdict).To(Equal(match.Drop))
 }
 
 const testSetsNamedPortYAML = `
@@ -235,17 +234,17 @@ default_action: Drop
 	// Packet to port "http" (80) → in named-web-ports → Accept
 	m := &match.MatchContext{Packet: pkt1[0]}
 	engine.RunTest(m)
-	Expect(m.Verdict).To(Equal(rule.VerdictAccept))
+	Expect(m.Verdict).To(Equal(match.Accept))
 
 	// Packet to port "https" (443) → in named-web-ports → Accept
 	m = &match.MatchContext{Packet: pkt2[0]}
 	engine.RunTest(m)
-	Expect(m.Verdict).To(Equal(rule.VerdictAccept))
+	Expect(m.Verdict).To(Equal(match.Accept))
 
 	// Packet to port "dns" (53) → NOT in named-web-ports → deny-all (Drop)
 	m = &match.MatchContext{Packet: pkt3[0]}
 	engine.RunTest(m)
-	Expect(m.Verdict).To(Equal(rule.VerdictDrop))
+	Expect(m.Verdict).To(Equal(match.Drop))
 }
 
 func TestNew(t *testing.T) {
@@ -272,17 +271,17 @@ func TestPacketsFromBytesAndMatch(t *testing.T) {
 	// First packet: src 192.168.1.5 -> dst 1.1.1.1:80 proto 7, src_port 30000 — matches rule 1 (Accept)
 	m := &match.MatchContext{Packet: pkt1[0]}
 	engine.RunTest(m)
-	Expect(m.Verdict).To(Equal(rule.VerdictAccept))
+	Expect(m.Verdict).To(Equal(match.Accept))
 
 	// Second packet: src 10.0.0.1 -> dst 2.2.2.2:8080 proto 7 — matches rule 3 (Drop)
 	m = &match.MatchContext{Packet: pkt2[0]}
 	engine.RunTest(m)
-	Expect(m.Verdict).To(Equal(rule.VerdictDrop))
+	Expect(m.Verdict).To(Equal(match.Drop))
 
 	// Third packet: proto 17, no matching rule — default action Accept
 	m = &match.MatchContext{Packet: pkt3[0]}
 	engine.RunTest(m)
-	Expect(m.Verdict).To(Equal(rule.VerdictAccept))
+	Expect(m.Verdict).To(Equal(match.Accept))
 }
 
 func TestLoadSetsFromBytes(t *testing.T) {
@@ -376,18 +375,18 @@ func TestRulesWithNamedSetsMatch(t *testing.T) {
 	// First packet: src 192.168.1.5 dst 1.1.1.1:80 → matches rule 1 (Accept)
 	m := &match.MatchContext{Packet: pkt1[0]}
 	engine.RunTest(m)
-	Expect(m.Verdict).To(Equal(rule.VerdictAccept))
+	Expect(m.Verdict).To(Equal(match.Accept))
 
 	// Second packet: src 10.0.0.1 dst 2.2.2.2:8080 → src is in trusted-ips (10.0.0.0/8),
 	// dst port 8080 is in web-ports → matches rule 1 (Accept)
 	m = &match.MatchContext{Packet: pkt2[0]}
 	engine.RunTest(m)
-	Expect(m.Verdict).To(Equal(rule.VerdictAccept))
+	Expect(m.Verdict).To(Equal(match.Accept))
 
 	// Third packet: src 172.16.0.1 → NOT in trusted-ips → falls through to deny-all (Drop)
 	m = &match.MatchContext{Packet: pkt3[0]}
 	engine.RunTest(m)
-	Expect(m.Verdict).To(Equal(rule.VerdictDrop))
+	Expect(m.Verdict).To(Equal(match.Drop))
 }
 
 const testRulesWithNotSetsYAML = `
@@ -433,12 +432,12 @@ func TestRulesWithNegatedNamedSetsMatch(t *testing.T) {
 	// First packet: src 192.168.1.5 — in trusted-ips → negated, rule1 does NOT match → deny-all (Drop)
 	m := &match.MatchContext{Packet: pkt1[0]}
 	engine.RunTest(m)
-	Expect(m.Verdict).To(Equal(rule.VerdictDrop))
+	Expect(m.Verdict).To(Equal(match.Drop))
 
 	// Third packet: src 172.16.0.1 — NOT in trusted-ips → rule1 matches (Accept)
 	m = &match.MatchContext{Packet: pkt3[0]}
 	engine.RunTest(m)
-	Expect(m.Verdict).To(Equal(rule.VerdictAccept))
+	Expect(m.Verdict).To(Equal(match.Accept))
 }
 
 func TestRulesReferencingUnknownNegatedSetError(t *testing.T) {

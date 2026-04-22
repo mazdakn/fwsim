@@ -19,17 +19,6 @@ const (
 	Pass
 )
 
-type Verdict int
-
-const VerdictUndefined Verdict = -1
-
-const (
-	VerdictAccept Verdict = iota
-	VerdictDrop
-	VerdictPass
-	VerdictNoMatch
-)
-
 func (a Action) String() string {
 	switch a {
 	case Accept:
@@ -40,34 +29,6 @@ func (a Action) String() string {
 		return "Pass"
 	default:
 		return fmt.Sprintf("Undefined(%d)", a)
-	}
-}
-
-func (v Verdict) String() string {
-	switch v {
-	case VerdictAccept:
-		return "Accept"
-	case VerdictDrop:
-		return "Drop"
-	case VerdictPass:
-		return "Pass"
-	case VerdictNoMatch:
-		return "no match"
-	default:
-		return fmt.Sprintf("Undefined(%d)", v)
-	}
-}
-
-func VerdictFromAction(a Action) Verdict {
-	switch a {
-	case Accept:
-		return VerdictAccept
-	case Drop:
-		return VerdictDrop
-	case Pass:
-		return VerdictPass
-	default:
-		return VerdictUndefined
 	}
 }
 

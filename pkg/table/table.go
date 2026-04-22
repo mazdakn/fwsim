@@ -50,7 +50,7 @@ func (t *Table) Match(matchContext *match.MatchContext) {
 				t.logCtx.Debugf("Rule %+v action is Pass, continuing evaluation", r)
 				continue
 			}
-			matchContext.Verdict = rule.VerdictFromAction(r.Action)
+			matchContext.Verdict = match.VerdictFromAction(r.Action)
 			return
 		}
 	}
@@ -61,8 +61,8 @@ func (t *Table) Match(matchContext *match.MatchContext) {
 	t.DefaultAction.IncrementPacketCount()
 	matchContext.Trace = append(matchContext.Trace, t.DefaultAction)
 	if t.DefaultAction.Action == rule.Pass {
-		matchContext.Verdict = rule.VerdictNoMatch
+		matchContext.Verdict = match.NoMatch
 		return
 	}
-	matchContext.Verdict = rule.VerdictFromAction(t.DefaultAction.Action)
+	matchContext.Verdict = match.VerdictFromAction(t.DefaultAction.Action)
 }
