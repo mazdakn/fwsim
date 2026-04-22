@@ -15,13 +15,13 @@ type Resources struct {
 
 type Engine struct {
 	table   *table.Table
-	matches []*match.Match
+	matches []*match.MatchContext
 	sets    map[string]set.Set
 }
 
 func New(resources ...Resources) *Engine {
 	e := &Engine{
-		matches: []*match.Match{},
+		matches: []*match.MatchContext{},
 		sets:    map[string]set.Set{},
 	}
 	for _, resource := range resources {
@@ -46,7 +46,7 @@ func (e *Engine) SetTable(t *table.Table) {
 	e.table = t
 }
 
-func (e *Engine) SetMatches(matches []*match.Match) {
+func (e *Engine) SetMatches(matches []*match.MatchContext) {
 	e.matches = matches
 }
 
@@ -63,21 +63,21 @@ func (e *Engine) Table() *table.Table {
 	return e.table
 }
 
-func (e *Engine) RunTest(m *match.Match) {
+func (e *Engine) RunTest(m *match.MatchContext) {
 	e.table.Match(m)
 }
 
-func (e *Engine) RunTests() []*match.Match {
+func (e *Engine) RunTests() []*match.MatchContext {
 	for _, m := range e.matches {
 		e.table.Match(m)
 	}
 	return e.matches
 }
 
-func toMatches(pkts []*packet.Packet) []*match.Match {
-	matches := make([]*match.Match, 0, len(pkts))
+func toMatches(pkts []*packet.Packet) []*match.MatchContext {
+	matches := make([]*match.MatchContext, 0, len(pkts))
 	for _, p := range pkts {
-		matches = append(matches, &match.Match{Packet: p})
+		matches = append(matches, &match.MatchContext{Packet: p})
 	}
 	return matches
 }

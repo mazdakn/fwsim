@@ -73,9 +73,9 @@ func TestTableMatchUsesAscendingOrder(t *testing.T) {
 	table.AddRule(highOrderDrop)
 	table.AddRule(lowOrderAccept)
 
-	m := match.Match{Packet: pkt}
+	m := match.MatchContext{Packet: pkt}
 	table.Match(&m)
-	Expect(m.Result.Verdict).To(Equal(rule.Accept))
+	Expect(m.Verdict).To(Equal(rule.VerdictAccept))
 }
 
 func TestTableMatchPassContinuesToNextRule(t *testing.T) {
@@ -98,13 +98,13 @@ func TestTableMatchPassContinuesToNextRule(t *testing.T) {
 	table.AddRule(passRule)
 	table.AddRule(acceptRule)
 
-	m := match.Match{Packet: pkt}
+	m := match.MatchContext{Packet: pkt}
 	table.Match(&m)
 
-	Expect(m.Result.Verdict).To(Equal(rule.Accept))
-	Expect(m.Result.Trace).To(HaveLen(2))
-	Expect(m.Result.Trace[0].Name).To(Equal("pass-http"))
-	Expect(m.Result.Trace[1].Name).To(Equal("accept-http"))
+	Expect(m.Verdict).To(Equal(rule.VerdictAccept))
+	Expect(m.Trace).To(HaveLen(2))
+	Expect(m.Trace[0].Name).To(Equal("pass-http"))
+	Expect(m.Trace[1].Name).To(Equal("accept-http"))
 }
 
 func TestTableMatchPassFallsBackToDefaultAction(t *testing.T) {
@@ -124,13 +124,13 @@ func TestTableMatchPassFallsBackToDefaultAction(t *testing.T) {
 
 	table.AddRule(passRule)
 
-	m := match.Match{Packet: pkt}
+	m := match.MatchContext{Packet: pkt}
 	table.Match(&m)
 
-	Expect(m.Result.Verdict).To(Equal(rule.Drop))
-	Expect(m.Result.Trace).To(HaveLen(2))
-	Expect(m.Result.Trace[0].Name).To(Equal("pass-http"))
-	Expect(m.Result.Trace[1].Name).To(Equal("table test default action"))
+	Expect(m.Verdict).To(Equal(rule.VerdictDrop))
+	Expect(m.Trace).To(HaveLen(2))
+	Expect(m.Trace[0].Name).To(Equal("pass-http"))
+	Expect(m.Trace[1].Name).To(Equal("table test default action"))
 }
 
 func TestTableMatchNoRuleAndDefaultPassReturnsNoMatchVerdict(t *testing.T) {
@@ -145,11 +145,11 @@ func TestTableMatchNoRuleAndDefaultPassReturnsNoMatchVerdict(t *testing.T) {
 		packet.WithDstPort(80),
 	)
 
-	m := match.Match{Packet: pkt}
+	m := match.MatchContext{Packet: pkt}
 	table.Match(&m)
 
-	Expect(m.Result.Verdict).To(Equal(rule.NoMatch))
-	Expect(m.Result.Trace).To(HaveLen(1))
-	Expect(m.Result.Trace[0].Name).To(Equal("table test default action"))
-	Expect(m.Result.Trace[0].Action).To(Equal(rule.Pass))
+	Expect(m.Verdict).To(Equal(rule.VerdictNoMatch))
+	Expect(m.Trace).To(HaveLen(1))
+	Expect(m.Trace[0].Name).To(Equal("table test default action"))
+	Expect(m.Trace[0].Action).To(Equal(rule.Pass))
 }

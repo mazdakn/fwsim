@@ -17,7 +17,15 @@ const (
 	Accept Action = iota
 	Drop
 	Pass
-	NoMatch
+)
+
+type Verdict int
+
+const (
+	VerdictAccept  Verdict = Verdict(Accept)
+	VerdictDrop    Verdict = Verdict(Drop)
+	VerdictPass    Verdict = Verdict(Pass)
+	VerdictNoMatch Verdict = Verdict(Pass) + 1
 )
 
 func (a Action) String() string {
@@ -28,10 +36,36 @@ func (a Action) String() string {
 		return "Drop"
 	case Pass:
 		return "Pass"
-	case NoMatch:
-		return "no match"
 	default:
 		return fmt.Sprintf("Undefined(%d)", a)
+	}
+}
+
+func (v Verdict) String() string {
+	switch v {
+	case VerdictAccept:
+		return "Accept"
+	case VerdictDrop:
+		return "Drop"
+	case VerdictPass:
+		return "Pass"
+	case VerdictNoMatch:
+		return "no match"
+	default:
+		return fmt.Sprintf("Undefined(%d)", v)
+	}
+}
+
+func VerdictFromAction(a Action) Verdict {
+	switch a {
+	case Accept:
+		return VerdictAccept
+	case Drop:
+		return VerdictDrop
+	case Pass:
+		return VerdictPass
+	default:
+		return Verdict(-1)
 	}
 }
 

@@ -7,15 +7,15 @@ import (
 
 // Result holds the outcome of matching a packet against a Table.
 type Result struct {
-	Verdict rule.Action
+	Verdict rule.Verdict
 	Trace   []*rule.Rule
 }
 
-type Match struct {
+type MatchContext struct {
 	Packet *packet.Packet
-	Result Result
+	Result
 }
 
-func New() *Match {
-	return &Match{}
+func New() *MatchContext {
+	return &MatchContext{}
 }
