@@ -114,7 +114,7 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 	e := engine.New(resources)
 
 	// Match packet against rules
-	m := &match.MatchContext{Packet: pkt.ToPacket()}
+	m := match.New(pkt.ToPacket())
 	e.RunTest(m)
 	printResult(m)
 	fmt.Println()

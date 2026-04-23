@@ -12,14 +12,16 @@ import (
 // Table holds a slice of firewall rules.
 type Table struct {
 	Name          string
+	Order         uint64
 	Rules         []*rule.Rule
 	DefaultAction *rule.Rule
 	logCtx        *logrus.Entry
 }
 
-func New(name string, defaultAction rule.Action) *Table {
+func New(name string, order uint64, defaultAction rule.Action) *Table {
 	return &Table{
-		Name: name,
+		Name:  name,
+		Order: order,
 		DefaultAction: rule.New(
 			rule.WithAction(defaultAction),
 			rule.WithName(fmt.Sprintf("table %s default action", name)),
@@ -40,18 +42,19 @@ func (t *Table) AddRule(r *rule.Rule) {
 	t.Rules[i] = r
 }
 
-func (t *Table) Match(matchContext *match.MatchContext) {
+func (t *Table) Match(matchContext *match.MatchContext) bool {
 	t.logCtx.Debugf("Matching packet %+v", matchContext.Packet)
 	for _, r := range t.Rules {
 		matchContext.Trace = append(matchContext.Trace, r)
 		if r.Match(matchContext.Packet) {
 			t.logCtx.Debugf("Rule %+v matched", r)
 			if r.Action == rule.Pass {
-				t.logCtx.Debugf("Rule %+v action is Pass, continuing evaluation", r)
-				continue
+				t.logCtx.Debugf("Rule %+v action is Pass, continuing evaluation to next table", r)
+				matchContext.Verdict = match.Pass
+				return false
 			}
 			matchContext.Verdict = match.VerdictFromAction(r.Action)
-			return
+			return true
 		}
 	}
 	if t.DefaultAction == nil {
@@ -61,8 +64,15 @@ func (t *Table) Match(matchContext *match.MatchContext) {
 	t.DefaultAction.IncrementPacketCount()
 	matchContext.Trace = append(matchContext.Trace, t.DefaultAction)
 	if t.DefaultAction.Action == rule.Pass {
-		matchContext.Verdict = match.NoMatch
-		return
+		matchContext.Verdict = match.Pass
+		return false
 	}
 	matchContext.Verdict = match.VerdictFromAction(t.DefaultAction.Action)
+	return true
+}
+
+func SortTables(tables []*Table) {
+	sort.SliceStable(tables, func(i, j int) bool {
+		return tables[i].Order < tables[j].Order
+	})
 }

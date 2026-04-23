@@ -52,6 +52,9 @@ type MatchContext struct {
 	Trace   []*rule.Rule
 }
 
-func New() *MatchContext {
-	return &MatchContext{}
+func New(pkt *packet.Packet) *MatchContext {
+	return &MatchContext{
+		Packet:  pkt,
+		Verdict: NoMatch,
+	}
 }

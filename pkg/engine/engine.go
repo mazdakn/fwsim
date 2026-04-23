@@ -9,12 +9,12 @@ import (
 
 type Resources struct {
 	Sets    map[string]set.Set
-	Table   *table.Table
+	Tables  []*table.Table
 	Packets []*packet.Packet
 }
 
 type Engine struct {
-	table   *table.Table
+	tables  []*table.Table
 	matches []*match.MatchContext
 	sets    map[string]set.Set
 }
@@ -34,16 +34,16 @@ func (e *Engine) LoadResources(resources Resources) {
 	if resources.Sets != nil {
 		e.sets = resources.Sets
 	}
-	if resources.Table != nil {
-		e.table = resources.Table
+	if resources.Tables != nil {
+		e.SetTables(resources.Tables)
 	}
 	if resources.Packets != nil {
 		e.matches = toMatches(resources.Packets)
 	}
 }
 
-func (e *Engine) SetTable(t *table.Table) {
-	e.table = t
+func (e *Engine) SetTables(tables []*table.Table) {
+	e.tables = tables
 }
 
 func (e *Engine) SetMatches(matches []*match.MatchContext) {
@@ -59,17 +59,22 @@ func (e *Engine) Sets() map[string]set.Set {
 	return e.sets
 }
 
-func (e *Engine) Table() *table.Table {
-	return e.table
+func (e *Engine) Tables() []*table.Table {
+	return e.tables
 }
 
 func (e *Engine) RunTest(m *match.MatchContext) {
-	e.table.Match(m)
+	for _, t := range e.tables {
+		if t.Match(m) {
+			return
+		}
+	}
+	m.Verdict = match.NoMatch
 }
 
 func (e *Engine) RunTests() []*match.MatchContext {
 	for _, m := range e.matches {
-		e.table.Match(m)
+		e.RunTest(m)
 	}
 	return e.matches
 }
@@ -77,7 +82,7 @@ func (e *Engine) RunTests() []*match.MatchContext {
 func toMatches(pkts []*packet.Packet) []*match.MatchContext {
 	matches := make([]*match.MatchContext, 0, len(pkts))
 	for _, p := range pkts {
-		matches = append(matches, &match.MatchContext{Packet: p})
+		matches = append(matches, match.New(p))
 	}
 	return matches
 }

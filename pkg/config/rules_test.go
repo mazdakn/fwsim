@@ -131,6 +131,7 @@ func TestTableFromBytesWithSetFields(t *testing.T) {
 
 	yaml := `
 name: main
+order: 7
 rules:
   - name: allow-trusted
     src:
@@ -147,6 +148,7 @@ default_action: Drop
 	rc, err := TableFromBytes([]byte(yaml))
 	Expect(err).To(BeNil())
 	Expect(rc).ToNot(BeNil())
+	Expect(rc.Order).To(Equal(uint64(7)))
 	Expect(rc.Rules).To(HaveLen(1))
 	Expect(rc.Rules[0].Source.Sets).To(Equal([]string{"trusted-ips", "src-ipports"}))
 	Expect(rc.Rules[0].Destination.Sets).To(Equal([]string{"web-ports", "dst-ipports"}))

@@ -47,7 +47,7 @@ dst_port: 80
 		LoadPackets: true,
 	})
 	Expect(err).To(BeNil())
-	Expect(resources.Table).ToNot(BeNil())
+	Expect(resources.Tables).To(HaveLen(1))
 	Expect(resources.Sets).To(HaveLen(1))
 	Expect(resources.Packets).To(HaveLen(1))
 	Expect(resources.Sets).To(HaveKey("web-ports"))
@@ -59,27 +59,56 @@ dst_port: 80
 	Expect(resources.Packets[0].DstPort).To(Equal(uint16(80)))
 }
 
-func TestConfigRulesFromDirConflictingDefaultAction(t *testing.T) {
+func TestConfigTablesFromDirSortsByOrder(t *testing.T) {
 	RegisterTestingT(t)
 
 	dir := t.TempDir()
 	tablesDir := filepath.Join(dir, "tables")
 	Expect(os.MkdirAll(tablesDir, 0o755)).To(Succeed())
 	Expect(os.WriteFile(filepath.Join(tablesDir, "a.yaml"), []byte(`
-name: main
+name: first
+order: 10
 rules: []
 default_action: Accept
 `), 0o600)).To(Succeed())
 	Expect(os.WriteFile(filepath.Join(tablesDir, "b.yaml"), []byte(`
-name: main
+name: second
+order: 5
 rules: []
 default_action: Drop
 `), 0o600)).To(Succeed())
 
-	tbl, err := ConfigRulesFromDir(tablesDir, nil)
-	Expect(err).ToNot(BeNil())
-	Expect(err.Error()).To(ContainSubstring("conflicting default_action"))
-	Expect(tbl).To(BeNil())
+	tables, err := ConfigTablesFromDir(tablesDir, nil)
+	Expect(err).To(BeNil())
+	Expect(tables).To(HaveLen(2))
+	Expect(tables[0].Name).To(Equal("second"))
+	Expect(tables[1].Name).To(Equal("first"))
+}
+
+func TestConfigTablesFromDirStableForEqualOrder(t *testing.T) {
+	RegisterTestingT(t)
+
+	dir := t.TempDir()
+	tablesDir := filepath.Join(dir, "tables")
+	Expect(os.MkdirAll(tablesDir, 0o755)).To(Succeed())
+	Expect(os.WriteFile(filepath.Join(tablesDir, "a.yaml"), []byte(`
+name: first
+order: 10
+rules: []
+default_action: Accept
+`), 0o600)).To(Succeed())
+	Expect(os.WriteFile(filepath.Join(tablesDir, "b.yaml"), []byte(`
+name: second
+order: 10
+rules: []
+default_action: Drop
+`), 0o600)).To(Succeed())
+
+	tables, err := ConfigTablesFromDir(tablesDir, nil)
+	Expect(err).To(BeNil())
+	Expect(tables).To(HaveLen(2))
+	Expect(tables[0].Name).To(Equal("first"))
+	Expect(tables[1].Name).To(Equal("second"))
 }
 
 func TestConfigSetsFromDirMissingDirectory(t *testing.T) {
@@ -88,6 +117,14 @@ func TestConfigSetsFromDirMissingDirectory(t *testing.T) {
 	sets, err := ConfigSetsFromDir(filepath.Join(t.TempDir(), "sets"))
 	Expect(err).To(BeNil())
 	Expect(sets).To(Equal(map[string]set.Set{}))
+}
+
+func TestConfigTablesFromDirMissingDirectory(t *testing.T) {
+	RegisterTestingT(t)
+
+	tables, err := ConfigTablesFromDir(filepath.Join(t.TempDir(), "tables"), nil)
+	Expect(err).To(BeNil())
+	Expect(tables).To(BeEmpty())
 }
 
 func TestConfigFromDirectoryWithoutPacketsWhenNotRequested(t *testing.T) {
@@ -105,7 +142,21 @@ default_action: Accept
 		InputDir: dir,
 	})
 	Expect(err).To(BeNil())
-	Expect(resources.Table).ToNot(BeNil())
+	Expect(resources.Tables).To(HaveLen(1))
+	Expect(resources.Packets).To(BeNil())
+}
+
+func TestConfigFromDirectoryWithoutTables(t *testing.T) {
+	RegisterTestingT(t)
+
+	dir := t.TempDir()
+	Expect(os.MkdirAll(filepath.Join(dir, "sets"), 0o755)).To(Succeed())
+
+	resources, err := ConfigFromFile(Config{
+		InputDir: dir,
+	})
+	Expect(err).To(BeNil())
+	Expect(resources.Tables).To(BeEmpty())
 	Expect(resources.Packets).To(BeNil())
 }
 
