@@ -19,13 +19,9 @@ type Table struct {
 }
 
 func New(name string, defaultAction rule.Action) *Table {
-	return NewWithOrder(name, 0, defaultAction)
-}
-
-func NewWithOrder(name string, order uint64, defaultAction rule.Action) *Table {
 	return &Table{
 		Name:  name,
-		Order: order,
+		Order: 0,
 		DefaultAction: rule.New(
 			rule.WithAction(defaultAction),
 			rule.WithName(fmt.Sprintf("table %s default action", name)),

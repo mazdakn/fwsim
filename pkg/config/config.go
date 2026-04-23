@@ -45,9 +45,6 @@ func ConfigFromDirectory(conf Config) (engine.Resources, error) {
 		return engine.Resources{}, err
 	}
 	resources.Tables = tables
-	if len(tables) > 0 {
-		resources.Table = tables[0]
-	}
 
 	if conf.LoadPackets {
 		pkts, err := ConfigPacketsFromDir(filepath.Join(conf.InputDir, "packets"))
@@ -122,7 +119,7 @@ func ConfigRulesFromDir(dir string, sets map[string]set.Set) (*table.Table, erro
 		return nil, err
 	}
 	if len(tables) == 0 {
-		return nil, fmt.Errorf("no yaml files found in tables directory %s", dir)
+		return nil, nil
 	}
 	return tables[0], nil
 }
@@ -130,10 +127,13 @@ func ConfigRulesFromDir(dir string, sets map[string]set.Set) (*table.Table, erro
 func ConfigTablesFromDir(dir string, sets map[string]set.Set) ([]*table.Table, error) {
 	files, err := yamlFilesInDir(dir)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return []*table.Table{}, nil
+		}
 		return nil, fmt.Errorf("failed to read tables directory %s: %w", dir, err)
 	}
 	if len(files) == 0 {
-		return nil, fmt.Errorf("no yaml files found in tables directory %s", dir)
+		return []*table.Table{}, nil
 	}
 
 	tables := make([]*table.Table, 0, len(files))
@@ -217,7 +217,8 @@ func toTable(t *Table, sets map[string]set.Set) (*table.Table, error) {
 		sets = map[string]set.Set{}
 	}
 
-	tbl := table.NewWithOrder(t.Name, t.Order, rule.MustParseAction(t.DefaultAction))
+	tbl := table.New(t.Name, rule.MustParseAction(t.DefaultAction))
+	tbl.Order = t.Order
 	for _, r := range t.Rules {
 		mRule, err := r.ToRule(sets)
 		if err != nil {

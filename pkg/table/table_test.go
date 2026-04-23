@@ -54,10 +54,14 @@ func TestTableAddRuleSortStableForEqualOrders(t *testing.T) {
 func TestSortTablesSortAscendingAndStable(t *testing.T) {
 	RegisterTestingT(t)
 
-	t1 := NewWithOrder("first", 10, rule.Accept)
-	t2 := NewWithOrder("second", 0, rule.Accept)
-	t3 := NewWithOrder("third", 10, rule.Accept)
-	t4 := NewWithOrder("fourth", 5, rule.Accept)
+	t1 := New("first", rule.Accept)
+	t1.Order = 10
+	t2 := New("second", rule.Accept)
+	t2.Order = 0
+	t3 := New("third", rule.Accept)
+	t3.Order = 10
+	t4 := New("fourth", rule.Accept)
+	t4.Order = 5
 
 	tables := []*Table{t1, t2, t3, t4}
 	SortTables(tables)

@@ -53,5 +53,13 @@ type MatchContext struct {
 }
 
 func New() *MatchContext {
-	return &MatchContext{}
+	return &MatchContext{
+		Verdict: NoMatch,
+	}
+}
+
+func NewWithPacket(pkt *packet.Packet) *MatchContext {
+	m := New()
+	m.Packet = pkt
+	return m
 }

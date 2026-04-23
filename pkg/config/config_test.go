@@ -47,7 +47,6 @@ dst_port: 80
 		LoadPackets: true,
 	})
 	Expect(err).To(BeNil())
-	Expect(resources.Table).ToNot(BeNil())
 	Expect(resources.Tables).To(HaveLen(1))
 	Expect(resources.Sets).To(HaveLen(1))
 	Expect(resources.Packets).To(HaveLen(1))
@@ -120,6 +119,14 @@ func TestConfigSetsFromDirMissingDirectory(t *testing.T) {
 	Expect(sets).To(Equal(map[string]set.Set{}))
 }
 
+func TestConfigTablesFromDirMissingDirectory(t *testing.T) {
+	RegisterTestingT(t)
+
+	tables, err := ConfigTablesFromDir(filepath.Join(t.TempDir(), "tables"), nil)
+	Expect(err).To(BeNil())
+	Expect(tables).To(BeEmpty())
+}
+
 func TestConfigFromDirectoryWithoutPacketsWhenNotRequested(t *testing.T) {
 	RegisterTestingT(t)
 
@@ -135,8 +142,21 @@ default_action: Accept
 		InputDir: dir,
 	})
 	Expect(err).To(BeNil())
-	Expect(resources.Table).ToNot(BeNil())
 	Expect(resources.Tables).To(HaveLen(1))
+	Expect(resources.Packets).To(BeNil())
+}
+
+func TestConfigFromDirectoryWithoutTables(t *testing.T) {
+	RegisterTestingT(t)
+
+	dir := t.TempDir()
+	Expect(os.MkdirAll(filepath.Join(dir, "sets"), 0o755)).To(Succeed())
+
+	resources, err := ConfigFromFile(Config{
+		InputDir: dir,
+	})
+	Expect(err).To(BeNil())
+	Expect(resources.Tables).To(BeEmpty())
 	Expect(resources.Packets).To(BeNil())
 }
 

@@ -17,7 +17,7 @@ func loadRulesFromBytes(e *enginepkg.Engine, data []byte) error {
 	if err != nil {
 		return err
 	}
-	e.SetTable(tbl)
+	e.SetTables([]*table.Table{tbl})
 	return nil
 }
 
@@ -182,17 +182,17 @@ func TestEngineWithNamedPortsInRulesAndPackets(t *testing.T) {
 	Expect(err).To(BeNil())
 
 	// Packet to port "http" (80) → matches allow-http rule (Accept)
-	m := &match.MatchContext{Packet: pkt1[0]}
+	m := match.NewWithPacket(pkt1[0])
 	engine.RunTest(m)
 	Expect(m.Verdict).To(Equal(match.Accept))
 
 	// Packet to port "https" (443) → matches allow-https rule (Accept)
-	m = &match.MatchContext{Packet: pkt2[0]}
+	m = match.NewWithPacket(pkt2[0])
 	engine.RunTest(m)
 	Expect(m.Verdict).To(Equal(match.Accept))
 
 	// Packet to port "dns" (53) with proto 17 → no matching rule → deny-all (Drop)
-	m = &match.MatchContext{Packet: pkt3[0]}
+	m = match.NewWithPacket(pkt3[0])
 	engine.RunTest(m)
 	Expect(m.Verdict).To(Equal(match.Drop))
 }
@@ -236,17 +236,17 @@ default_action: Drop
 	Expect(err).To(BeNil())
 
 	// Packet to port "http" (80) → in named-web-ports → Accept
-	m := &match.MatchContext{Packet: pkt1[0]}
+	m := match.NewWithPacket(pkt1[0])
 	engine.RunTest(m)
 	Expect(m.Verdict).To(Equal(match.Accept))
 
 	// Packet to port "https" (443) → in named-web-ports → Accept
-	m = &match.MatchContext{Packet: pkt2[0]}
+	m = match.NewWithPacket(pkt2[0])
 	engine.RunTest(m)
 	Expect(m.Verdict).To(Equal(match.Accept))
 
 	// Packet to port "dns" (53) → NOT in named-web-ports → deny-all (Drop)
-	m = &match.MatchContext{Packet: pkt3[0]}
+	m = match.NewWithPacket(pkt3[0])
 	engine.RunTest(m)
 	Expect(m.Verdict).To(Equal(match.Drop))
 }
@@ -294,7 +294,7 @@ default_action: Drop
 
 	pkt, err := config.PacketsFromBytes([]byte(testPacketsNamedPortYAML))
 	Expect(err).To(BeNil())
-	m := &match.MatchContext{Packet: pkt[0]}
+	m := match.NewWithPacket(pkt[0])
 	engine.RunTest(m)
 
 	Expect(m.Verdict).To(Equal(match.Accept))
@@ -333,7 +333,7 @@ default_action: Accept
 
 	pkt, err := config.PacketsFromBytes([]byte(testPacketsNamedPortYAML))
 	Expect(err).To(BeNil())
-	m := &match.MatchContext{Packet: pkt[0]}
+	m := match.NewWithPacket(pkt[0])
 	engine.RunTest(m)
 
 	Expect(m.Verdict).To(Equal(match.Drop))
@@ -372,7 +372,7 @@ default_action: Drop
 
 	pkt, err := config.PacketsFromBytes([]byte(testPacketsNamedPortYAML))
 	Expect(err).To(BeNil())
-	m := &match.MatchContext{Packet: pkt[0]}
+	m := match.NewWithPacket(pkt[0])
 	engine.RunTest(m)
 
 	Expect(m.Verdict).To(Equal(match.NoMatch))
@@ -396,17 +396,17 @@ func TestPacketsFromBytesAndMatch(t *testing.T) {
 	Expect(err).To(BeNil())
 
 	// First packet: src 192.168.1.5 -> dst 1.1.1.1:80 proto 7, src_port 30000 — matches rule 1 (Accept)
-	m := &match.MatchContext{Packet: pkt1[0]}
+	m := match.NewWithPacket(pkt1[0])
 	engine.RunTest(m)
 	Expect(m.Verdict).To(Equal(match.Accept))
 
 	// Second packet: src 10.0.0.1 -> dst 2.2.2.2:8080 proto 7 — matches rule 3 (Drop)
-	m = &match.MatchContext{Packet: pkt2[0]}
+	m = match.NewWithPacket(pkt2[0])
 	engine.RunTest(m)
 	Expect(m.Verdict).To(Equal(match.Drop))
 
 	// Third packet: proto 17, no matching rule — default action Accept
-	m = &match.MatchContext{Packet: pkt3[0]}
+	m = match.NewWithPacket(pkt3[0])
 	engine.RunTest(m)
 	Expect(m.Verdict).To(Equal(match.Accept))
 }
@@ -460,9 +460,9 @@ func TestRulesReferencingNamedSets(t *testing.T) {
 	err = loadRulesFromBytes(engine, []byte(testRulesWithSetsYAML))
 	Expect(err).To(BeNil())
 
-	Expect(len(engine.Table().Rules)).To(Equal(2))
+	Expect(len(engine.Tables()[0].Rules)).To(Equal(2))
 
-	rule1 := engine.Table().Rules[0]
+	rule1 := engine.Tables()[0].Rules[0]
 	Expect(rule1.Source.Sets).To(HaveLen(1))
 	Expect(rule1.Destination.Sets).To(HaveLen(1))
 	Expect(rule1.Source.Net).To(BeNil())
@@ -501,18 +501,18 @@ func TestRulesWithNamedSetsMatch(t *testing.T) {
 	Expect(err).To(BeNil())
 
 	// First packet: src 192.168.1.5 dst 1.1.1.1:80 → matches rule 1 (Accept)
-	m := &match.MatchContext{Packet: pkt1[0]}
+	m := match.NewWithPacket(pkt1[0])
 	engine.RunTest(m)
 	Expect(m.Verdict).To(Equal(match.Accept))
 
 	// Second packet: src 10.0.0.1 dst 2.2.2.2:8080 → src is in trusted-ips (10.0.0.0/8),
 	// dst port 8080 is in web-ports → matches rule 1 (Accept)
-	m = &match.MatchContext{Packet: pkt2[0]}
+	m = match.NewWithPacket(pkt2[0])
 	engine.RunTest(m)
 	Expect(m.Verdict).To(Equal(match.Accept))
 
 	// Third packet: src 172.16.0.1 → NOT in trusted-ips → falls through to deny-all (Drop)
-	m = &match.MatchContext{Packet: pkt3[0]}
+	m = match.NewWithPacket(pkt3[0])
 	engine.RunTest(m)
 	Expect(m.Verdict).To(Equal(match.Drop))
 }
@@ -539,8 +539,8 @@ func TestRulesReferencingNegatedNamedSets(t *testing.T) {
 	err = loadRulesFromBytes(engine, []byte(testRulesWithNotSetsYAML))
 	Expect(err).To(BeNil())
 
-	Expect(len(engine.Table().Rules)).To(Equal(2))
-	Expect(engine.Table().Rules[0].NotSource.Sets).To(HaveLen(1))
+	Expect(len(engine.Tables()[0].Rules)).To(Equal(2))
+	Expect(engine.Tables()[0].Rules[0].NotSource.Sets).To(HaveLen(1))
 }
 
 func TestRulesWithNegatedNamedSetsMatch(t *testing.T) {
@@ -559,12 +559,12 @@ func TestRulesWithNegatedNamedSetsMatch(t *testing.T) {
 	Expect(err).To(BeNil())
 
 	// First packet: src 192.168.1.5 — in trusted-ips → negated, rule1 does NOT match → deny-all (Drop)
-	m := &match.MatchContext{Packet: pkt1[0]}
+	m := match.NewWithPacket(pkt1[0])
 	engine.RunTest(m)
 	Expect(m.Verdict).To(Equal(match.Drop))
 
 	// Third packet: src 172.16.0.1 — NOT in trusted-ips → rule1 matches (Accept)
-	m = &match.MatchContext{Packet: pkt3[0]}
+	m = match.NewWithPacket(pkt3[0])
 	engine.RunTest(m)
 	Expect(m.Verdict).To(Equal(match.Accept))
 }
@@ -586,10 +586,10 @@ func TestLoadRulesFromBytes(t *testing.T) {
 	err := loadRulesFromBytes(engine, []byte(testRulesYAML))
 	Expect(err).To(BeNil())
 
-	Expect(len(engine.Table().Rules)).To(Equal(3))
+	Expect(len(engine.Tables()[0].Rules)).To(Equal(3))
 
 	// Verify first rule
-	rule1 := engine.Table().Rules[0]
+	rule1 := engine.Tables()[0].Rules[0]
 	Expect(rule1.Source.Net).ToNot(BeNil())
 	Expect(rule1.Source.Net.String()).To(Equal("192.168.1.0/24"))
 	Expect(rule1.Destination.Net).ToNot(BeNil())
@@ -599,7 +599,7 @@ func TestLoadRulesFromBytes(t *testing.T) {
 	Expect(rule1.Action.String()).To(Equal("Accept"))
 
 	// Verify second rule
-	rule2 := engine.Table().Rules[1]
+	rule2 := engine.Tables()[0].Rules[1]
 	Expect(rule2.Destination.Net).ToNot(BeNil())
 	Expect(rule2.Destination.Net.String()).To(Equal("1.1.1.1/32"))
 	Expect(rule2.Proto).ToNot(BeNil())
@@ -607,5 +607,5 @@ func TestLoadRulesFromBytes(t *testing.T) {
 	Expect(rule2.Action.String()).To(Equal("Drop"))
 
 	// Verify default action is set
-	Expect(engine.Table().DefaultAction.Action.String()).To(Equal("Accept"))
+	Expect(engine.Tables()[0].DefaultAction.Action.String()).To(Equal("Accept"))
 }

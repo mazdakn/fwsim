@@ -9,13 +9,11 @@ import (
 
 type Resources struct {
 	Sets    map[string]set.Set
-	Table   *table.Table
 	Tables  []*table.Table
 	Packets []*packet.Packet
 }
 
 type Engine struct {
-	table   *table.Table
 	tables  []*table.Table
 	matches []*match.MatchContext
 	sets    map[string]set.Set
@@ -39,36 +37,18 @@ func (e *Engine) LoadResources(resources Resources) {
 	if resources.Tables != nil {
 		e.SetTables(resources.Tables)
 	}
-	if resources.Table != nil {
-		e.SetTable(resources.Table)
-	}
 	if resources.Packets != nil {
 		e.matches = toMatches(resources.Packets)
 	}
 }
 
-func (e *Engine) SetTable(t *table.Table) {
-	e.table = t
-	if t == nil {
-		e.tables = nil
-		return
-	}
-	e.tables = []*table.Table{t}
-}
-
 func (e *Engine) SetTables(tables []*table.Table) {
 	if tables == nil {
 		e.tables = nil
-		e.table = nil
 		return
 	}
 	e.tables = append([]*table.Table(nil), tables...)
 	table.SortTables(e.tables)
-	if len(e.tables) == 0 {
-		e.table = nil
-		return
-	}
-	e.table = e.tables[0]
 }
 
 func (e *Engine) SetMatches(matches []*match.MatchContext) {
@@ -82,10 +62,6 @@ func (e *Engine) SetSets(sets map[string]set.Set) {
 // Sets returns the map of user-defined named sets loaded into the engine.
 func (e *Engine) Sets() map[string]set.Set {
 	return e.sets
-}
-
-func (e *Engine) Table() *table.Table {
-	return e.table
 }
 
 func (e *Engine) Tables() []*table.Table {
@@ -111,7 +87,7 @@ func (e *Engine) RunTests() []*match.MatchContext {
 func toMatches(pkts []*packet.Packet) []*match.MatchContext {
 	matches := make([]*match.MatchContext, 0, len(pkts))
 	for _, p := range pkts {
-		matches = append(matches, &match.MatchContext{Packet: p})
+		matches = append(matches, match.NewWithPacket(p))
 	}
 	return matches
 }
