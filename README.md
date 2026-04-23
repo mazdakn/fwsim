@@ -83,15 +83,16 @@ Table Config (tables/*.yaml)
 ----------------------------
 Top-level keys:
   name: table name
+  order: table evaluation order (lower first, default 0)
   default_action: Accept | Drop | Pass
-                 (Pass means final verdict is "no match" when no rule decides)
+                 (Pass means continue evaluation in the next table)
   rules: list of rule entries
 
 Each rule may include:
   name        Human-readable label
   order       Evaluation order (lower first)
   action      Accept | Drop | Pass
-              (Pass means "continue evaluating next rules")
+              (Pass means "continue evaluation in the next table")
   src / dst:
     net:          list of CIDRs
     port:         list of port numbers
@@ -100,9 +101,14 @@ Each rule may include:
   proto:      list of protocol names or numbers
   not_proto:  list of protocols to exclude
 
+Tables are loaded from every YAML file under `tables/` and sorted by `order`
+ascending. Packet evaluation continues table-by-table until a rule/default
+returns Accept or Drop; if all tables return Pass, the final verdict is `no match`.
+
 Example (hack/sample/tables/simple.yaml):
 
   name: main
+  order: 10
   rules:
     - name: allow-192.168-to-1.1.1.1
       src:

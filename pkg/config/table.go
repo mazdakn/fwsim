@@ -14,6 +14,7 @@ import (
 
 type Table struct {
 	Name          string `yaml:"name"                   validate:"isNonEmpty"`
+	Order         uint64 `yaml:"order,omitempty"`
 	Rules         []Rule `yaml:"rules,omitempty"`
 	DefaultAction string `yaml:"default_action,omitempty" validate:"isValidAction"`
 }

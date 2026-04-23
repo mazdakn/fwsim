@@ -40,11 +40,14 @@ func ConfigFromDirectory(conf Config) (engine.Resources, error) {
 	}
 	resources.Sets = sets
 
-	tbl, err := ConfigRulesFromDir(filepath.Join(conf.InputDir, "tables"), resources.Sets)
+	tables, err := ConfigTablesFromDir(filepath.Join(conf.InputDir, "tables"), resources.Sets)
 	if err != nil {
 		return engine.Resources{}, err
 	}
-	resources.Table = tbl
+	resources.Tables = tables
+	if len(tables) > 0 {
+		resources.Table = tables[0]
+	}
 
 	if conf.LoadPackets {
 		pkts, err := ConfigPacketsFromDir(filepath.Join(conf.InputDir, "packets"))
@@ -114,6 +117,14 @@ func ConfigSetsFromFile(file string) (map[string]set.Set, error) {
 }
 
 func ConfigRulesFromDir(dir string, sets map[string]set.Set) (*table.Table, error) {
+	tables, err := ConfigTablesFromDir(dir, sets)
+	if err != nil {
+		return nil, err
+	}
+	return tables[0], nil
+}
+
+func ConfigTablesFromDir(dir string, sets map[string]set.Set) ([]*table.Table, error) {
 	files, err := yamlFilesInDir(dir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read tables directory %s: %w", dir, err)
@@ -122,37 +133,16 @@ func ConfigRulesFromDir(dir string, sets map[string]set.Set) (*table.Table, erro
 		return nil, fmt.Errorf("no yaml files found in tables directory %s", dir)
 	}
 
-	merged := &Table{}
+	tables := make([]*table.Table, 0, len(files))
 	for _, file := range files {
-		t, err := TableFromFile(file)
+		tbl, err := ConfigTableFromFile(file, sets)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read table from %s: %w", file, err)
+			return nil, err
 		}
-		merged.Rules = append(merged.Rules, t.Rules...)
-		if merged.Name == "" {
-			merged.Name = t.Name
-		} else if merged.Name != t.Name {
-			return nil, fmt.Errorf("conflicting table name in %s: %s (expected %s)", file, t.Name, merged.Name)
-		}
-		if t.DefaultAction == "" {
-			continue
-		}
-		if merged.DefaultAction == "" {
-			merged.DefaultAction = t.DefaultAction
-			continue
-		}
-		if merged.DefaultAction != t.DefaultAction {
-			return nil, fmt.Errorf("conflicting default_action in %s: %s (expected %s)", file, t.DefaultAction, merged.DefaultAction)
-		}
+		tables = append(tables, tbl)
 	}
-
-	if merged.DefaultAction == "" {
-		return nil, fmt.Errorf("no default_action found in any table file under %s", dir)
-	}
-	if merged.Name == "" {
-		return nil, fmt.Errorf("no name found in any table file under %s", dir)
-	}
-	return toTable(merged, sets)
+	table.SortTables(tables)
+	return tables, nil
 }
 
 func ConfigPacketsFromDir(dir string) ([]*packet.Packet, error) {
@@ -224,7 +214,7 @@ func toTable(t *Table, sets map[string]set.Set) (*table.Table, error) {
 		sets = map[string]set.Set{}
 	}
 
-	tbl := table.New(t.Name, rule.MustParseAction(t.DefaultAction))
+	tbl := table.NewWithOrder(t.Name, t.Order, rule.MustParseAction(t.DefaultAction))
 	for _, r := range t.Rules {
 		mRule, err := r.ToRule(sets)
 		if err != nil {

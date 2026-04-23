@@ -8,6 +8,7 @@ import (
 	"github.com/mazdakn/fwsim/pkg/match"
 	"github.com/mazdakn/fwsim/pkg/proto"
 	"github.com/mazdakn/fwsim/pkg/set"
+	"github.com/mazdakn/fwsim/pkg/table"
 	. "github.com/onsi/gomega"
 )
 
@@ -255,6 +256,90 @@ func TestNew(t *testing.T) {
 
 	engine := enginepkg.New()
 	Expect(engine).ToNot(BeNil())
+}
+
+func TestEnginePassRuleContinuesToNextTable(t *testing.T) {
+	RegisterTestingT(t)
+
+	engine := enginepkg.New()
+
+	passTable, err := config.ConfigTableFromBytes([]byte(`
+name: pass-table
+order: 1
+rules:
+  - name: pass-http
+    dst:
+      port: [80]
+    proto: [6]
+    action: Pass
+default_action: Drop
+`), nil)
+	Expect(err).To(BeNil())
+
+	acceptTable, err := config.ConfigTableFromBytes([]byte(`
+name: accept-table
+order: 2
+rules:
+  - name: accept-http
+    dst:
+      port: [80]
+    proto: [6]
+    action: Accept
+default_action: Drop
+`), nil)
+	Expect(err).To(BeNil())
+
+	// Intentionally set reverse order; engine must sort by table order.
+	engine.SetTables([]*table.Table{acceptTable, passTable})
+
+	pkt, err := config.PacketsFromBytes([]byte(testPacketsNamedPortYAML))
+	Expect(err).To(BeNil())
+	m := &match.MatchContext{Packet: pkt[0]}
+	engine.RunTest(m)
+
+	Expect(m.Verdict).To(Equal(match.Accept))
+	Expect(m.Trace).To(HaveLen(2))
+	Expect(m.Trace[0].Name).To(Equal("pass-http"))
+	Expect(m.Trace[1].Name).To(Equal("accept-http"))
+}
+
+func TestEnginePassDefaultActionContinuesToNextTable(t *testing.T) {
+	RegisterTestingT(t)
+
+	engine := enginepkg.New()
+
+	passDefaultTable, err := config.ConfigTableFromBytes([]byte(`
+name: pass-default
+order: 1
+rules: []
+default_action: Pass
+`), nil)
+	Expect(err).To(BeNil())
+
+	dropTable, err := config.ConfigTableFromBytes([]byte(`
+name: drop-table
+order: 2
+rules:
+  - name: drop-http
+    dst:
+      port: [80]
+    proto: [6]
+    action: Drop
+default_action: Accept
+`), nil)
+	Expect(err).To(BeNil())
+
+	engine.SetTables([]*table.Table{dropTable, passDefaultTable})
+
+	pkt, err := config.PacketsFromBytes([]byte(testPacketsNamedPortYAML))
+	Expect(err).To(BeNil())
+	m := &match.MatchContext{Packet: pkt[0]}
+	engine.RunTest(m)
+
+	Expect(m.Verdict).To(Equal(match.Drop))
+	Expect(m.Trace).To(HaveLen(2))
+	Expect(m.Trace[0].Name).To(Equal("table pass-default default action"))
+	Expect(m.Trace[1].Name).To(Equal("drop-http"))
 }
 
 func TestPacketsFromBytesAndMatch(t *testing.T) {
