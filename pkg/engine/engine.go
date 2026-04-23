@@ -93,10 +93,6 @@ func (e *Engine) Tables() []*table.Table {
 }
 
 func (e *Engine) RunTest(m *match.MatchContext) {
-	if len(e.tables) == 0 {
-		m.Verdict = match.NoMatch
-		return
-	}
 	for _, t := range e.tables {
 		if t.Match(m) {
 			return

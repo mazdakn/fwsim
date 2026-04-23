@@ -60,7 +60,7 @@ dst_port: 80
 	Expect(resources.Packets[0].DstPort).To(Equal(uint16(80)))
 }
 
-func TestConfigTablesFromDirAllowsMultipleTables(t *testing.T) {
+func TestConfigTablesFromDirSortsByOrder(t *testing.T) {
 	RegisterTestingT(t)
 
 	dir := t.TempDir()
@@ -84,6 +84,32 @@ default_action: Drop
 	Expect(tables).To(HaveLen(2))
 	Expect(tables[0].Name).To(Equal("second"))
 	Expect(tables[1].Name).To(Equal("first"))
+}
+
+func TestConfigTablesFromDirStableForEqualOrder(t *testing.T) {
+	RegisterTestingT(t)
+
+	dir := t.TempDir()
+	tablesDir := filepath.Join(dir, "tables")
+	Expect(os.MkdirAll(tablesDir, 0o755)).To(Succeed())
+	Expect(os.WriteFile(filepath.Join(tablesDir, "a.yaml"), []byte(`
+name: first
+order: 10
+rules: []
+default_action: Accept
+`), 0o600)).To(Succeed())
+	Expect(os.WriteFile(filepath.Join(tablesDir, "b.yaml"), []byte(`
+name: second
+order: 10
+rules: []
+default_action: Drop
+`), 0o600)).To(Succeed())
+
+	tables, err := ConfigTablesFromDir(tablesDir, nil)
+	Expect(err).To(BeNil())
+	Expect(tables).To(HaveLen(2))
+	Expect(tables[0].Name).To(Equal("first"))
+	Expect(tables[1].Name).To(Equal("second"))
 }
 
 func TestConfigSetsFromDirMissingDirectory(t *testing.T) {

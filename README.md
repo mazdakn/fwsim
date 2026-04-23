@@ -85,7 +85,8 @@ Top-level keys:
   name: table name
   order: table evaluation order (lower first, default 0)
   default_action: Accept | Drop | Pass
-                 (Pass means continue evaluation in the next table)
+                 (Pass means continue evaluation in the next table;
+                  if no later table exists, verdict becomes "no match")
   rules: list of rule entries
 
 Each rule may include:

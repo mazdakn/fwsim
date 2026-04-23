@@ -51,6 +51,23 @@ func TestTableAddRuleSortStableForEqualOrders(t *testing.T) {
 	Expect(table.Rules[2].Name).To(Equal("rule3"))
 }
 
+func TestSortTablesSortAscendingAndStable(t *testing.T) {
+	RegisterTestingT(t)
+
+	t1 := NewWithOrder("first", 10, rule.Accept)
+	t2 := NewWithOrder("second", 0, rule.Accept)
+	t3 := NewWithOrder("third", 10, rule.Accept)
+	t4 := NewWithOrder("fourth", 5, rule.Accept)
+
+	tables := []*Table{t1, t2, t3, t4}
+	SortTables(tables)
+
+	Expect(tables[0].Name).To(Equal("second"))
+	Expect(tables[1].Name).To(Equal("fourth"))
+	Expect(tables[2].Name).To(Equal("first"))
+	Expect(tables[3].Name).To(Equal("third"))
+}
+
 func TestTableMatchUsesAscendingOrder(t *testing.T) {
 	RegisterTestingT(t)
 

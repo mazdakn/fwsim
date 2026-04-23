@@ -121,6 +121,9 @@ func ConfigRulesFromDir(dir string, sets map[string]set.Set) (*table.Table, erro
 	if err != nil {
 		return nil, err
 	}
+	if len(tables) == 0 {
+		return nil, fmt.Errorf("no yaml files found in tables directory %s", dir)
+	}
 	return tables[0], nil
 }
 

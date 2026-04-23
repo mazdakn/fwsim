@@ -342,6 +342,45 @@ default_action: Accept
 	Expect(m.Trace[1].Name).To(Equal("drop-http"))
 }
 
+func TestEngineAllTablesPassResultsInNoMatch(t *testing.T) {
+	RegisterTestingT(t)
+
+	engine := enginepkg.New()
+
+	firstTable, err := config.ConfigTableFromBytes([]byte(`
+name: first-pass
+order: 1
+rules: []
+default_action: Pass
+`), nil)
+	Expect(err).To(BeNil())
+
+	secondTable, err := config.ConfigTableFromBytes([]byte(`
+name: second-pass
+order: 2
+rules:
+  - name: pass-http
+    dst:
+      port: [80]
+    proto: [6]
+    action: Pass
+default_action: Drop
+`), nil)
+	Expect(err).To(BeNil())
+
+	engine.SetTables([]*table.Table{firstTable, secondTable})
+
+	pkt, err := config.PacketsFromBytes([]byte(testPacketsNamedPortYAML))
+	Expect(err).To(BeNil())
+	m := &match.MatchContext{Packet: pkt[0]}
+	engine.RunTest(m)
+
+	Expect(m.Verdict).To(Equal(match.NoMatch))
+	Expect(m.Trace).To(HaveLen(2))
+	Expect(m.Trace[0].Name).To(Equal("table first-pass default action"))
+	Expect(m.Trace[1].Name).To(Equal("pass-http"))
+}
+
 func TestPacketsFromBytesAndMatch(t *testing.T) {
 	RegisterTestingT(t)
 
