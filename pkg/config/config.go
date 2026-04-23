@@ -217,8 +217,7 @@ func toTable(t *Table, sets map[string]set.Set) (*table.Table, error) {
 		sets = map[string]set.Set{}
 	}
 
-	tbl := table.New(t.Name, rule.MustParseAction(t.DefaultAction))
-	tbl.Order = t.Order
+	tbl := table.New(t.Name, t.Order, rule.MustParseAction(t.DefaultAction))
 	for _, r := range t.Rules {
 		mRule, err := r.ToRule(sets)
 		if err != nil {

@@ -43,12 +43,7 @@ func (e *Engine) LoadResources(resources Resources) {
 }
 
 func (e *Engine) SetTables(tables []*table.Table) {
-	if tables == nil {
-		e.tables = nil
-		return
-	}
-	e.tables = append([]*table.Table(nil), tables...)
-	table.SortTables(e.tables)
+	e.tables = tables
 }
 
 func (e *Engine) SetMatches(matches []*match.MatchContext) {
@@ -87,7 +82,7 @@ func (e *Engine) RunTests() []*match.MatchContext {
 func toMatches(pkts []*packet.Packet) []*match.MatchContext {
 	matches := make([]*match.MatchContext, 0, len(pkts))
 	for _, p := range pkts {
-		matches = append(matches, match.NewWithPacket(p))
+		matches = append(matches, match.New(p))
 	}
 	return matches
 }

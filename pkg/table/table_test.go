@@ -12,7 +12,7 @@ import (
 func TestTableAddRuleSortAscending(t *testing.T) {
 	RegisterTestingT(t)
 
-	table := New("test", rule.Drop)
+	table := New("test", 0, rule.Drop)
 
 	// Add rules with different orders
 	rule1 := rule.New(rule.WithName("rule1"), rule.WithOrder(10), rule.WithAction(rule.Accept))
@@ -33,7 +33,7 @@ func TestTableAddRuleSortAscending(t *testing.T) {
 func TestTableAddRuleSortStableForEqualOrders(t *testing.T) {
 	RegisterTestingT(t)
 
-	table := New("test", rule.Drop)
+	table := New("test", 0, rule.Drop)
 
 	// Add rules with the same order (default 0)
 	rule1 := rule.New(rule.WithName("rule1"), rule.WithAction(rule.Accept))
@@ -54,14 +54,10 @@ func TestTableAddRuleSortStableForEqualOrders(t *testing.T) {
 func TestSortTablesSortAscendingAndStable(t *testing.T) {
 	RegisterTestingT(t)
 
-	t1 := New("first", rule.Accept)
-	t1.Order = 10
-	t2 := New("second", rule.Accept)
-	t2.Order = 0
-	t3 := New("third", rule.Accept)
-	t3.Order = 10
-	t4 := New("fourth", rule.Accept)
-	t4.Order = 5
+	t1 := New("first", 10, rule.Accept)
+	t2 := New("second", 0, rule.Accept)
+	t3 := New("third", 10, rule.Accept)
+	t4 := New("fourth", 5, rule.Accept)
 
 	tables := []*Table{t1, t2, t3, t4}
 	SortTables(tables)
@@ -75,7 +71,7 @@ func TestSortTablesSortAscendingAndStable(t *testing.T) {
 func TestTableMatchUsesAscendingOrder(t *testing.T) {
 	RegisterTestingT(t)
 
-	table := New("test", rule.Drop)
+	table := New("test", 0, rule.Drop)
 
 	pkt := packet.New(
 		packet.WithSrcAddr("10.0.0.1"),
@@ -102,7 +98,7 @@ func TestTableMatchUsesAscendingOrder(t *testing.T) {
 func TestTableMatchPassContinuesToNextTable(t *testing.T) {
 	RegisterTestingT(t)
 
-	table := New("test", rule.Drop)
+	table := New("test", 0, rule.Drop)
 
 	pkt := packet.New(
 		packet.WithSrcAddr("10.0.0.1"),
@@ -127,7 +123,7 @@ func TestTableMatchPassContinuesToNextTable(t *testing.T) {
 func TestTableMatchPassRuleDoesNotEvaluateDefaultAction(t *testing.T) {
 	RegisterTestingT(t)
 
-	table := New("test", rule.Drop)
+	table := New("test", 0, rule.Drop)
 
 	pkt := packet.New(
 		packet.WithSrcAddr("10.0.0.1"),
@@ -153,7 +149,7 @@ func TestTableMatchPassRuleDoesNotEvaluateDefaultAction(t *testing.T) {
 func TestTableMatchNoRuleAndDefaultPassReturnsNoMatchVerdict(t *testing.T) {
 	RegisterTestingT(t)
 
-	table := New("test", rule.Pass)
+	table := New("test", 0, rule.Pass)
 
 	pkt := packet.New(
 		packet.WithSrcAddr("10.0.0.1"),
