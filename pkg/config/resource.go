@@ -5,8 +5,9 @@ import (
 	"github.com/mazdakn/fwsim/pkg/table"
 )
 
-// Resource holds all parsed firewall resources (tables and sets).
+// Resource holds all parsed firewall resources (tables, sets, and intents).
 type Resource struct {
-	Tables []*table.Table
-	Sets   map[string]set.Set
+	Tables  []*table.Table
+	Sets    map[string]set.Set
+	Intents []*Intent
 }

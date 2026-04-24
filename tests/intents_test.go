@@ -11,25 +11,20 @@ import (
 
 	"github.com/mazdakn/fwsim/pkg/config"
 	enginepkg "github.com/mazdakn/fwsim/pkg/engine"
-	"github.com/mazdakn/fwsim/pkg/match"
 	"github.com/mazdakn/fwsim/pkg/rule"
 	"github.com/mazdakn/fwsim/pkg/set"
 	. "github.com/onsi/gomega"
 )
 
-// intentFromYAML is a test helper that parses an intent YAML string and
-// converts it to a MatchContext, failing the test on any error.
-func intentFromYAML(t *testing.T, data string) *match.MatchContext {
+// intentFromYAML is a test helper that parses an intent YAML string,
+// failing the test on any error.
+func intentFromYAML(t *testing.T, data string) *config.Intent {
 	t.Helper()
 	intent, err := config.IntentFromBytes([]byte(data))
 	if err != nil {
 		t.Fatalf("intentFromYAML: %v", err)
 	}
-	mc, err := intent.ToMatchContext()
-	if err != nil {
-		t.Fatalf("intentFromYAML ToMatchContext: %v", err)
-	}
-	return mc
+	return intent
 }
 
 // TestRunTestsBasicAcceptAndDrop verifies that RunTests produces the correct
@@ -51,7 +46,7 @@ default_action: Drop
 `), nil)
 	Expect(err).To(BeNil())
 
-	intents := []*match.MatchContext{
+	intents := []*config.Intent{
 		intentFromYAML(t, `
 name: http should be accepted
 packet:
@@ -120,7 +115,7 @@ packet:
 	engine := enginepkg.New(nil)
 	engine.RegisterTable(tbl)
 
-	results := engine.RunTests([]*match.MatchContext{intent})
+	results := engine.RunTests([]*config.Intent{intent})
 
 	Expect(results).To(HaveLen(1))
 	Expect(results[0].Verdict).To(BeNil())
@@ -153,7 +148,7 @@ expected_verdict: Accept
 	engine := enginepkg.New(nil)
 	engine.RegisterTable(tbl)
 
-	results := engine.RunTests([]*match.MatchContext{intent})
+	results := engine.RunTests([]*config.Intent{intent})
 
 	Expect(results).To(HaveLen(1))
 	Expect(results[0].Verdict).To(HaveValue(Equal(rule.Drop)))
@@ -195,7 +190,7 @@ hit_by_rule: deny-all
 	engine := enginepkg.New(nil)
 	engine.RegisterTable(tbl)
 
-	results := engine.RunTests([]*match.MatchContext{intent})
+	results := engine.RunTests([]*config.Intent{intent})
 
 	Expect(results).To(HaveLen(1))
 	Expect(results[0].VerdictMatches()).To(BeTrue())
@@ -248,7 +243,7 @@ default_action: Drop
 `), merged)
 	Expect(err).To(BeNil())
 
-	intents := []*match.MatchContext{
+	intents := []*config.Intent{
 		// Trusted source to web port → Accept
 		intentFromYAML(t, `
 name: trusted to http
@@ -342,7 +337,7 @@ default_action: Drop
 `), nil)
 	Expect(err).To(BeNil())
 
-	intents := []*match.MatchContext{
+	intents := []*config.Intent{
 		// Internal source to HTTP → passes filter, accepted in forward
 		intentFromYAML(t, `
 name: internal http
@@ -441,7 +436,7 @@ hit_by_rule: allow-udp-dns
 `)
 
 	// Run with a single intent.
-	results := engine.RunTests([]*match.MatchContext{firstIntent})
+	results := engine.RunTests([]*config.Intent{firstIntent})
 	Expect(results).To(HaveLen(1))
 	Expect(results[0].VerdictMatches()).To(BeTrue())
 	Expect(results[0].RuleMatches()).To(BeTrue())
@@ -459,7 +454,7 @@ hit_by_rule: deny-all
 `)
 
 	// Run with two intents.
-	results = engine.RunTests([]*match.MatchContext{firstIntent, secondIntent})
+	results = engine.RunTests([]*config.Intent{firstIntent, secondIntent})
 	Expect(results).To(HaveLen(2))
 	for _, m := range results {
 		Expect(m.VerdictMatches()).To(BeTrue())
@@ -482,7 +477,7 @@ default_action: Accept
 `), nil)
 	Expect(err).To(BeNil())
 
-	intents := []*match.MatchContext{
+	intents := []*config.Intent{
 		// UDP packet hits explicit rule → Drop
 		intentFromYAML(t, `
 name: udp traffic

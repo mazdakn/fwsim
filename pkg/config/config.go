@@ -7,7 +7,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/mazdakn/fwsim/pkg/match"
 	"github.com/mazdakn/fwsim/pkg/packet"
 	"github.com/mazdakn/fwsim/pkg/rule"
 	"github.com/mazdakn/fwsim/pkg/set"
@@ -22,22 +21,22 @@ type Config struct {
 	LoadIntents bool
 }
 
-func ConfigFromFile(conf Config) (*Resource, []*match.MatchContext, error) {
+func ConfigFromFile(conf Config) (*Resource, error) {
 	if conf.InputDir == "" {
-		return nil, nil, fmt.Errorf("input directory is required")
+		return nil, fmt.Errorf("input directory is required")
 	}
 	return ConfigFromDirectory(conf)
 }
 
-func ConfigFromDirectory(conf Config) (*Resource, []*match.MatchContext, error) {
+func ConfigFromDirectory(conf Config) (*Resource, error) {
 	sets, err := ConfigSetsFromDir(filepath.Join(conf.InputDir, "sets"))
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	tables, err := ConfigTablesFromDir(filepath.Join(conf.InputDir, "tables"), sets)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	resources := &Resource{
@@ -45,15 +44,14 @@ func ConfigFromDirectory(conf Config) (*Resource, []*match.MatchContext, error) 
 		Sets:   sets,
 	}
 
-	var intents []*match.MatchContext
 	if conf.LoadIntents {
-		intents, err = ConfigIntentsFromDir(filepath.Join(conf.InputDir, "intents"))
+		resources.Intents, err = ConfigIntentsFromDir(filepath.Join(conf.InputDir, "intents"))
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 	}
 
-	return resources, intents, nil
+	return resources, nil
 }
 
 func ConfigTableFromBytes(data []byte, sets map[string]set.Set) (*table.Table, error) {
@@ -191,7 +189,7 @@ func ConfigSetsFromDir(dir string) (map[string]set.Set, error) {
 	return sets, nil
 }
 
-func ConfigIntentsFromDir(dir string) ([]*match.MatchContext, error) {
+func ConfigIntentsFromDir(dir string) ([]*Intent, error) {
 	files, err := yamlFilesInDir(dir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read intents directory %s: %w", dir, err)
@@ -199,19 +197,15 @@ func ConfigIntentsFromDir(dir string) ([]*match.MatchContext, error) {
 	if len(files) == 0 {
 		return nil, fmt.Errorf("no yaml files found in intents directory %s", dir)
 	}
-	var contexts []*match.MatchContext
+	var intents []*Intent
 	for _, file := range files {
 		intent, err := IntentFromFile(file)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read intent from %s: %w", file, err)
 		}
-		mc, err := intent.ToMatchContext()
-		if err != nil {
-			return nil, fmt.Errorf("failed to convert intent in %s: %w", file, err)
-		}
-		contexts = append(contexts, mc)
+		intents = append(intents, intent)
 	}
-	return contexts, nil
+	return intents, nil
 }
 
 func yamlFilesInDir(dir string) ([]string, error) {
