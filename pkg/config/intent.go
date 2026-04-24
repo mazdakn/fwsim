@@ -6,6 +6,7 @@ import (
 
 	"github.com/goccy/go-yaml"
 	"github.com/mazdakn/fwsim/pkg/match"
+	"github.com/mazdakn/fwsim/pkg/rule"
 )
 
 // Intent expresses a user's expectation about how a specific packet should be
@@ -16,8 +17,9 @@ type Intent struct {
 	// Packet describes the packet to be matched (mandatory).
 	Packet Packet `yaml:"packet"`
 	// ExpectedVerdict is the verdict the user expects the packet to receive.
-	// Supported values: Accept, Drop, Pass, NoMatch (case-insensitive).
-	// Leave empty to skip verdict validation.
+	// Supported values: Accept, Drop, Pass (case-insensitive).
+	// Leave empty to skip verdict validation; when set, validation fails if the
+	// actual verdict does not match.
 	ExpectedVerdict string `yaml:"expected_verdict,omitempty"`
 	// HitByRule is the name of the rule the user expects to match the packet.
 	// Leave empty to skip rule validation.
@@ -35,13 +37,11 @@ func (i *Intent) ToMatchContext() (*match.MatchContext, error) {
 
 	opts := []match.MatchContextOption{}
 	if i.ExpectedVerdict != "" {
-		v, err := match.ParseVerdict(i.ExpectedVerdict)
+		a, err := rule.ParseAction(i.ExpectedVerdict)
 		if err != nil {
 			return nil, fmt.Errorf("intent %q: invalid expected_verdict: %w", i.Name, err)
 		}
-		if v != nil {
-			opts = append(opts, match.WithExpectedVerdict(*v))
-		}
+		opts = append(opts, match.WithExpectedVerdict(a))
 	}
 	if i.HitByRule != "" {
 		opts = append(opts, match.WithExpectedRule(i.HitByRule))

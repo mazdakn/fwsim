@@ -7,6 +7,7 @@ import (
 	enginepkg "github.com/mazdakn/fwsim/pkg/engine"
 	"github.com/mazdakn/fwsim/pkg/match"
 	"github.com/mazdakn/fwsim/pkg/proto"
+	"github.com/mazdakn/fwsim/pkg/rule"
 	"github.com/mazdakn/fwsim/pkg/set"
 	"github.com/mazdakn/fwsim/pkg/table"
 	. "github.com/onsi/gomega"
@@ -184,17 +185,17 @@ func TestEngineWithNamedPortsInRulesAndPackets(t *testing.T) {
 	// Packet to port "http" (80) → matches allow-http rule (Accept)
 	m := match.New(pkt1[0])
 	engine.RunTest(m)
-	Expect(m.Verdict).To(Equal(match.Accept))
+	Expect(m.Verdict).To(HaveValue(Equal(rule.Accept)))
 
 	// Packet to port "https" (443) → matches allow-https rule (Accept)
 	m = match.New(pkt2[0])
 	engine.RunTest(m)
-	Expect(m.Verdict).To(Equal(match.Accept))
+	Expect(m.Verdict).To(HaveValue(Equal(rule.Accept)))
 
 	// Packet to port "dns" (53) with proto 17 → no matching rule → deny-all (Drop)
 	m = match.New(pkt3[0])
 	engine.RunTest(m)
-	Expect(m.Verdict).To(Equal(match.Drop))
+	Expect(m.Verdict).To(HaveValue(Equal(rule.Drop)))
 }
 
 const testSetsNamedPortYAML = `
@@ -238,17 +239,17 @@ default_action: Drop
 	// Packet to port "http" (80) → in named-web-ports → Accept
 	m := match.New(pkt1[0])
 	engine.RunTest(m)
-	Expect(m.Verdict).To(Equal(match.Accept))
+	Expect(m.Verdict).To(HaveValue(Equal(rule.Accept)))
 
 	// Packet to port "https" (443) → in named-web-ports → Accept
 	m = match.New(pkt2[0])
 	engine.RunTest(m)
-	Expect(m.Verdict).To(Equal(match.Accept))
+	Expect(m.Verdict).To(HaveValue(Equal(rule.Accept)))
 
 	// Packet to port "dns" (53) → NOT in named-web-ports → deny-all (Drop)
 	m = match.New(pkt3[0])
 	engine.RunTest(m)
-	Expect(m.Verdict).To(Equal(match.Drop))
+	Expect(m.Verdict).To(HaveValue(Equal(rule.Drop)))
 }
 
 func TestNew(t *testing.T) {
@@ -296,7 +297,7 @@ default_action: Drop
 	m := match.New(pkt[0])
 	engine.RunTest(m)
 
-	Expect(m.Verdict).To(Equal(match.Accept))
+	Expect(m.Verdict).To(HaveValue(Equal(rule.Accept)))
 	Expect(m.Trace).To(HaveLen(2))
 	Expect(m.Trace[0].Name).To(Equal("pass-http"))
 	Expect(m.Trace[1].Name).To(Equal("accept-http"))
@@ -335,7 +336,7 @@ default_action: Accept
 	m := match.New(pkt[0])
 	engine.RunTest(m)
 
-	Expect(m.Verdict).To(Equal(match.Drop))
+	Expect(m.Verdict).To(HaveValue(Equal(rule.Drop)))
 	Expect(m.Trace).To(HaveLen(2))
 	Expect(m.Trace[0].Name).To(Equal("table pass-default default action"))
 	Expect(m.Trace[1].Name).To(Equal("drop-http"))
@@ -374,7 +375,7 @@ default_action: Drop
 	m := match.New(pkt[0])
 	engine.RunTest(m)
 
-	Expect(m.Verdict).To(Equal(match.NoMatch))
+	Expect(m.Verdict).To(BeNil())
 	Expect(m.Trace).To(HaveLen(2))
 	Expect(m.Trace[0].Name).To(Equal("table first-pass default action"))
 	Expect(m.Trace[1].Name).To(Equal("pass-http"))
@@ -397,17 +398,17 @@ func TestPacketsFromBytesAndMatch(t *testing.T) {
 	// First packet: src 192.168.1.5 -> dst 1.1.1.1:80 proto 7, src_port 30000 — matches rule 1 (Accept)
 	m := match.New(pkt1[0])
 	engine.RunTest(m)
-	Expect(m.Verdict).To(Equal(match.Accept))
+	Expect(m.Verdict).To(HaveValue(Equal(rule.Accept)))
 
 	// Second packet: src 10.0.0.1 -> dst 2.2.2.2:8080 proto 7 — matches rule 3 (Drop)
 	m = match.New(pkt2[0])
 	engine.RunTest(m)
-	Expect(m.Verdict).To(Equal(match.Drop))
+	Expect(m.Verdict).To(HaveValue(Equal(rule.Drop)))
 
 	// Third packet: proto 17, no matching rule — default action Accept
 	m = match.New(pkt3[0])
 	engine.RunTest(m)
-	Expect(m.Verdict).To(Equal(match.Accept))
+	Expect(m.Verdict).To(HaveValue(Equal(rule.Accept)))
 }
 
 func TestLoadSetsFromBytes(t *testing.T) {
@@ -502,18 +503,18 @@ func TestRulesWithNamedSetsMatch(t *testing.T) {
 	// First packet: src 192.168.1.5 dst 1.1.1.1:80 → matches rule 1 (Accept)
 	m := match.New(pkt1[0])
 	engine.RunTest(m)
-	Expect(m.Verdict).To(Equal(match.Accept))
+	Expect(m.Verdict).To(HaveValue(Equal(rule.Accept)))
 
 	// Second packet: src 10.0.0.1 dst 2.2.2.2:8080 → src is in trusted-ips (10.0.0.0/8),
 	// dst port 8080 is in web-ports → matches rule 1 (Accept)
 	m = match.New(pkt2[0])
 	engine.RunTest(m)
-	Expect(m.Verdict).To(Equal(match.Accept))
+	Expect(m.Verdict).To(HaveValue(Equal(rule.Accept)))
 
 	// Third packet: src 172.16.0.1 → NOT in trusted-ips → falls through to deny-all (Drop)
 	m = match.New(pkt3[0])
 	engine.RunTest(m)
-	Expect(m.Verdict).To(Equal(match.Drop))
+	Expect(m.Verdict).To(HaveValue(Equal(rule.Drop)))
 }
 
 const testRulesWithNotSetsYAML = `
@@ -560,12 +561,12 @@ func TestRulesWithNegatedNamedSetsMatch(t *testing.T) {
 	// First packet: src 192.168.1.5 — in trusted-ips → negated, rule1 does NOT match → deny-all (Drop)
 	m := match.New(pkt1[0])
 	engine.RunTest(m)
-	Expect(m.Verdict).To(Equal(match.Drop))
+	Expect(m.Verdict).To(HaveValue(Equal(rule.Drop)))
 
 	// Third packet: src 172.16.0.1 — NOT in trusted-ips → rule1 matches (Accept)
 	m = match.New(pkt3[0])
 	engine.RunTest(m)
-	Expect(m.Verdict).To(Equal(match.Accept))
+	Expect(m.Verdict).To(HaveValue(Equal(rule.Accept)))
 }
 
 func TestRulesReferencingUnknownNegatedSetError(t *testing.T) {

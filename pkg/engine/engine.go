@@ -68,7 +68,7 @@ func (e *Engine) RunTest(m *match.MatchContext) {
 			return
 		}
 	}
-	m.Verdict = match.NoMatch
+	m.Verdict = nil
 }
 
 func (e *Engine) RunTests() []*match.MatchContext {
