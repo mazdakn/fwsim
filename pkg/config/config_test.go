@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/mazdakn/fwsim/pkg/engine"
 	"github.com/mazdakn/fwsim/pkg/set"
 	. "github.com/onsi/gomega"
 )
@@ -51,16 +50,16 @@ hit_by_rule: allow-http
 		LoadIntents: true,
 	})
 	Expect(err).To(BeNil())
-	Expect(resources.Tables).To(HaveLen(1))
-	Expect(resources.Sets).To(HaveLen(1))
-	Expect(resources.Intents).To(HaveLen(1))
-	Expect(resources.Sets).To(HaveKey("web-ports"))
-	Expect(resources.Sets["web-ports"].Match(uint16(80))).To(BeTrue())
-	Expect(resources.Sets["web-ports"].Match(uint16(443))).To(BeTrue())
-	Expect(resources.Intents[0].Packet.SrcAddr.String()).To(Equal("10.0.0.1"))
-	Expect(resources.Intents[0].Packet.DstAddr.String()).To(Equal("1.1.1.1"))
-	Expect(resources.Intents[0].Packet.SrcPort).To(Equal(uint16(12345)))
-	Expect(resources.Intents[0].Packet.DstPort).To(Equal(uint16(80)))
+	Expect(resources.Tables()).To(HaveLen(1))
+	Expect(resources.Sets()).To(HaveLen(1))
+	Expect(resources.Matches()).To(HaveLen(1))
+	Expect(resources.Sets()).To(HaveKey("web-ports"))
+	Expect(resources.Sets()["web-ports"].Match(uint16(80))).To(BeTrue())
+	Expect(resources.Sets()["web-ports"].Match(uint16(443))).To(BeTrue())
+	Expect(resources.Matches()[0].Packet.SrcAddr.String()).To(Equal("10.0.0.1"))
+	Expect(resources.Matches()[0].Packet.DstAddr.String()).To(Equal("1.1.1.1"))
+	Expect(resources.Matches()[0].Packet.SrcPort).To(Equal(uint16(12345)))
+	Expect(resources.Matches()[0].Packet.DstPort).To(Equal(uint16(80)))
 }
 
 func TestConfigTablesFromDirSortsByOrder(t *testing.T) {
@@ -146,8 +145,8 @@ default_action: Accept
 		InputDir: dir,
 	})
 	Expect(err).To(BeNil())
-	Expect(resources.Tables).To(HaveLen(1))
-	Expect(resources.Intents).To(BeNil())
+	Expect(resources.Tables()).To(HaveLen(1))
+	Expect(resources.Matches()).To(BeNil())
 }
 
 func TestConfigFromDirectoryWithoutTables(t *testing.T) {
@@ -160,8 +159,8 @@ func TestConfigFromDirectoryWithoutTables(t *testing.T) {
 		InputDir: dir,
 	})
 	Expect(err).To(BeNil())
-	Expect(resources.Tables).To(BeEmpty())
-	Expect(resources.Intents).To(BeNil())
+	Expect(resources.Tables()).To(BeEmpty())
+	Expect(resources.Matches()).To(BeNil())
 }
 
 func TestConfigFromFileWithoutInputDir(t *testing.T) {
@@ -170,7 +169,7 @@ func TestConfigFromFileWithoutInputDir(t *testing.T) {
 	resources, err := ConfigFromFile(Config{})
 	Expect(err).ToNot(BeNil())
 	Expect(err.Error()).To(ContainSubstring("input directory is required"))
-	Expect(resources).To(Equal(engine.Resources{}))
+	Expect(resources).To(BeNil())
 }
 
 func TestConfigSetsFromDirDuplicateNames(t *testing.T) {

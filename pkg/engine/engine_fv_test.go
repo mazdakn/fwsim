@@ -77,10 +77,9 @@ hit_by_rule: deny-all
 `),
 	}
 
-	engine := enginepkg.New(enginepkg.Resources{
-		Tables:  []*table.Table{tbl},
-		Intents: intents,
-	})
+	engine := enginepkg.New()
+	engine.SetTables([]*table.Table{tbl})
+	engine.SetMatches(intents)
 
 	results := engine.RunTests()
 
@@ -120,10 +119,9 @@ packet:
   dst_port: 80
 `)
 
-	engine := enginepkg.New(enginepkg.Resources{
-		Tables:  []*table.Table{tbl},
-		Intents: []*match.MatchContext{intent},
-	})
+	engine := enginepkg.New()
+	engine.SetTables([]*table.Table{tbl})
+	engine.SetMatches([]*match.MatchContext{intent})
 
 	results := engine.RunTests()
 
@@ -155,10 +153,9 @@ packet:
 expected_verdict: Accept
 `)
 
-	engine := enginepkg.New(enginepkg.Resources{
-		Tables:  []*table.Table{tbl},
-		Intents: []*match.MatchContext{intent},
-	})
+	engine := enginepkg.New()
+	engine.SetTables([]*table.Table{tbl})
+	engine.SetMatches([]*match.MatchContext{intent})
 
 	results := engine.RunTests()
 
@@ -199,10 +196,9 @@ expected_verdict: Accept
 hit_by_rule: deny-all
 `)
 
-	engine := enginepkg.New(enginepkg.Resources{
-		Tables:  []*table.Table{tbl},
-		Intents: []*match.MatchContext{intent},
-	})
+	engine := enginepkg.New()
+	engine.SetTables([]*table.Table{tbl})
+	engine.SetMatches([]*match.MatchContext{intent})
 
 	results := engine.RunTests()
 
@@ -296,11 +292,10 @@ hit_by_rule: deny-all
 `),
 	}
 
-	engine := enginepkg.New(enginepkg.Resources{
-		Sets:    merged,
-		Tables:  []*table.Table{tbl},
-		Intents: intents,
-	})
+	engine := enginepkg.New()
+	engine.SetSets(merged)
+	engine.SetTables([]*table.Table{tbl})
+	engine.SetMatches(intents)
 
 	results := engine.RunTests()
 
@@ -402,10 +397,9 @@ hit_by_rule: deny-external
 `),
 	}
 
-	engine := enginepkg.New(enginepkg.Resources{
-		Tables:  []*table.Table{filterTable, forwardTable},
-		Intents: intents,
-	})
+	engine := enginepkg.New()
+	engine.SetTables([]*table.Table{filterTable, forwardTable})
+	engine.SetMatches(intents)
 
 	results := engine.RunTests()
 
@@ -416,9 +410,9 @@ hit_by_rule: deny-external
 	}
 }
 
-// TestRunTestsLoadResourcesUpdatesIntents verifies that LoadResources can
+// TestRunTestsSetMatchesUpdatesIntents verifies that SetMatches can
 // replace the intents and that RunTests picks up the new set.
-func TestRunTestsLoadResourcesUpdatesIntents(t *testing.T) {
+func TestRunTestsSetMatchesUpdatesIntents(t *testing.T) {
 	RegisterTestingT(t)
 
 	tbl, err := config.ConfigTableFromBytes([]byte(`
@@ -439,9 +433,8 @@ default_action: Drop
 	engine.SetTables([]*table.Table{tbl})
 
 	// Load first batch of intents.
-	engine.LoadResources(enginepkg.Resources{
-		Intents: []*match.MatchContext{
-			intentFromYAML(t, `
+	engine.SetMatches([]*match.MatchContext{
+		intentFromYAML(t, `
 name: dns query
 packet:
   src_addr: 10.0.0.1
@@ -452,7 +445,6 @@ packet:
 expected_verdict: Accept
 hit_by_rule: allow-udp-dns
 `),
-		},
 	})
 
 	results := engine.RunTests()
@@ -460,10 +452,9 @@ hit_by_rule: allow-udp-dns
 	Expect(results[0].VerdictMatches()).To(BeTrue())
 	Expect(results[0].RuleMatches()).To(BeTrue())
 
-	// Replace intents with a different set via a second LoadResources call.
-	engine.LoadResources(enginepkg.Resources{
-		Intents: []*match.MatchContext{
-			intentFromYAML(t, `
+	// Replace intents with a different set via a second SetMatches call.
+	engine.SetMatches([]*match.MatchContext{
+		intentFromYAML(t, `
 name: blocked tcp
 packet:
   src_addr: 10.0.0.1
@@ -474,7 +465,6 @@ packet:
 expected_verdict: Drop
 hit_by_rule: deny-all
 `),
-		},
 	})
 
 	results = engine.RunTests()
@@ -524,10 +514,9 @@ expected_verdict: Accept
 `),
 	}
 
-	engine := enginepkg.New(enginepkg.Resources{
-		Tables:  []*table.Table{tbl},
-		Intents: intents,
-	})
+	engine := enginepkg.New()
+	engine.SetTables([]*table.Table{tbl})
+	engine.SetMatches(intents)
 
 	results := engine.RunTests()
 
