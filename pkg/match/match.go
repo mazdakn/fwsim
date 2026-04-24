@@ -44,15 +44,6 @@ func New(pkt *packet.Packet, opts ...MatchContextOption) *MatchContext {
 	return m
 }
 
-// VerdictString returns a human-readable string for the verdict.
-// Returns "no match" when Verdict is nil (no rule matched).
-func (m *MatchContext) VerdictString() string {
-	if m.Verdict == nil {
-		return "no match"
-	}
-	return m.Verdict.String()
-}
-
 // VerdictMatches reports whether the actual verdict satisfies the intent.
 // Returns true when no expected verdict was specified (nil).
 func (m *MatchContext) VerdictMatches() bool {

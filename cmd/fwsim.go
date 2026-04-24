@@ -147,7 +147,7 @@ func runPackets(cmd *cobra.Command, args []string) {
 }
 
 func printResult(m *match.MatchContext) {
-	fmt.Printf("Packet: %s  Verdict: %s\n", m.Packet, m.VerdictString())
+	fmt.Printf("Packet: %s  Verdict: %s\n", m.Packet, m.Verdict)
 	if len(m.Trace) == 0 {
 		return
 	}
@@ -168,9 +168,9 @@ func printResult(m *match.MatchContext) {
 func printIntentResult(m *match.MatchContext) {
 	if m.ExpectedVerdict != nil {
 		if m.VerdictMatches() {
-			fmt.Printf("  [OK] Verdict matches expected: %s\n", *m.ExpectedVerdict)
+			fmt.Printf("  [OK] Verdict matches expected: %s\n", m.ExpectedVerdict)
 		} else {
-			fmt.Printf("  [FAIL] Verdict mismatch: expected %s, got %s\n", *m.ExpectedVerdict, m.VerdictString())
+			fmt.Printf("  [FAIL] Verdict mismatch: expected %s, got %s\n", m.ExpectedVerdict, m.Verdict)
 		}
 	}
 	if m.HitByRule != "" {

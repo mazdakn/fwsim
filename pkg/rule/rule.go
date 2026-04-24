@@ -19,8 +19,11 @@ const (
 	Pass
 )
 
-func (a Action) String() string {
-	switch a {
+func (a *Action) String() string {
+	if a == nil {
+		return "no match"
+	}
+	switch *a {
 	case Accept:
 		return "Accept"
 	case Drop:
@@ -28,7 +31,7 @@ func (a Action) String() string {
 	case Pass:
 		return "Pass"
 	default:
-		return fmt.Sprintf("Undefined(%d)", a)
+		return fmt.Sprintf("Undefined(%d)", *a)
 	}
 }
 
@@ -37,7 +40,7 @@ func (a Action) Validate() error {
 	case Accept, Drop, Pass:
 		return nil
 	default:
-		return fmt.Errorf("undefined action %v", a)
+		return fmt.Errorf("undefined action %v", &a)
 	}
 }
 
@@ -440,7 +443,7 @@ func (r *Rule) String() string {
 	}
 	dstNet = appendSetStrings(dstNet, filterEndpointSetsByType(r.Destination.Sets, set.TypeIP))
 	dstNet = appendNotSetStrings(dstNet, filterEndpointSetsByType(r.NotDestination.Sets, set.TypeIP))
-	return fmt.Sprintf("%s %s{%s:%s->%s:%s}", r.Action, proto, srcNet, srcPort, dstNet, dstPort)
+	return fmt.Sprintf("%s %s{%s:%s->%s:%s}", &r.Action, proto, srcNet, srcPort, dstNet, dstPort)
 }
 
 // matchAllNamedSets returns true when every set in sets matches the packet
