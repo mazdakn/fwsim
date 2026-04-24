@@ -12,7 +12,7 @@ import (
 	"github.com/mazdakn/fwsim/pkg/config"
 	enginepkg "github.com/mazdakn/fwsim/pkg/engine"
 	"github.com/mazdakn/fwsim/pkg/rule"
-	"github.com/mazdakn/fwsim/pkg/set"
+	"github.com/mazdakn/fwsim/pkg/table"
 	. "github.com/onsi/gomega"
 )
 
@@ -71,12 +71,10 @@ hit_by_rule: deny-all
 `),
 	}
 
-	engine := enginepkg.New(nil)
-	engine.RegisterTable(tbl)
-
-	for _, intent := range intents {
-		engine.RegisterIntent(intent)
-	}
+	engine := enginepkg.New(&config.Resource{
+		Tables:  []*table.Table{tbl},
+		Intents: intents,
+	})
 	results := engine.RunTests()
 
 	Expect(results).To(HaveLen(2))
@@ -115,9 +113,10 @@ packet:
   dst_port: 80
 `)
 
-	engine := enginepkg.New(nil)
-	engine.RegisterTable(tbl)
-	engine.RegisterIntent(intent)
+	engine := enginepkg.New(&config.Resource{
+		Tables:  []*table.Table{tbl},
+		Intents: []*config.Intent{intent},
+	})
 	results := engine.RunTests()
 
 	Expect(results).To(HaveLen(1))
@@ -148,9 +147,10 @@ packet:
 expected_verdict: Accept
 `)
 
-	engine := enginepkg.New(nil)
-	engine.RegisterTable(tbl)
-	engine.RegisterIntent(intent)
+	engine := enginepkg.New(&config.Resource{
+		Tables:  []*table.Table{tbl},
+		Intents: []*config.Intent{intent},
+	})
 	results := engine.RunTests()
 
 	Expect(results).To(HaveLen(1))
@@ -190,9 +190,10 @@ expected_verdict: Accept
 hit_by_rule: deny-all
 `)
 
-	engine := enginepkg.New(nil)
-	engine.RegisterTable(tbl)
-	engine.RegisterIntent(intent)
+	engine := enginepkg.New(&config.Resource{
+		Tables:  []*table.Table{tbl},
+		Intents: []*config.Intent{intent},
+	})
 	results := engine.RunTests()
 
 	Expect(results).To(HaveLen(1))
@@ -223,12 +224,8 @@ members:
 `))
 	Expect(err).To(BeNil())
 
-	merged := make(map[string]set.Set)
-	for k, v := range sets {
-		merged[k] = v
-	}
 	for k, v := range webSets {
-		merged[k] = v
+		sets[k] = v
 	}
 
 	tbl, err := config.ConfigTableFromBytes([]byte(`
@@ -243,7 +240,7 @@ rules:
   - name: deny-all
     action: Drop
 default_action: Drop
-`), merged)
+`), sets)
 	Expect(err).To(BeNil())
 
 	intents := []*config.Intent{
@@ -285,15 +282,11 @@ hit_by_rule: deny-all
 `),
 	}
 
-	engine := enginepkg.New(nil)
-	for k, v := range merged {
-		engine.RegisterSet(k, v)
-	}
-	engine.RegisterTable(tbl)
-
-	for _, intent := range intents {
-		engine.RegisterIntent(intent)
-	}
+	engine := enginepkg.New(&config.Resource{
+		Sets:    sets,
+		Tables:  []*table.Table{tbl},
+		Intents: intents,
+	})
 	results := engine.RunTests()
 
 	Expect(results).To(HaveLen(3))
@@ -394,13 +387,10 @@ hit_by_rule: deny-external
 `),
 	}
 
-	engine := enginepkg.New(nil)
-	engine.RegisterTable(filterTable)
-	engine.RegisterTable(forwardTable)
-
-	for _, intent := range intents {
-		engine.RegisterIntent(intent)
-	}
+	engine := enginepkg.New(&config.Resource{
+		Tables:  []*table.Table{filterTable, forwardTable},
+		Intents: intents,
+	})
 	results := engine.RunTests()
 
 	Expect(results).To(HaveLen(4))
@@ -429,9 +419,6 @@ default_action: Drop
 `), nil)
 	Expect(err).To(BeNil())
 
-	engine := enginepkg.New(nil)
-	engine.RegisterTable(tbl)
-
 	firstIntent := intentFromYAML(t, `
 name: dns query
 packet:
@@ -445,8 +432,10 @@ hit_by_rule: allow-udp-dns
 `)
 
 	// Run with a single intent.
-	engine.RegisterIntent(firstIntent)
-	results := engine.RunTests()
+	results := enginepkg.New(&config.Resource{
+		Tables:  []*table.Table{tbl},
+		Intents: []*config.Intent{firstIntent},
+	}).RunTests()
 	Expect(results).To(HaveLen(1))
 	Expect(results[0].VerdictMatches()).To(BeTrue())
 	Expect(results[0].RuleMatches()).To(BeTrue())
@@ -464,11 +453,10 @@ hit_by_rule: deny-all
 `)
 
 	// Run with two intents using a fresh engine.
-	engine2 := enginepkg.New(nil)
-	engine2.RegisterTable(tbl)
-	engine2.RegisterIntent(firstIntent)
-	engine2.RegisterIntent(secondIntent)
-	results = engine2.RunTests()
+	results = enginepkg.New(&config.Resource{
+		Tables:  []*table.Table{tbl},
+		Intents: []*config.Intent{firstIntent, secondIntent},
+	}).RunTests()
 	Expect(results).To(HaveLen(2))
 	for _, m := range results {
 		Expect(m.VerdictMatches()).To(BeTrue())
@@ -517,12 +505,10 @@ expected_verdict: Accept
 `),
 	}
 
-	engine := enginepkg.New(nil)
-	engine.RegisterTable(tbl)
-
-	for _, intent := range intents {
-		engine.RegisterIntent(intent)
-	}
+	engine := enginepkg.New(&config.Resource{
+		Tables:  []*table.Table{tbl},
+		Intents: intents,
+	})
 	results := engine.RunTests()
 
 	Expect(results).To(HaveLen(2))
