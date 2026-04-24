@@ -63,7 +63,7 @@ func VerdictFromAction(a rule.Action) Verdict {
 	case rule.Pass:
 		return Pass
 	default:
-		return NoMatch
+		panic(fmt.Sprintf("VerdictFromAction: unknown action %v", a))
 	}
 }
 
