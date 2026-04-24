@@ -8,7 +8,6 @@ import (
 	"github.com/mazdakn/fwsim/pkg/set"
 	. "github.com/onsi/gomega"
 )
-
 func TestConfigFromDirectory(t *testing.T) {
 	RegisterTestingT(t)
 
@@ -45,17 +44,17 @@ expected_verdict: Accept
 hit_by_rule: allow-http
 `), 0o600)).To(Succeed())
 
-	e, intents, err := ConfigFromFile(Config{
+	r, intents, err := ConfigFromFile(Config{
 		InputDir:    dir,
 		LoadIntents: true,
 	})
 	Expect(err).To(BeNil())
-	Expect(e.Tables()).To(HaveLen(1))
-	Expect(e.Sets()).To(HaveLen(1))
+	Expect(r.Tables).To(HaveLen(1))
+	Expect(r.Sets).To(HaveLen(1))
 	Expect(intents).To(HaveLen(1))
-	Expect(e.Sets()).To(HaveKey("web-ports"))
-	Expect(e.Sets()["web-ports"].Match(uint16(80))).To(BeTrue())
-	Expect(e.Sets()["web-ports"].Match(uint16(443))).To(BeTrue())
+	Expect(r.Sets).To(HaveKey("web-ports"))
+	Expect(r.Sets["web-ports"].Match(uint16(80))).To(BeTrue())
+	Expect(r.Sets["web-ports"].Match(uint16(443))).To(BeTrue())
 	Expect(intents[0].Packet.SrcAddr.String()).To(Equal("10.0.0.1"))
 	Expect(intents[0].Packet.DstAddr.String()).To(Equal("1.1.1.1"))
 	Expect(intents[0].Packet.SrcPort).To(Equal(uint16(12345)))
@@ -145,7 +144,7 @@ default_action: Accept
 		InputDir: dir,
 	})
 	Expect(err).To(BeNil())
-	Expect(e.Tables()).To(HaveLen(1))
+	Expect(e.Tables).To(HaveLen(1))
 }
 
 func TestConfigFromDirectoryWithoutTables(t *testing.T) {
@@ -158,7 +157,7 @@ func TestConfigFromDirectoryWithoutTables(t *testing.T) {
 		InputDir: dir,
 	})
 	Expect(err).To(BeNil())
-	Expect(e.Tables()).To(BeEmpty())
+	Expect(e.Tables).To(BeEmpty())
 }
 
 func TestConfigFromFileWithoutInputDir(t *testing.T) {
