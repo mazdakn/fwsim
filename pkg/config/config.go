@@ -7,7 +7,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/mazdakn/fwsim/pkg/engine"
 	"github.com/mazdakn/fwsim/pkg/match"
 	"github.com/mazdakn/fwsim/pkg/packet"
 	"github.com/mazdakn/fwsim/pkg/rule"
@@ -23,30 +22,27 @@ type Config struct {
 	LoadIntents bool
 }
 
-func ConfigFromFile(conf Config) (*engine.Engine, []*match.MatchContext, error) {
+func ConfigFromFile(conf Config) (*Resource, []*match.MatchContext, error) {
 	if conf.InputDir == "" {
 		return nil, nil, fmt.Errorf("input directory is required")
 	}
 	return ConfigFromDirectory(conf)
 }
 
-func ConfigFromDirectory(conf Config) (*engine.Engine, []*match.MatchContext, error) {
-	e := engine.New()
-
+func ConfigFromDirectory(conf Config) (*Resource, []*match.MatchContext, error) {
 	sets, err := ConfigSetsFromDir(filepath.Join(conf.InputDir, "sets"))
 	if err != nil {
 		return nil, nil, err
-	}
-	for name, s := range sets {
-		e.RegisterSet(name, s)
 	}
 
 	tables, err := ConfigTablesFromDir(filepath.Join(conf.InputDir, "tables"), sets)
 	if err != nil {
 		return nil, nil, err
 	}
-	for _, t := range tables {
-		e.RegisterTable(t)
+
+	resources := &Resource{
+		Tables: tables,
+		Sets:   sets,
 	}
 
 	var intents []*match.MatchContext
@@ -57,7 +53,7 @@ func ConfigFromDirectory(conf Config) (*engine.Engine, []*match.MatchContext, er
 		}
 	}
 
-	return e, intents, nil
+	return resources, intents, nil
 }
 
 func ConfigTableFromBytes(data []byte, sets map[string]set.Set) (*table.Table, error) {

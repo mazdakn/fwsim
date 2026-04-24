@@ -76,7 +76,7 @@ hit_by_rule: deny-all
 `),
 	}
 
-	engine := enginepkg.New()
+	engine := enginepkg.New(nil)
 	engine.RegisterTable(tbl)
 
 	results := engine.RunTests(intents)
@@ -117,7 +117,7 @@ packet:
   dst_port: 80
 `)
 
-	engine := enginepkg.New()
+	engine := enginepkg.New(nil)
 	engine.RegisterTable(tbl)
 
 	results := engine.RunTests([]*match.MatchContext{intent})
@@ -150,7 +150,7 @@ packet:
 expected_verdict: Accept
 `)
 
-	engine := enginepkg.New()
+	engine := enginepkg.New(nil)
 	engine.RegisterTable(tbl)
 
 	results := engine.RunTests([]*match.MatchContext{intent})
@@ -192,7 +192,7 @@ expected_verdict: Accept
 hit_by_rule: deny-all
 `)
 
-	engine := enginepkg.New()
+	engine := enginepkg.New(nil)
 	engine.RegisterTable(tbl)
 
 	results := engine.RunTests([]*match.MatchContext{intent})
@@ -287,7 +287,7 @@ hit_by_rule: deny-all
 `),
 	}
 
-	engine := enginepkg.New()
+	engine := enginepkg.New(nil)
 	for k, v := range merged {
 		engine.RegisterSet(k, v)
 	}
@@ -393,7 +393,7 @@ hit_by_rule: deny-external
 `),
 	}
 
-	engine := enginepkg.New()
+	engine := enginepkg.New(nil)
 	engine.RegisterTable(filterTable)
 	engine.RegisterTable(forwardTable)
 
@@ -425,7 +425,7 @@ default_action: Drop
 `), nil)
 	Expect(err).To(BeNil())
 
-	engine := enginepkg.New()
+	engine := enginepkg.New(nil)
 	engine.RegisterTable(tbl)
 
 	firstIntent := intentFromYAML(t, `
@@ -508,7 +508,7 @@ expected_verdict: Accept
 `),
 	}
 
-	engine := enginepkg.New()
+	engine := enginepkg.New(nil)
 	engine.RegisterTable(tbl)
 
 	results := engine.RunTests(intents)
