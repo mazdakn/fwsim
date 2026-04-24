@@ -78,11 +78,8 @@ hit_by_rule: deny-all
 
 	engine := enginepkg.New()
 	engine.RegisterTable(tbl)
-	for _, m := range intents {
-		engine.RegisterMatch(m)
-	}
 
-	results := engine.RunTests()
+	results := engine.RunTests(intents)
 
 	Expect(results).To(HaveLen(2))
 	for _, m := range results {
@@ -122,9 +119,8 @@ packet:
 
 	engine := enginepkg.New()
 	engine.RegisterTable(tbl)
-	engine.RegisterMatch(intent)
 
-	results := engine.RunTests()
+	results := engine.RunTests([]*match.MatchContext{intent})
 
 	Expect(results).To(HaveLen(1))
 	Expect(results[0].Verdict).To(BeNil())
@@ -156,9 +152,8 @@ expected_verdict: Accept
 
 	engine := enginepkg.New()
 	engine.RegisterTable(tbl)
-	engine.RegisterMatch(intent)
 
-	results := engine.RunTests()
+	results := engine.RunTests([]*match.MatchContext{intent})
 
 	Expect(results).To(HaveLen(1))
 	Expect(results[0].Verdict).To(HaveValue(Equal(rule.Drop)))
@@ -199,9 +194,8 @@ hit_by_rule: deny-all
 
 	engine := enginepkg.New()
 	engine.RegisterTable(tbl)
-	engine.RegisterMatch(intent)
 
-	results := engine.RunTests()
+	results := engine.RunTests([]*match.MatchContext{intent})
 
 	Expect(results).To(HaveLen(1))
 	Expect(results[0].VerdictMatches()).To(BeTrue())
@@ -298,11 +292,8 @@ hit_by_rule: deny-all
 		engine.RegisterSet(k, v)
 	}
 	engine.RegisterTable(tbl)
-	for _, m := range intents {
-		engine.RegisterMatch(m)
-	}
 
-	results := engine.RunTests()
+	results := engine.RunTests(intents)
 
 	Expect(results).To(HaveLen(3))
 	for _, m := range results {
@@ -405,11 +396,8 @@ hit_by_rule: deny-external
 	engine := enginepkg.New()
 	engine.RegisterTable(filterTable)
 	engine.RegisterTable(forwardTable)
-	for _, m := range intents {
-		engine.RegisterMatch(m)
-	}
 
-	results := engine.RunTests()
+	results := engine.RunTests(intents)
 
 	Expect(results).To(HaveLen(4))
 	for _, m := range results {
@@ -418,9 +406,9 @@ hit_by_rule: deny-external
 	}
 }
 
-// TestRunTestsRegisterMatchAppendIntents verifies that RegisterMatch appends
-// intents and that RunTests processes all registered intents.
-func TestRunTestsRegisterMatchAppendIntents(t *testing.T) {
+// TestRunTestsVaryingIntentCounts verifies that RunTests correctly processes
+// different numbers of match contexts passed directly as arguments.
+func TestRunTestsVaryingIntentCounts(t *testing.T) {
 	RegisterTestingT(t)
 
 	tbl, err := config.ConfigTableFromBytes([]byte(`
@@ -440,8 +428,7 @@ default_action: Drop
 	engine := enginepkg.New()
 	engine.RegisterTable(tbl)
 
-	// Register first intent.
-	engine.RegisterMatch(intentFromYAML(t, `
+	firstIntent := intentFromYAML(t, `
 name: dns query
 packet:
   src_addr: 10.0.0.1
@@ -451,15 +438,15 @@ packet:
   dst_port: 53
 expected_verdict: Accept
 hit_by_rule: allow-udp-dns
-`))
+`)
 
-	results := engine.RunTests()
+	// Run with a single intent.
+	results := engine.RunTests([]*match.MatchContext{firstIntent})
 	Expect(results).To(HaveLen(1))
 	Expect(results[0].VerdictMatches()).To(BeTrue())
 	Expect(results[0].RuleMatches()).To(BeTrue())
 
-	// Register a second intent — RegisterMatch appends, so RunTests now sees both.
-	engine.RegisterMatch(intentFromYAML(t, `
+	secondIntent := intentFromYAML(t, `
 name: blocked tcp
 packet:
   src_addr: 10.0.0.1
@@ -469,9 +456,10 @@ packet:
   dst_port: 53
 expected_verdict: Drop
 hit_by_rule: deny-all
-`))
+`)
 
-	results = engine.RunTests()
+	// Run with two intents.
+	results = engine.RunTests([]*match.MatchContext{firstIntent, secondIntent})
 	Expect(results).To(HaveLen(2))
 	for _, m := range results {
 		Expect(m.VerdictMatches()).To(BeTrue())
@@ -522,11 +510,8 @@ expected_verdict: Accept
 
 	engine := enginepkg.New()
 	engine.RegisterTable(tbl)
-	for _, m := range intents {
-		engine.RegisterMatch(m)
-	}
 
-	results := engine.RunTests()
+	results := engine.RunTests(intents)
 
 	Expect(results).To(HaveLen(2))
 	for _, m := range results {
