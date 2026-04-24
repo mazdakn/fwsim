@@ -127,7 +127,7 @@ func runPackets(cmd *cobra.Command, args []string) {
 	// Create engine and load rules
 	resources, err := config.ConfigFromFile(config.Config{
 		InputDir:    inputDir,
-		LoadPackets: true,
+		LoadIntents: true,
 	})
 	if err != nil {
 		logrus.WithError(err).Errorf("failed to load resources from %s", inputDir)
@@ -138,6 +138,7 @@ func runPackets(cmd *cobra.Command, args []string) {
 	// Evaluate each packet
 	for _, m := range e.RunTests() {
 		printResult(m)
+		printIntentResult(m)
 		fmt.Println()
 	}
 
@@ -162,6 +163,23 @@ func printResult(m *match.MatchContext) {
 		})
 	}
 	t.Render()
+}
+
+func printIntentResult(m *match.MatchContext) {
+	if m.ExpectedVerdict != match.Undefined {
+		if m.VerdictMatches() {
+			fmt.Printf("  [OK] Verdict matches expected: %s\n", m.ExpectedVerdict)
+		} else {
+			fmt.Printf("  [FAIL] Verdict mismatch: expected %s, got %s\n", m.ExpectedVerdict, m.Verdict)
+		}
+	}
+	if m.HitByRule != "" {
+		if m.RuleMatches() {
+			fmt.Printf("  [OK] Rule matched as expected: %s\n", m.HitByRule)
+		} else {
+			fmt.Printf("  [FAIL] Rule mismatch: expected rule %q to match, but it did not\n", m.HitByRule)
+		}
+	}
 }
 
 func printValidations(validations []string) {

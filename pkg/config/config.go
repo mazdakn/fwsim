@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/mazdakn/fwsim/pkg/engine"
+	"github.com/mazdakn/fwsim/pkg/match"
 	"github.com/mazdakn/fwsim/pkg/packet"
 	"github.com/mazdakn/fwsim/pkg/rule"
 	"github.com/mazdakn/fwsim/pkg/set"
@@ -15,11 +16,11 @@ import (
 )
 
 type Config struct {
-	// Base directory input. Expects tables/, sets/, packets/ sub-directories.
+	// Base directory input. Expects tables/, sets/, intents/ sub-directories.
 	InputDir string
 
-	// LoadPackets controls whether packets/ input is loaded.
-	LoadPackets bool
+	// LoadIntents controls whether intents/ input is loaded.
+	LoadIntents bool
 }
 
 func ConfigFromFile(conf Config) (engine.Resources, error) {
@@ -46,12 +47,12 @@ func ConfigFromDirectory(conf Config) (engine.Resources, error) {
 	}
 	resources.Tables = tables
 
-	if conf.LoadPackets {
-		pkts, err := ConfigPacketsFromDir(filepath.Join(conf.InputDir, "packets"))
+	if conf.LoadIntents {
+		intents, err := ConfigIntentsFromDir(filepath.Join(conf.InputDir, "intents"))
 		if err != nil {
 			return engine.Resources{}, err
 		}
-		resources.Packets = pkts
+		resources.Intents = intents
 	}
 
 	return resources, nil
@@ -190,6 +191,29 @@ func ConfigSetsFromDir(dir string) (map[string]set.Set, error) {
 		}
 	}
 	return sets, nil
+}
+
+func ConfigIntentsFromDir(dir string) ([]*match.MatchContext, error) {
+	files, err := yamlFilesInDir(dir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read intents directory %s: %w", dir, err)
+	}
+	if len(files) == 0 {
+		return nil, fmt.Errorf("no yaml files found in intents directory %s", dir)
+	}
+	var contexts []*match.MatchContext
+	for _, file := range files {
+		intent, err := IntentFromFile(file)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read intent from %s: %w", file, err)
+		}
+		mc, err := intent.ToMatchContext()
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert intent in %s: %w", file, err)
+		}
+		contexts = append(contexts, mc)
+	}
+	return contexts, nil
 }
 
 func yamlFilesInDir(dir string) ([]string, error) {

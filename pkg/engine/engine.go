@@ -2,7 +2,6 @@ package engine
 
 import (
 	"github.com/mazdakn/fwsim/pkg/match"
-	"github.com/mazdakn/fwsim/pkg/packet"
 	"github.com/mazdakn/fwsim/pkg/set"
 	"github.com/mazdakn/fwsim/pkg/table"
 )
@@ -10,7 +9,7 @@ import (
 type Resources struct {
 	Sets    map[string]set.Set
 	Tables  []*table.Table
-	Packets []*packet.Packet
+	Intents []*match.MatchContext
 }
 
 type Engine struct {
@@ -37,8 +36,8 @@ func (e *Engine) LoadResources(resources Resources) {
 	if resources.Tables != nil {
 		e.SetTables(resources.Tables)
 	}
-	if resources.Packets != nil {
-		e.matches = toMatches(resources.Packets)
+	if resources.Intents != nil {
+		e.matches = resources.Intents
 	}
 }
 
@@ -77,12 +76,4 @@ func (e *Engine) RunTests() []*match.MatchContext {
 		e.RunTest(m)
 	}
 	return e.matches
-}
-
-func toMatches(pkts []*packet.Packet) []*match.MatchContext {
-	matches := make([]*match.MatchContext, 0, len(pkts))
-	for _, p := range pkts {
-		matches = append(matches, match.New(p))
-	}
-	return matches
 }
