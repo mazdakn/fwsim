@@ -90,6 +90,8 @@ hit_by_rule: deny-all
 		Expect(m.RuleMatches()).To(BeTrue(), "intent %q: expected rule %q, last trace: %v", m.Packet.Metadata.Name, m.HitByRule, m.Trace)
 	}
 }
+
+// TestRunTestsNoMatchReturnsNilVerdict verifies that a packet that passes
 // through all tables without a definitive verdict results in a nil Verdict.
 func TestRunTestsNoMatchReturnsNilVerdict(t *testing.T) {
 	RegisterTestingT(t)
@@ -127,6 +129,8 @@ packet:
 	Expect(results).To(HaveLen(1))
 	Expect(results[0].Verdict).To(BeNil())
 }
+
+// TestRunTestsWrongExpectedVerdictDetected ensures that VerdictMatches returns
 // false when the intent specifies the wrong expected verdict.
 func TestRunTestsWrongExpectedVerdictDetected(t *testing.T) {
 	RegisterTestingT(t)
