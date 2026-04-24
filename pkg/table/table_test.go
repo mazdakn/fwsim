@@ -92,7 +92,7 @@ func TestTableMatchUsesAscendingOrder(t *testing.T) {
 
 	m := match.MatchContext{Packet: pkt}
 	table.Match(&m)
-	Expect(m.Verdict).To(Equal(match.Accept))
+	Expect(m.Verdict).To(HaveValue(Equal(rule.Accept)))
 }
 
 func TestTableMatchPassContinuesToNextTable(t *testing.T) {
@@ -115,7 +115,7 @@ func TestTableMatchPassContinuesToNextTable(t *testing.T) {
 	matched := table.Match(&m)
 
 	Expect(matched).To(BeFalse())
-	Expect(m.Verdict).To(Equal(match.Pass))
+	Expect(m.Verdict).To(HaveValue(Equal(rule.Pass)))
 	Expect(m.Trace).To(HaveLen(1))
 	Expect(m.Trace[0].Name).To(Equal("pass-http"))
 }
@@ -141,7 +141,7 @@ func TestTableMatchPassRuleDoesNotEvaluateDefaultAction(t *testing.T) {
 	matched := table.Match(&m)
 
 	Expect(matched).To(BeFalse())
-	Expect(m.Verdict).To(Equal(match.Pass))
+	Expect(m.Verdict).To(HaveValue(Equal(rule.Pass)))
 	Expect(m.Trace).To(HaveLen(1))
 	Expect(m.Trace[0].Name).To(Equal("pass-http"))
 }
@@ -162,7 +162,7 @@ func TestTableMatchNoRuleAndDefaultPassReturnsNoMatchVerdict(t *testing.T) {
 	matched := table.Match(&m)
 
 	Expect(matched).To(BeFalse())
-	Expect(m.Verdict).To(Equal(match.Pass))
+	Expect(m.Verdict).To(HaveValue(Equal(rule.Pass)))
 	Expect(m.Trace).To(HaveLen(1))
 	Expect(m.Trace[0].Name).To(Equal("table test default action"))
 	Expect(m.Trace[0].Action).To(Equal(rule.Pass))

@@ -48,12 +48,11 @@ func (t *Table) Match(matchContext *match.MatchContext) bool {
 		matchContext.Trace = append(matchContext.Trace, r)
 		if r.Match(matchContext.Packet) {
 			t.logCtx.Debugf("Rule %+v matched", r)
+			matchContext.Verdict = &r.Action
 			if r.Action == rule.Pass {
 				t.logCtx.Debugf("Rule %+v action is Pass, continuing evaluation to next table", r)
-				matchContext.Verdict = match.Pass
 				return false
 			}
-			matchContext.Verdict = match.VerdictFromAction(r.Action)
 			return true
 		}
 	}
@@ -63,11 +62,10 @@ func (t *Table) Match(matchContext *match.MatchContext) bool {
 	t.logCtx.Debugf("No rule matched, using default action %s", t.DefaultAction.Action.String())
 	t.DefaultAction.IncrementPacketCount()
 	matchContext.Trace = append(matchContext.Trace, t.DefaultAction)
+	matchContext.Verdict = &t.DefaultAction.Action
 	if t.DefaultAction.Action == rule.Pass {
-		matchContext.Verdict = match.Pass
 		return false
 	}
-	matchContext.Verdict = match.VerdictFromAction(t.DefaultAction.Action)
 	return true
 }
 
