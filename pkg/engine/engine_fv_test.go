@@ -14,7 +14,6 @@ import (
 	"github.com/mazdakn/fwsim/pkg/match"
 	"github.com/mazdakn/fwsim/pkg/rule"
 	"github.com/mazdakn/fwsim/pkg/set"
-	"github.com/mazdakn/fwsim/pkg/table"
 	. "github.com/onsi/gomega"
 )
 
@@ -78,8 +77,10 @@ hit_by_rule: deny-all
 	}
 
 	engine := enginepkg.New()
-	engine.SetTables([]*table.Table{tbl})
-	engine.SetMatches(intents)
+	engine.RegisterTable(tbl)
+	for _, m := range intents {
+		engine.RegisterMatch(m)
+	}
 
 	results := engine.RunTests()
 
@@ -89,8 +90,6 @@ hit_by_rule: deny-all
 		Expect(m.RuleMatches()).To(BeTrue(), "intent %q: expected rule %q, last trace: %v", m.Packet.Metadata.Name, m.HitByRule, m.Trace)
 	}
 }
-
-// TestRunTestsNoMatchReturnsNilVerdict verifies that a packet that passes
 // through all tables without a definitive verdict results in a nil Verdict.
 func TestRunTestsNoMatchReturnsNilVerdict(t *testing.T) {
 	RegisterTestingT(t)
@@ -120,16 +119,14 @@ packet:
 `)
 
 	engine := enginepkg.New()
-	engine.SetTables([]*table.Table{tbl})
-	engine.SetMatches([]*match.MatchContext{intent})
+	engine.RegisterTable(tbl)
+	engine.RegisterMatch(intent)
 
 	results := engine.RunTests()
 
 	Expect(results).To(HaveLen(1))
 	Expect(results[0].Verdict).To(BeNil())
 }
-
-// TestRunTestsWrongExpectedVerdictDetected ensures that VerdictMatches returns
 // false when the intent specifies the wrong expected verdict.
 func TestRunTestsWrongExpectedVerdictDetected(t *testing.T) {
 	RegisterTestingT(t)
@@ -154,8 +151,8 @@ expected_verdict: Accept
 `)
 
 	engine := enginepkg.New()
-	engine.SetTables([]*table.Table{tbl})
-	engine.SetMatches([]*match.MatchContext{intent})
+	engine.RegisterTable(tbl)
+	engine.RegisterMatch(intent)
 
 	results := engine.RunTests()
 
@@ -197,8 +194,8 @@ hit_by_rule: deny-all
 `)
 
 	engine := enginepkg.New()
-	engine.SetTables([]*table.Table{tbl})
-	engine.SetMatches([]*match.MatchContext{intent})
+	engine.RegisterTable(tbl)
+	engine.RegisterMatch(intent)
 
 	results := engine.RunTests()
 
@@ -293,9 +290,13 @@ hit_by_rule: deny-all
 	}
 
 	engine := enginepkg.New()
-	engine.SetSets(merged)
-	engine.SetTables([]*table.Table{tbl})
-	engine.SetMatches(intents)
+	for k, v := range merged {
+		engine.RegisterSet(k, v)
+	}
+	engine.RegisterTable(tbl)
+	for _, m := range intents {
+		engine.RegisterMatch(m)
+	}
 
 	results := engine.RunTests()
 
@@ -398,8 +399,11 @@ hit_by_rule: deny-external
 	}
 
 	engine := enginepkg.New()
-	engine.SetTables([]*table.Table{filterTable, forwardTable})
-	engine.SetMatches(intents)
+	engine.RegisterTable(filterTable)
+	engine.RegisterTable(forwardTable)
+	for _, m := range intents {
+		engine.RegisterMatch(m)
+	}
 
 	results := engine.RunTests()
 
@@ -410,9 +414,9 @@ hit_by_rule: deny-external
 	}
 }
 
-// TestRunTestsSetMatchesUpdatesIntents verifies that SetMatches can
-// replace the intents and that RunTests picks up the new set.
-func TestRunTestsSetMatchesUpdatesIntents(t *testing.T) {
+// TestRunTestsRegisterMatchAppendIntents verifies that RegisterMatch appends
+// intents and that RunTests processes all registered intents.
+func TestRunTestsRegisterMatchAppendIntents(t *testing.T) {
 	RegisterTestingT(t)
 
 	tbl, err := config.ConfigTableFromBytes([]byte(`
@@ -430,11 +434,10 @@ default_action: Drop
 	Expect(err).To(BeNil())
 
 	engine := enginepkg.New()
-	engine.SetTables([]*table.Table{tbl})
+	engine.RegisterTable(tbl)
 
-	// Load first batch of intents.
-	engine.SetMatches([]*match.MatchContext{
-		intentFromYAML(t, `
+	// Register first intent.
+	engine.RegisterMatch(intentFromYAML(t, `
 name: dns query
 packet:
   src_addr: 10.0.0.1
@@ -444,17 +447,15 @@ packet:
   dst_port: 53
 expected_verdict: Accept
 hit_by_rule: allow-udp-dns
-`),
-	})
+`))
 
 	results := engine.RunTests()
 	Expect(results).To(HaveLen(1))
 	Expect(results[0].VerdictMatches()).To(BeTrue())
 	Expect(results[0].RuleMatches()).To(BeTrue())
 
-	// Replace intents with a different set via a second SetMatches call.
-	engine.SetMatches([]*match.MatchContext{
-		intentFromYAML(t, `
+	// Register a second intent — RegisterMatch appends, so RunTests now sees both.
+	engine.RegisterMatch(intentFromYAML(t, `
 name: blocked tcp
 packet:
   src_addr: 10.0.0.1
@@ -464,13 +465,14 @@ packet:
   dst_port: 53
 expected_verdict: Drop
 hit_by_rule: deny-all
-`),
-	})
+`))
 
 	results = engine.RunTests()
-	Expect(results).To(HaveLen(1))
-	Expect(results[0].VerdictMatches()).To(BeTrue())
-	Expect(results[0].RuleMatches()).To(BeTrue())
+	Expect(results).To(HaveLen(2))
+	for _, m := range results {
+		Expect(m.VerdictMatches()).To(BeTrue())
+		Expect(m.RuleMatches()).To(BeTrue())
+	}
 }
 
 // TestRunTestsDefaultActionVerdict confirms that a packet reaching the end of
@@ -515,8 +517,10 @@ expected_verdict: Accept
 	}
 
 	engine := enginepkg.New()
-	engine.SetTables([]*table.Table{tbl})
-	engine.SetMatches(intents)
+	engine.RegisterTable(tbl)
+	for _, m := range intents {
+		engine.RegisterMatch(m)
+	}
 
 	results := engine.RunTests()
 

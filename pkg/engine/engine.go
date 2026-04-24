@@ -18,16 +18,16 @@ func New() *Engine {
 	}
 }
 
-func (e *Engine) SetTables(tables []*table.Table) {
-	e.tables = tables
+func (e *Engine) RegisterTable(t *table.Table) {
+	e.tables = append(e.tables, t)
 }
 
-func (e *Engine) SetMatches(matches []*match.MatchContext) {
-	e.matches = matches
+func (e *Engine) RegisterMatch(m *match.MatchContext) {
+	e.matches = append(e.matches, m)
 }
 
-func (e *Engine) SetSets(sets map[string]set.Set) {
-	e.sets = sets
+func (e *Engine) RegisterSet(name string, s set.Set) {
+	e.sets[name] = s
 }
 
 // Sets returns the map of user-defined named sets loaded into the engine.
