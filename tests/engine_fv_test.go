@@ -1,4 +1,4 @@
-package engine_test
+package tests
 
 // Integration / functional-verification tests for Engine.RunTests.
 //
