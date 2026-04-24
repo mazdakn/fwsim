@@ -39,7 +39,9 @@ func (i *Intent) ToMatchContext() (*match.MatchContext, error) {
 		if err != nil {
 			return nil, fmt.Errorf("intent %q: invalid expected_verdict: %w", i.Name, err)
 		}
-		opts = append(opts, match.WithExpectedVerdict(v))
+		if v != nil {
+			opts = append(opts, match.WithExpectedVerdict(*v))
+		}
 	}
 	if i.HitByRule != "" {
 		opts = append(opts, match.WithExpectedRule(i.HitByRule))

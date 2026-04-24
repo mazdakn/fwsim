@@ -10,8 +10,6 @@ import (
 
 type Verdict int
 
-const Undefined Verdict = -1
-
 const (
 	Accept Verdict = iota
 	Drop
@@ -19,23 +17,26 @@ const (
 	NoMatch
 )
 
-// ParseVerdict converts a string to a Verdict. Returns Undefined and an error
-// if the string is not a recognized verdict name.
-func ParseVerdict(s string) (Verdict, error) {
+// ParseVerdict converts a string to a Verdict pointer. Returns nil, nil when
+// the string is empty, meaning no verdict was specified. Returns an error if
+// the string is not a recognized verdict name.
+func ParseVerdict(s string) (*Verdict, error) {
+	var v Verdict
 	switch strings.ToLower(strings.ReplaceAll(s, "_", "")) {
 	case "accept":
-		return Accept, nil
+		v = Accept
 	case "drop":
-		return Drop, nil
+		v = Drop
 	case "pass":
-		return Pass, nil
+		v = Pass
 	case "nomatch":
-		return NoMatch, nil
-	case "", "undefined":
-		return Undefined, nil
+		v = NoMatch
+	case "":
+		return nil, nil
 	default:
-		return Undefined, fmt.Errorf("unknown verdict: %s", s)
+		return nil, fmt.Errorf("unknown verdict: %s", s)
 	}
+	return &v, nil
 }
 
 func (v Verdict) String() string {
@@ -49,7 +50,7 @@ func (v Verdict) String() string {
 	case NoMatch:
 		return "no match"
 	default:
-		return fmt.Sprintf("Undefined(%d)", v)
+		return fmt.Sprintf("Unknown(%d)", v)
 	}
 }
 
@@ -62,7 +63,7 @@ func VerdictFromAction(a rule.Action) Verdict {
 	case rule.Pass:
 		return Pass
 	default:
-		return Undefined
+		return NoMatch
 	}
 }
 
@@ -71,9 +72,9 @@ type MatchContext struct {
 	Verdict Verdict
 	Trace   []*rule.Rule
 
-	// ExpectedVerdict is the verdict expected by the intent. When set to a value
-	// other than Undefined, it is compared against the actual Verdict after matching.
-	ExpectedVerdict Verdict
+	// ExpectedVerdict is the verdict expected by the intent. When nil, verdict
+	// validation is skipped.
+	ExpectedVerdict *Verdict
 	// HitByRule is the name of the rule expected to match the packet. When non-empty,
 	// it is checked against the last rule recorded in Trace after matching.
 	HitByRule string
@@ -84,7 +85,7 @@ type MatchContextOption func(*MatchContext)
 // WithExpectedVerdict sets the verdict the intent expects the packet to receive.
 func WithExpectedVerdict(v Verdict) MatchContextOption {
 	return func(m *MatchContext) {
-		m.ExpectedVerdict = v
+		m.ExpectedVerdict = &v
 	}
 }
 
@@ -97,9 +98,8 @@ func WithExpectedRule(name string) MatchContextOption {
 
 func New(pkt *packet.Packet, opts ...MatchContextOption) *MatchContext {
 	m := &MatchContext{
-		Packet:          pkt,
-		Verdict:         NoMatch,
-		ExpectedVerdict: Undefined,
+		Packet:  pkt,
+		Verdict: NoMatch,
 	}
 	for _, opt := range opts {
 		opt(m)
@@ -108,9 +108,9 @@ func New(pkt *packet.Packet, opts ...MatchContextOption) *MatchContext {
 }
 
 // VerdictMatches reports whether the actual verdict satisfies the intent.
-// Returns true when no expected verdict was specified (Undefined).
+// Returns true when no expected verdict was specified (nil).
 func (m *MatchContext) VerdictMatches() bool {
-	return m.ExpectedVerdict == Undefined || m.ExpectedVerdict == m.Verdict
+	return m.ExpectedVerdict == nil || *m.ExpectedVerdict == m.Verdict
 }
 
 // RuleMatches reports whether the expected rule was the decisive rule that
