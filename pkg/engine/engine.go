@@ -13,6 +13,9 @@ type Engine struct {
 
 func New(r *config.Resource) *Engine {
 	if r != nil {
+		if r.Sets == nil {
+			r.Sets = map[string]set.Set{}
+		}
 		return &Engine{resources: *r}
 	}
 	return &Engine{
@@ -27,9 +30,6 @@ func (e *Engine) RegisterTable(t *table.Table) {
 }
 
 func (e *Engine) RegisterSet(name string, s set.Set) {
-	if e.resources.Sets == nil {
-		e.resources.Sets = map[string]set.Set{}
-	}
 	e.resources.Sets[name] = s
 }
 
