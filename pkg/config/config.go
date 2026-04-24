@@ -23,39 +23,37 @@ type Config struct {
 	LoadIntents bool
 }
 
-func ConfigFromFile(conf Config) (engine.Resources, error) {
+func ConfigFromFile(conf Config) (*engine.Engine, error) {
 	if conf.InputDir == "" {
-		return engine.Resources{}, fmt.Errorf("input directory is required")
+		return nil, fmt.Errorf("input directory is required")
 	}
 	return ConfigFromDirectory(conf)
 }
 
-func ConfigFromDirectory(conf Config) (engine.Resources, error) {
-	resources := engine.Resources{
-		Sets: map[string]set.Set{},
-	}
+func ConfigFromDirectory(conf Config) (*engine.Engine, error) {
+	e := engine.New()
 
 	sets, err := ConfigSetsFromDir(filepath.Join(conf.InputDir, "sets"))
 	if err != nil {
-		return engine.Resources{}, err
+		return nil, err
 	}
-	resources.Sets = sets
+	e.SetSets(sets)
 
-	tables, err := ConfigTablesFromDir(filepath.Join(conf.InputDir, "tables"), resources.Sets)
+	tables, err := ConfigTablesFromDir(filepath.Join(conf.InputDir, "tables"), e.Sets())
 	if err != nil {
-		return engine.Resources{}, err
+		return nil, err
 	}
-	resources.Tables = tables
+	e.SetTables(tables)
 
 	if conf.LoadIntents {
 		intents, err := ConfigIntentsFromDir(filepath.Join(conf.InputDir, "intents"))
 		if err != nil {
-			return engine.Resources{}, err
+			return nil, err
 		}
-		resources.Intents = intents
+		e.SetMatches(intents)
 	}
 
-	return resources, nil
+	return e, nil
 }
 
 func ConfigTableFromBytes(data []byte, sets map[string]set.Set) (*table.Table, error) {

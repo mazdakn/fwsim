@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/mazdakn/fwsim/pkg/config"
-	"github.com/mazdakn/fwsim/pkg/engine"
 	"github.com/mazdakn/fwsim/pkg/match"
 	"github.com/mazdakn/fwsim/pkg/port"
 	"github.com/mazdakn/fwsim/pkg/proto"
@@ -104,14 +103,13 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 	}
 
 	// Create engine and load rules
-	resources, err := config.ConfigFromFile(config.Config{
+	e, err := config.ConfigFromFile(config.Config{
 		InputDir: inputDir,
 	})
 	if err != nil {
 		logrus.WithError(err).Errorf("failed to load resources from %s", inputDir)
 		os.Exit(1)
 	}
-	e := engine.New(resources)
 
 	// Match packet against rules
 	m := match.New(pkt.ToPacket())
@@ -125,7 +123,7 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 
 func runPackets(cmd *cobra.Command, args []string) {
 	// Create engine and load rules
-	resources, err := config.ConfigFromFile(config.Config{
+	e, err := config.ConfigFromFile(config.Config{
 		InputDir:    inputDir,
 		LoadIntents: true,
 	})
@@ -133,7 +131,6 @@ func runPackets(cmd *cobra.Command, args []string) {
 		logrus.WithError(err).Errorf("failed to load resources from %s", inputDir)
 		os.Exit(1)
 	}
-	e := engine.New(resources)
 
 	// Evaluate each packet
 	for _, m := range e.RunTests() {

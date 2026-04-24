@@ -6,38 +6,15 @@ import (
 	"github.com/mazdakn/fwsim/pkg/table"
 )
 
-type Resources struct {
-	Sets    map[string]set.Set
-	Tables  []*table.Table
-	Intents []*match.MatchContext
-}
-
 type Engine struct {
 	tables  []*table.Table
 	matches []*match.MatchContext
 	sets    map[string]set.Set
 }
 
-func New(resources ...Resources) *Engine {
-	e := &Engine{
-		matches: []*match.MatchContext{},
-		sets:    map[string]set.Set{},
-	}
-	for _, resource := range resources {
-		e.LoadResources(resource)
-	}
-	return e
-}
-
-func (e *Engine) LoadResources(resources Resources) {
-	if resources.Sets != nil {
-		e.sets = resources.Sets
-	}
-	if resources.Tables != nil {
-		e.SetTables(resources.Tables)
-	}
-	if resources.Intents != nil {
-		e.matches = resources.Intents
+func New() *Engine {
+	return &Engine{
+		sets: map[string]set.Set{},
 	}
 }
 
@@ -60,6 +37,10 @@ func (e *Engine) Sets() map[string]set.Set {
 
 func (e *Engine) Tables() []*table.Table {
 	return e.tables
+}
+
+func (e *Engine) Matches() []*match.MatchContext {
+	return e.matches
 }
 
 func (e *Engine) RunTest(m *match.MatchContext) {
