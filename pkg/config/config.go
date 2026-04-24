@@ -7,7 +7,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/mazdakn/fwsim/pkg/engine"
 	"github.com/mazdakn/fwsim/pkg/match"
 	"github.com/mazdakn/fwsim/pkg/packet"
 	"github.com/mazdakn/fwsim/pkg/rule"
@@ -21,33 +20,39 @@ type Config struct {
 
 	// LoadIntents controls whether intents/ input is loaded.
 	LoadIntents bool
+
+	// Tables holds the ordered list of firewall tables loaded from InputDir.
+	Tables []*table.Table
+
+	// Sets holds the named sets loaded from InputDir.
+	Sets map[string]set.Set
 }
 
-func ConfigFromFile(conf Config) (*engine.Engine, []*match.MatchContext, error) {
+func ConfigFromFile(conf Config) (*Config, []*match.MatchContext, error) {
 	if conf.InputDir == "" {
 		return nil, nil, fmt.Errorf("input directory is required")
 	}
 	return ConfigFromDirectory(conf)
 }
 
-func ConfigFromDirectory(conf Config) (*engine.Engine, []*match.MatchContext, error) {
-	e := engine.New()
+func ConfigFromDirectory(conf Config) (*Config, []*match.MatchContext, error) {
+	if conf.Sets == nil {
+		conf.Sets = map[string]set.Set{}
+	}
 
 	sets, err := ConfigSetsFromDir(filepath.Join(conf.InputDir, "sets"))
 	if err != nil {
 		return nil, nil, err
 	}
 	for name, s := range sets {
-		e.RegisterSet(name, s)
+		conf.Sets[name] = s
 	}
 
-	tables, err := ConfigTablesFromDir(filepath.Join(conf.InputDir, "tables"), sets)
+	tables, err := ConfigTablesFromDir(filepath.Join(conf.InputDir, "tables"), conf.Sets)
 	if err != nil {
 		return nil, nil, err
 	}
-	for _, t := range tables {
-		e.RegisterTable(t)
-	}
+	conf.Tables = append(conf.Tables, tables...)
 
 	var intents []*match.MatchContext
 	if conf.LoadIntents {
@@ -57,7 +62,7 @@ func ConfigFromDirectory(conf Config) (*engine.Engine, []*match.MatchContext, er
 		}
 	}
 
-	return e, intents, nil
+	return &conf, intents, nil
 }
 
 func ConfigTableFromBytes(data []byte, sets map[string]set.Set) (*table.Table, error) {
