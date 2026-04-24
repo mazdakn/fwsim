@@ -7,9 +7,8 @@ import (
 )
 
 type Engine struct {
-	tables  []*table.Table
-	matches []*match.MatchContext
-	sets    map[string]set.Set
+	tables []*table.Table
+	sets   map[string]set.Set
 }
 
 func New() *Engine {
@@ -20,10 +19,6 @@ func New() *Engine {
 
 func (e *Engine) RegisterTable(t *table.Table) {
 	e.tables = append(e.tables, t)
-}
-
-func (e *Engine) RegisterMatch(m *match.MatchContext) {
-	e.matches = append(e.matches, m)
 }
 
 func (e *Engine) RegisterSet(name string, s set.Set) {
@@ -39,22 +34,18 @@ func (e *Engine) Tables() []*table.Table {
 	return e.tables
 }
 
-func (e *Engine) Matches() []*match.MatchContext {
-	return e.matches
-}
-
-func (e *Engine) RunTest(m *match.MatchContext) {
-	for _, t := range e.tables {
-		if t.Match(m) {
-			return
+func (e *Engine) RunTests(matches []*match.MatchContext) []*match.MatchContext {
+	for _, m := range matches {
+		decided := false
+		for _, t := range e.tables {
+			if t.Match(m) {
+				decided = true
+				break
+			}
+		}
+		if !decided {
+			m.Verdict = nil
 		}
 	}
-	m.Verdict = nil
-}
-
-func (e *Engine) RunTests() []*match.MatchContext {
-	for _, m := range e.matches {
-		e.RunTest(m)
-	}
-	return e.matches
+	return matches
 }

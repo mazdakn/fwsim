@@ -23,19 +23,19 @@ type Config struct {
 	LoadIntents bool
 }
 
-func ConfigFromFile(conf Config) (*engine.Engine, error) {
+func ConfigFromFile(conf Config) (*engine.Engine, []*match.MatchContext, error) {
 	if conf.InputDir == "" {
-		return nil, fmt.Errorf("input directory is required")
+		return nil, nil, fmt.Errorf("input directory is required")
 	}
 	return ConfigFromDirectory(conf)
 }
 
-func ConfigFromDirectory(conf Config) (*engine.Engine, error) {
+func ConfigFromDirectory(conf Config) (*engine.Engine, []*match.MatchContext, error) {
 	e := engine.New()
 
 	sets, err := ConfigSetsFromDir(filepath.Join(conf.InputDir, "sets"))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	for name, s := range sets {
 		e.RegisterSet(name, s)
@@ -43,23 +43,21 @@ func ConfigFromDirectory(conf Config) (*engine.Engine, error) {
 
 	tables, err := ConfigTablesFromDir(filepath.Join(conf.InputDir, "tables"), e.Sets())
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	for _, t := range tables {
 		e.RegisterTable(t)
 	}
 
+	var intents []*match.MatchContext
 	if conf.LoadIntents {
-		intents, err := ConfigIntentsFromDir(filepath.Join(conf.InputDir, "intents"))
+		intents, err = ConfigIntentsFromDir(filepath.Join(conf.InputDir, "intents"))
 		if err != nil {
-			return nil, err
-		}
-		for _, m := range intents {
-			e.RegisterMatch(m)
+			return nil, nil, err
 		}
 	}
 
-	return e, nil
+	return e, intents, nil
 }
 
 func ConfigTableFromBytes(data []byte, sets map[string]set.Set) (*table.Table, error) {

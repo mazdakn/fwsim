@@ -103,7 +103,7 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 	}
 
 	// Create engine and load rules
-	e, err := config.ConfigFromFile(config.Config{
+	e, _, err := config.ConfigFromFile(config.Config{
 		InputDir: inputDir,
 	})
 	if err != nil {
@@ -113,7 +113,7 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 
 	// Match packet against rules
 	m := match.New(pkt.ToPacket())
-	e.RunTest(m)
+	e.RunTests([]*match.MatchContext{m})
 	printResult(m)
 	fmt.Println()
 
@@ -123,7 +123,7 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 
 func runPackets(cmd *cobra.Command, args []string) {
 	// Create engine and load rules
-	e, err := config.ConfigFromFile(config.Config{
+	e, intents, err := config.ConfigFromFile(config.Config{
 		InputDir:    inputDir,
 		LoadIntents: true,
 	})
@@ -133,7 +133,7 @@ func runPackets(cmd *cobra.Command, args []string) {
 	}
 
 	// Evaluate each packet
-	for _, m := range e.RunTests() {
+	for _, m := range e.RunTests(intents) {
 		printResult(m)
 		printIntentResult(m)
 		fmt.Println()

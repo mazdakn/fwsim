@@ -45,21 +45,21 @@ expected_verdict: Accept
 hit_by_rule: allow-http
 `), 0o600)).To(Succeed())
 
-	e, err := ConfigFromFile(Config{
+	e, intents, err := ConfigFromFile(Config{
 		InputDir:    dir,
 		LoadIntents: true,
 	})
 	Expect(err).To(BeNil())
 	Expect(e.Tables()).To(HaveLen(1))
 	Expect(e.Sets()).To(HaveLen(1))
-	Expect(e.Matches()).To(HaveLen(1))
+	Expect(intents).To(HaveLen(1))
 	Expect(e.Sets()).To(HaveKey("web-ports"))
 	Expect(e.Sets()["web-ports"].Match(uint16(80))).To(BeTrue())
 	Expect(e.Sets()["web-ports"].Match(uint16(443))).To(BeTrue())
-	Expect(e.Matches()[0].Packet.SrcAddr.String()).To(Equal("10.0.0.1"))
-	Expect(e.Matches()[0].Packet.DstAddr.String()).To(Equal("1.1.1.1"))
-	Expect(e.Matches()[0].Packet.SrcPort).To(Equal(uint16(12345)))
-	Expect(e.Matches()[0].Packet.DstPort).To(Equal(uint16(80)))
+	Expect(intents[0].Packet.SrcAddr.String()).To(Equal("10.0.0.1"))
+	Expect(intents[0].Packet.DstAddr.String()).To(Equal("1.1.1.1"))
+	Expect(intents[0].Packet.SrcPort).To(Equal(uint16(12345)))
+	Expect(intents[0].Packet.DstPort).To(Equal(uint16(80)))
 }
 
 func TestConfigTablesFromDirSortsByOrder(t *testing.T) {
@@ -141,12 +141,11 @@ rules: []
 default_action: Accept
 `), 0o600)).To(Succeed())
 
-	e, err := ConfigFromFile(Config{
+	e, _, err := ConfigFromFile(Config{
 		InputDir: dir,
 	})
 	Expect(err).To(BeNil())
 	Expect(e.Tables()).To(HaveLen(1))
-	Expect(e.Matches()).To(BeNil())
 }
 
 func TestConfigFromDirectoryWithoutTables(t *testing.T) {
@@ -155,18 +154,17 @@ func TestConfigFromDirectoryWithoutTables(t *testing.T) {
 	dir := t.TempDir()
 	Expect(os.MkdirAll(filepath.Join(dir, "sets"), 0o755)).To(Succeed())
 
-	e, err := ConfigFromFile(Config{
+	e, _, err := ConfigFromFile(Config{
 		InputDir: dir,
 	})
 	Expect(err).To(BeNil())
 	Expect(e.Tables()).To(BeEmpty())
-	Expect(e.Matches()).To(BeNil())
 }
 
 func TestConfigFromFileWithoutInputDir(t *testing.T) {
 	RegisterTestingT(t)
 
-	e, err := ConfigFromFile(Config{})
+	e, _, err := ConfigFromFile(Config{})
 	Expect(err).ToNot(BeNil())
 	Expect(err.Error()).To(ContainSubstring("input directory is required"))
 	Expect(e).To(BeNil())
