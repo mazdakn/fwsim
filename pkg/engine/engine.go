@@ -41,6 +41,7 @@ func (e *Engine) LoadResources(resources Resources) {
 	if resources.Packets != nil {
 		e.matches = toMatches(resources.Packets)
 	}
+	// Intents take precedence over Packets when both are present.
 	if resources.Intents != nil {
 		e.matches = resources.Intents
 	}
