@@ -59,6 +59,11 @@ func IntentFromBytes(data []byte) (*Intent, error) {
 	if err := intent.Packet.Validate(); err != nil {
 		return nil, fmt.Errorf("intent %q: invalid packet: %w", intent.Name, err)
 	}
+	if intent.ExpectedVerdict != "" {
+		if _, err := rule.ParseAction(intent.ExpectedVerdict); err != nil {
+			return nil, fmt.Errorf("intent %q: invalid expected_verdict: %w", intent.Name, err)
+		}
+	}
 	return &intent, nil
 }
 

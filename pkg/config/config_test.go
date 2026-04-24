@@ -44,21 +44,21 @@ expected_verdict: Accept
 hit_by_rule: allow-http
 `), 0o600)).To(Succeed())
 
-	r, intents, err := ConfigFromFile(Config{
+	r, err := ConfigFromFile(Config{
 		InputDir:    dir,
 		LoadIntents: true,
 	})
 	Expect(err).To(BeNil())
 	Expect(r.Tables).To(HaveLen(1))
 	Expect(r.Sets).To(HaveLen(1))
-	Expect(intents).To(HaveLen(1))
+	Expect(r.Intents).To(HaveLen(1))
 	Expect(r.Sets).To(HaveKey("web-ports"))
 	Expect(r.Sets["web-ports"].Match(uint16(80))).To(BeTrue())
 	Expect(r.Sets["web-ports"].Match(uint16(443))).To(BeTrue())
-	Expect(intents[0].Packet.SrcAddr.String()).To(Equal("10.0.0.1"))
-	Expect(intents[0].Packet.DstAddr.String()).To(Equal("1.1.1.1"))
-	Expect(intents[0].Packet.SrcPort).To(Equal(uint16(12345)))
-	Expect(intents[0].Packet.DstPort).To(Equal(uint16(80)))
+	Expect(r.Intents[0].Packet.SrcAddr).To(Equal("10.0.0.1"))
+	Expect(r.Intents[0].Packet.DstAddr).To(Equal("1.1.1.1"))
+	Expect(r.Intents[0].Packet.SrcPort.Number).To(Equal(uint16(12345)))
+	Expect(r.Intents[0].Packet.DstPort.Number).To(Equal(uint16(80)))
 }
 
 func TestConfigTablesFromDirSortsByOrder(t *testing.T) {
@@ -140,7 +140,7 @@ rules: []
 default_action: Accept
 `), 0o600)).To(Succeed())
 
-	e, _, err := ConfigFromFile(Config{
+	e, err := ConfigFromFile(Config{
 		InputDir: dir,
 	})
 	Expect(err).To(BeNil())
@@ -153,7 +153,7 @@ func TestConfigFromDirectoryWithoutTables(t *testing.T) {
 	dir := t.TempDir()
 	Expect(os.MkdirAll(filepath.Join(dir, "sets"), 0o755)).To(Succeed())
 
-	e, _, err := ConfigFromFile(Config{
+	e, err := ConfigFromFile(Config{
 		InputDir: dir,
 	})
 	Expect(err).To(BeNil())
@@ -163,7 +163,7 @@ func TestConfigFromDirectoryWithoutTables(t *testing.T) {
 func TestConfigFromFileWithoutInputDir(t *testing.T) {
 	RegisterTestingT(t)
 
-	e, _, err := ConfigFromFile(Config{})
+	e, err := ConfigFromFile(Config{})
 	Expect(err).ToNot(BeNil())
 	Expect(err.Error()).To(ContainSubstring("input directory is required"))
 	Expect(e).To(BeNil())

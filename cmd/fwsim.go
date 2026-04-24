@@ -104,19 +104,19 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 	}
 
 	// Create engine and load rules
-	r, _, err := config.ConfigFromFile(config.Config{
+	r, err := config.ConfigFromFile(config.Config{
 		InputDir: inputDir,
 	})
 	if err != nil {
 		logrus.WithError(err).Errorf("failed to load resources from %s", inputDir)
 		os.Exit(1)
 	}
+	r.Intents = append(r.Intents, &config.Intent{Packet: *pkt})
 	e := engine.New(r)
 
 	// Match packet against rules
-	m := match.New(pkt.ToPacket())
-	e.RunTests([]*match.MatchContext{m})
-	printResult(m)
+	results := e.RunTests()
+	printResult(results[0])
 	fmt.Println()
 
 	// Run and print validations.
@@ -125,7 +125,7 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 
 func runPackets(cmd *cobra.Command, args []string) {
 	// Create engine and load rules
-	r, intents, err := config.ConfigFromFile(config.Config{
+	r, err := config.ConfigFromFile(config.Config{
 		InputDir:    inputDir,
 		LoadIntents: true,
 	})
@@ -136,7 +136,7 @@ func runPackets(cmd *cobra.Command, args []string) {
 	e := engine.New(r)
 
 	// Evaluate each packet
-	for _, m := range e.RunTests(intents) {
+	for _, m := range e.RunTests() {
 		printResult(m)
 		printIntentResult(m)
 		fmt.Println()
