@@ -37,20 +37,26 @@ func ConfigFromDirectory(conf Config) (*engine.Engine, error) {
 	if err != nil {
 		return nil, err
 	}
-	e.SetSets(sets)
+	for name, s := range sets {
+		e.RegisterSet(name, s)
+	}
 
 	tables, err := ConfigTablesFromDir(filepath.Join(conf.InputDir, "tables"), e.Sets())
 	if err != nil {
 		return nil, err
 	}
-	e.SetTables(tables)
+	for _, t := range tables {
+		e.RegisterTable(t)
+	}
 
 	if conf.LoadIntents {
 		intents, err := ConfigIntentsFromDir(filepath.Join(conf.InputDir, "intents"))
 		if err != nil {
 			return nil, err
 		}
-		e.SetMatches(intents)
+		for _, m := range intents {
+			e.RegisterMatch(m)
+		}
 	}
 
 	return e, nil

@@ -8,8 +8,6 @@ import (
 	"github.com/mazdakn/fwsim/pkg/match"
 	"github.com/mazdakn/fwsim/pkg/proto"
 	"github.com/mazdakn/fwsim/pkg/rule"
-	"github.com/mazdakn/fwsim/pkg/set"
-	"github.com/mazdakn/fwsim/pkg/table"
 	. "github.com/onsi/gomega"
 )
 
@@ -18,7 +16,7 @@ func loadRulesFromBytes(e *enginepkg.Engine, data []byte) error {
 	if err != nil {
 		return err
 	}
-	e.SetTables([]*table.Table{tbl})
+	e.RegisterTable(tbl)
 	return nil
 }
 
@@ -27,14 +25,9 @@ func loadSetsFromBytes(e *enginepkg.Engine, data []byte) error {
 	if err != nil {
 		return err
 	}
-	merged := e.Sets()
-	if merged == nil {
-		merged = map[string]set.Set{}
-	}
 	for name, s := range sets {
-		merged[name] = s
+		e.RegisterSet(name, s)
 	}
-	e.SetSets(merged)
 	return nil
 }
 
@@ -290,7 +283,8 @@ default_action: Drop
 `), nil)
 	Expect(err).To(BeNil())
 
-	engine.SetTables([]*table.Table{passTable, acceptTable})
+	engine.RegisterTable(passTable)
+	engine.RegisterTable(acceptTable)
 
 	pkt, err := config.PacketsFromBytes([]byte(testPacketsNamedPortYAML))
 	Expect(err).To(BeNil())
@@ -329,7 +323,8 @@ default_action: Accept
 `), nil)
 	Expect(err).To(BeNil())
 
-	engine.SetTables([]*table.Table{passDefaultTable, dropTable})
+	engine.RegisterTable(passDefaultTable)
+	engine.RegisterTable(dropTable)
 
 	pkt, err := config.PacketsFromBytes([]byte(testPacketsNamedPortYAML))
 	Expect(err).To(BeNil())
@@ -368,7 +363,8 @@ default_action: Drop
 `), nil)
 	Expect(err).To(BeNil())
 
-	engine.SetTables([]*table.Table{firstTable, secondTable})
+	engine.RegisterTable(firstTable)
+	engine.RegisterTable(secondTable)
 
 	pkt, err := config.PacketsFromBytes([]byte(testPacketsNamedPortYAML))
 	Expect(err).To(BeNil())
