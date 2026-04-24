@@ -74,7 +74,10 @@ hit_by_rule: deny-all
 	engine := enginepkg.New(nil)
 	engine.RegisterTable(tbl)
 
-	results := engine.RunTests(intents)
+	for _, intent := range intents {
+		engine.RegisterIntent(intent)
+	}
+	results := engine.RunTests()
 
 	Expect(results).To(HaveLen(2))
 	for _, m := range results {
@@ -114,8 +117,8 @@ packet:
 
 	engine := enginepkg.New(nil)
 	engine.RegisterTable(tbl)
-
-	results := engine.RunTests([]*config.Intent{intent})
+	engine.RegisterIntent(intent)
+	results := engine.RunTests()
 
 	Expect(results).To(HaveLen(1))
 	Expect(results[0].Verdict).To(BeNil())
@@ -147,8 +150,8 @@ expected_verdict: Accept
 
 	engine := enginepkg.New(nil)
 	engine.RegisterTable(tbl)
-
-	results := engine.RunTests([]*config.Intent{intent})
+	engine.RegisterIntent(intent)
+	results := engine.RunTests()
 
 	Expect(results).To(HaveLen(1))
 	Expect(results[0].Verdict).To(HaveValue(Equal(rule.Drop)))
@@ -189,8 +192,8 @@ hit_by_rule: deny-all
 
 	engine := enginepkg.New(nil)
 	engine.RegisterTable(tbl)
-
-	results := engine.RunTests([]*config.Intent{intent})
+	engine.RegisterIntent(intent)
+	results := engine.RunTests()
 
 	Expect(results).To(HaveLen(1))
 	Expect(results[0].VerdictMatches()).To(BeTrue())
@@ -288,7 +291,10 @@ hit_by_rule: deny-all
 	}
 	engine.RegisterTable(tbl)
 
-	results := engine.RunTests(intents)
+	for _, intent := range intents {
+		engine.RegisterIntent(intent)
+	}
+	results := engine.RunTests()
 
 	Expect(results).To(HaveLen(3))
 	for _, m := range results {
@@ -392,7 +398,10 @@ hit_by_rule: deny-external
 	engine.RegisterTable(filterTable)
 	engine.RegisterTable(forwardTable)
 
-	results := engine.RunTests(intents)
+	for _, intent := range intents {
+		engine.RegisterIntent(intent)
+	}
+	results := engine.RunTests()
 
 	Expect(results).To(HaveLen(4))
 	for _, m := range results {
@@ -436,7 +445,8 @@ hit_by_rule: allow-udp-dns
 `)
 
 	// Run with a single intent.
-	results := engine.RunTests([]*config.Intent{firstIntent})
+	engine.RegisterIntent(firstIntent)
+	results := engine.RunTests()
 	Expect(results).To(HaveLen(1))
 	Expect(results[0].VerdictMatches()).To(BeTrue())
 	Expect(results[0].RuleMatches()).To(BeTrue())
@@ -453,8 +463,12 @@ expected_verdict: Drop
 hit_by_rule: deny-all
 `)
 
-	// Run with two intents.
-	results = engine.RunTests([]*config.Intent{firstIntent, secondIntent})
+	// Run with two intents using a fresh engine.
+	engine2 := enginepkg.New(nil)
+	engine2.RegisterTable(tbl)
+	engine2.RegisterIntent(firstIntent)
+	engine2.RegisterIntent(secondIntent)
+	results = engine2.RunTests()
 	Expect(results).To(HaveLen(2))
 	for _, m := range results {
 		Expect(m.VerdictMatches()).To(BeTrue())
@@ -506,7 +520,10 @@ expected_verdict: Accept
 	engine := enginepkg.New(nil)
 	engine.RegisterTable(tbl)
 
-	results := engine.RunTests(intents)
+	for _, intent := range intents {
+		engine.RegisterIntent(intent)
+	}
+	results := engine.RunTests()
 
 	Expect(results).To(HaveLen(2))
 	for _, m := range results {

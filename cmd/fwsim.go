@@ -111,10 +111,11 @@ func runEvaluate(cmd *cobra.Command, args []string) {
 		logrus.WithError(err).Errorf("failed to load resources from %s", inputDir)
 		os.Exit(1)
 	}
+	r.Intents = append(r.Intents, &config.Intent{Packet: *pkt})
 	e := engine.New(r)
 
 	// Match packet against rules
-	results := e.RunTests([]*config.Intent{{Packet: *pkt}})
+	results := e.RunTests()
 	printResult(results[0])
 	fmt.Println()
 
@@ -135,7 +136,7 @@ func runPackets(cmd *cobra.Command, args []string) {
 	e := engine.New(r)
 
 	// Evaluate each packet
-	for _, m := range e.RunTests(r.Intents) {
+	for _, m := range e.RunTests() {
 		printResult(m)
 		printIntentResult(m)
 		fmt.Println()

@@ -174,17 +174,17 @@ func TestEngineWithNamedPortsInRulesAndPackets(t *testing.T) {
 	intent3, err := config.IntentFromBytes([]byte(testIntentNamedPort3YAML))
 	Expect(err).To(BeNil())
 
+	engine.RegisterIntent(intent1)
+	engine.RegisterIntent(intent2)
+	engine.RegisterIntent(intent3)
+	results := engine.RunTests()
+
 	// Packet to port "http" (80) → matches allow-http rule (Accept)
-	results := engine.RunTests([]*config.Intent{intent1})
 	Expect(results[0].Verdict).To(HaveValue(Equal(rule.Accept)))
-
 	// Packet to port "https" (443) → matches allow-https rule (Accept)
-	results = engine.RunTests([]*config.Intent{intent2})
-	Expect(results[0].Verdict).To(HaveValue(Equal(rule.Accept)))
-
+	Expect(results[1].Verdict).To(HaveValue(Equal(rule.Accept)))
 	// Packet to port "dns" (53) with proto 17 → no matching rule → deny-all (Drop)
-	results = engine.RunTests([]*config.Intent{intent3})
-	Expect(results[0].Verdict).To(HaveValue(Equal(rule.Drop)))
+	Expect(results[2].Verdict).To(HaveValue(Equal(rule.Drop)))
 }
 
 const testSetsNamedPortYAML = `
@@ -225,17 +225,17 @@ default_action: Drop
 	pkt3, err := config.IntentFromBytes([]byte(testIntentNamedPort3YAML))
 	Expect(err).To(BeNil())
 
+	engine.RegisterIntent(pkt1)
+	engine.RegisterIntent(pkt2)
+	engine.RegisterIntent(pkt3)
+	results := engine.RunTests()
+
 	// Packet to port "http" (80) → in named-web-ports → Accept
-	results := engine.RunTests([]*config.Intent{pkt1})
 	Expect(results[0].Verdict).To(HaveValue(Equal(rule.Accept)))
-
 	// Packet to port "https" (443) → in named-web-ports → Accept
-	results = engine.RunTests([]*config.Intent{pkt2})
-	Expect(results[0].Verdict).To(HaveValue(Equal(rule.Accept)))
-
+	Expect(results[1].Verdict).To(HaveValue(Equal(rule.Accept)))
 	// Packet to port "dns" (53) → NOT in named-web-ports → deny-all (Drop)
-	results = engine.RunTests([]*config.Intent{pkt3})
-	Expect(results[0].Verdict).To(HaveValue(Equal(rule.Drop)))
+	Expect(results[2].Verdict).To(HaveValue(Equal(rule.Drop)))
 }
 
 func TestNew(t *testing.T) {
@@ -281,7 +281,8 @@ default_action: Drop
 
 	intent, err := config.IntentFromBytes([]byte(testIntentNamedPortYAML))
 	Expect(err).To(BeNil())
-	results := engine.RunTests([]*config.Intent{intent})
+	engine.RegisterIntent(intent)
+	results := engine.RunTests()
 
 	Expect(results[0].Verdict).To(HaveValue(Equal(rule.Accept)))
 	Expect(results[0].Trace).To(HaveLen(2))
@@ -320,7 +321,8 @@ default_action: Accept
 
 	intent, err := config.IntentFromBytes([]byte(testIntentNamedPortYAML))
 	Expect(err).To(BeNil())
-	results := engine.RunTests([]*config.Intent{intent})
+	engine.RegisterIntent(intent)
+	results := engine.RunTests()
 
 	Expect(results[0].Verdict).To(HaveValue(Equal(rule.Drop)))
 	Expect(results[0].Trace).To(HaveLen(2))
@@ -359,7 +361,8 @@ default_action: Drop
 
 	intent, err := config.IntentFromBytes([]byte(testIntentNamedPortYAML))
 	Expect(err).To(BeNil())
-	results := engine.RunTests([]*config.Intent{intent})
+	engine.RegisterIntent(intent)
+	results := engine.RunTests()
 
 	Expect(results[0].Verdict).To(BeNil())
 	Expect(results[0].Trace).To(HaveLen(2))
@@ -381,17 +384,17 @@ func TestIntentsFromBytesAndMatch(t *testing.T) {
 	intent3, err := config.IntentFromBytes([]byte(testIntent3YAML))
 	Expect(err).To(BeNil())
 
+	engine.RegisterIntent(intent1)
+	engine.RegisterIntent(intent2)
+	engine.RegisterIntent(intent3)
+	results := engine.RunTests()
+
 	// First packet: src 192.168.1.5 -> dst 1.1.1.1:80 proto 7, src_port 30000 — matches rule 1 (Accept)
-	results := engine.RunTests([]*config.Intent{intent1})
 	Expect(results[0].Verdict).To(HaveValue(Equal(rule.Accept)))
-
 	// Second packet: src 10.0.0.1 -> dst 2.2.2.2:8080 proto 7 — matches rule 3 (Drop)
-	results = engine.RunTests([]*config.Intent{intent2})
-	Expect(results[0].Verdict).To(HaveValue(Equal(rule.Drop)))
-
+	Expect(results[1].Verdict).To(HaveValue(Equal(rule.Drop)))
 	// Third packet: proto 17, no matching rule — default action Accept
-	results = engine.RunTests([]*config.Intent{intent3})
-	Expect(results[0].Verdict).To(HaveValue(Equal(rule.Accept)))
+	Expect(results[2].Verdict).To(HaveValue(Equal(rule.Accept)))
 }
 
 func TestLoadSetsFromBytes(t *testing.T) {
@@ -483,18 +486,18 @@ func TestRulesWithNamedSetsMatch(t *testing.T) {
 	intent3, err := config.IntentFromBytes([]byte(testIntent3YAML))
 	Expect(err).To(BeNil())
 
-	// First packet: src 192.168.1.5 dst 1.1.1.1:80 → matches rule 1 (Accept)
-	results := engine.RunTests([]*config.Intent{intent1})
-	Expect(results[0].Verdict).To(HaveValue(Equal(rule.Accept)))
+	engine.RegisterIntent(intent1)
+	engine.RegisterIntent(intent2)
+	engine.RegisterIntent(intent3)
+	results := engine.RunTests()
 
+	// First packet: src 192.168.1.5 dst 1.1.1.1:80 → matches rule 1 (Accept)
+	Expect(results[0].Verdict).To(HaveValue(Equal(rule.Accept)))
 	// Second packet: src 10.0.0.1 dst 2.2.2.2:8080 → src is in trusted-ips (10.0.0.0/8),
 	// dst port 8080 is in web-ports → matches rule 1 (Accept)
-	results = engine.RunTests([]*config.Intent{intent2})
-	Expect(results[0].Verdict).To(HaveValue(Equal(rule.Accept)))
-
+	Expect(results[1].Verdict).To(HaveValue(Equal(rule.Accept)))
 	// Third packet: src 172.16.0.1 → NOT in trusted-ips → falls through to deny-all (Drop)
-	results = engine.RunTests([]*config.Intent{intent3})
-	Expect(results[0].Verdict).To(HaveValue(Equal(rule.Drop)))
+	Expect(results[2].Verdict).To(HaveValue(Equal(rule.Drop)))
 }
 
 const testRulesWithNotSetsYAML = `
@@ -538,13 +541,14 @@ func TestRulesWithNegatedNamedSetsMatch(t *testing.T) {
 	intent3, err := config.IntentFromBytes([]byte(testIntent3YAML))
 	Expect(err).To(BeNil())
 
-	// First packet: src 192.168.1.5 — in trusted-ips → negated, rule1 does NOT match → deny-all (Drop)
-	results := engine.RunTests([]*config.Intent{intent1})
-	Expect(results[0].Verdict).To(HaveValue(Equal(rule.Drop)))
+	engine.RegisterIntent(intent1)
+	engine.RegisterIntent(intent3)
+	results := engine.RunTests()
 
+	// First packet: src 192.168.1.5 — in trusted-ips → negated, rule1 does NOT match → deny-all (Drop)
+	Expect(results[0].Verdict).To(HaveValue(Equal(rule.Drop)))
 	// Third packet: src 172.16.0.1 — NOT in trusted-ips → rule1 matches (Accept)
-	results = engine.RunTests([]*config.Intent{intent3})
-	Expect(results[0].Verdict).To(HaveValue(Equal(rule.Accept)))
+	Expect(results[1].Verdict).To(HaveValue(Equal(rule.Accept)))
 }
 
 func TestRulesReferencingUnknownNegatedSetError(t *testing.T) {

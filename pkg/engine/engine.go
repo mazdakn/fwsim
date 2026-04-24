@@ -44,9 +44,13 @@ func (e *Engine) Tables() []*table.Table {
 	return e.resources.Tables
 }
 
-func (e *Engine) RunTests(intents []*config.Intent) []*match.MatchContext {
-	results := make([]*match.MatchContext, 0, len(intents))
-	for _, intent := range intents {
+func (e *Engine) RegisterIntent(i *config.Intent) {
+	e.resources.Intents = append(e.resources.Intents, i)
+}
+
+func (e *Engine) RunTests() []*match.MatchContext {
+	results := make([]*match.MatchContext, 0, len(e.resources.Intents))
+	for _, intent := range e.resources.Intents {
 		mc, err := intent.ToMatchContext()
 		if err != nil {
 			// Intents stored in Resource are pre-validated; this indicates a
