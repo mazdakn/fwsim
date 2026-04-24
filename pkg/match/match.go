@@ -75,27 +75,36 @@ type MatchContext struct {
 	// other than Undefined, it is compared against the actual Verdict after matching.
 	ExpectedVerdict Verdict
 	// HitByRule is the name of the rule expected to match the packet. When non-empty,
-	// it is checked against the rules recorded in Trace after matching.
+	// it is checked against the last rule recorded in Trace after matching.
 	HitByRule string
 }
 
-func New(pkt *packet.Packet) *MatchContext {
-	return &MatchContext{
+type MatchContextOption func(*MatchContext)
+
+// WithExpectedVerdict sets the verdict the intent expects the packet to receive.
+func WithExpectedVerdict(v Verdict) MatchContextOption {
+	return func(m *MatchContext) {
+		m.ExpectedVerdict = v
+	}
+}
+
+// WithExpectedRule sets the name of the rule expected to be the decisive match.
+func WithExpectedRule(name string) MatchContextOption {
+	return func(m *MatchContext) {
+		m.HitByRule = name
+	}
+}
+
+func New(pkt *packet.Packet, opts ...MatchContextOption) *MatchContext {
+	m := &MatchContext{
 		Packet:          pkt,
 		Verdict:         NoMatch,
 		ExpectedVerdict: Undefined,
 	}
-}
-
-// NewFromIntent creates a MatchContext from a packet together with the intent's
-// expected verdict and expected hit rule.
-func NewFromIntent(pkt *packet.Packet, expectedVerdict Verdict, hitByRule string) *MatchContext {
-	return &MatchContext{
-		Packet:          pkt,
-		Verdict:         NoMatch,
-		ExpectedVerdict: expectedVerdict,
-		HitByRule:       hitByRule,
+	for _, opt := range opts {
+		opt(m)
 	}
+	return m
 }
 
 // VerdictMatches reports whether the actual verdict satisfies the intent.
@@ -104,16 +113,15 @@ func (m *MatchContext) VerdictMatches() bool {
 	return m.ExpectedVerdict == Undefined || m.ExpectedVerdict == m.Verdict
 }
 
-// RuleMatches reports whether the expected rule was among the rules that
-// matched the packet. Returns true when no expected rule was specified.
+// RuleMatches reports whether the expected rule was the decisive rule that
+// determined the verdict. Returns true when no expected rule was specified.
+// Returns false when the verdict is NoMatch (no rule fired).
 func (m *MatchContext) RuleMatches() bool {
 	if m.HitByRule == "" {
 		return true
 	}
-	for _, r := range m.Trace {
-		if r.Name == m.HitByRule {
-			return true
-		}
+	if m.Verdict == NoMatch || len(m.Trace) == 0 {
+		return false
 	}
-	return false
+	return m.Trace[len(m.Trace)-1].Name == m.HitByRule
 }

@@ -33,16 +33,19 @@ func (i *Intent) ToMatchContext() (*match.MatchContext, error) {
 		pkt.Metadata.Name = i.Name
 	}
 
-	expectedVerdict := match.Undefined
+	opts := []match.MatchContextOption{}
 	if i.ExpectedVerdict != "" {
-		var err error
-		expectedVerdict, err = match.ParseVerdict(i.ExpectedVerdict)
+		v, err := match.ParseVerdict(i.ExpectedVerdict)
 		if err != nil {
 			return nil, fmt.Errorf("intent %q: invalid expected_verdict: %w", i.Name, err)
 		}
+		opts = append(opts, match.WithExpectedVerdict(v))
+	}
+	if i.HitByRule != "" {
+		opts = append(opts, match.WithExpectedRule(i.HitByRule))
 	}
 
-	return match.NewFromIntent(pkt, expectedVerdict, i.HitByRule), nil
+	return match.New(pkt, opts...), nil
 }
 
 // IntentFromBytes parses a single Intent from YAML bytes.

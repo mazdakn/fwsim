@@ -16,7 +16,7 @@ func TestConfigFromDirectory(t *testing.T) {
 	dir := t.TempDir()
 	Expect(os.MkdirAll(filepath.Join(dir, "tables"), 0o755)).To(Succeed())
 	Expect(os.MkdirAll(filepath.Join(dir, "sets"), 0o755)).To(Succeed())
-	Expect(os.MkdirAll(filepath.Join(dir, "packets"), 0o755)).To(Succeed())
+	Expect(os.MkdirAll(filepath.Join(dir, "intents"), 0o755)).To(Succeed())
 
 	Expect(os.WriteFile(filepath.Join(dir, "tables", "tables.yaml"), []byte(`
 name: main
@@ -34,29 +34,33 @@ type: port
 members: ["80", "443"]
 `), 0o600)).To(Succeed())
 
-	Expect(os.WriteFile(filepath.Join(dir, "packets", "packets.yaml"), []byte(`
-src_addr: 10.0.0.1
-dst_addr: 1.1.1.1
-proto: 6
-src_port: 12345
-dst_port: 80
+	Expect(os.WriteFile(filepath.Join(dir, "intents", "intent.yaml"), []byte(`
+name: http test
+packet:
+  src_addr: 10.0.0.1
+  dst_addr: 1.1.1.1
+  proto: 6
+  src_port: 12345
+  dst_port: 80
+expected_verdict: Accept
+hit_by_rule: allow-http
 `), 0o600)).To(Succeed())
 
 	resources, err := ConfigFromFile(Config{
 		InputDir:    dir,
-		LoadPackets: true,
+		LoadIntents: true,
 	})
 	Expect(err).To(BeNil())
 	Expect(resources.Tables).To(HaveLen(1))
 	Expect(resources.Sets).To(HaveLen(1))
-	Expect(resources.Packets).To(HaveLen(1))
+	Expect(resources.Intents).To(HaveLen(1))
 	Expect(resources.Sets).To(HaveKey("web-ports"))
 	Expect(resources.Sets["web-ports"].Match(uint16(80))).To(BeTrue())
 	Expect(resources.Sets["web-ports"].Match(uint16(443))).To(BeTrue())
-	Expect(resources.Packets[0].SrcAddr.String()).To(Equal("10.0.0.1"))
-	Expect(resources.Packets[0].DstAddr.String()).To(Equal("1.1.1.1"))
-	Expect(resources.Packets[0].SrcPort).To(Equal(uint16(12345)))
-	Expect(resources.Packets[0].DstPort).To(Equal(uint16(80)))
+	Expect(resources.Intents[0].Packet.SrcAddr.String()).To(Equal("10.0.0.1"))
+	Expect(resources.Intents[0].Packet.DstAddr.String()).To(Equal("1.1.1.1"))
+	Expect(resources.Intents[0].Packet.SrcPort).To(Equal(uint16(12345)))
+	Expect(resources.Intents[0].Packet.DstPort).To(Equal(uint16(80)))
 }
 
 func TestConfigTablesFromDirSortsByOrder(t *testing.T) {
@@ -127,7 +131,7 @@ func TestConfigTablesFromDirMissingDirectory(t *testing.T) {
 	Expect(tables).To(BeEmpty())
 }
 
-func TestConfigFromDirectoryWithoutPacketsWhenNotRequested(t *testing.T) {
+func TestConfigFromDirectoryWithoutIntentsWhenNotRequested(t *testing.T) {
 	RegisterTestingT(t)
 
 	dir := t.TempDir()
@@ -143,7 +147,7 @@ default_action: Accept
 	})
 	Expect(err).To(BeNil())
 	Expect(resources.Tables).To(HaveLen(1))
-	Expect(resources.Packets).To(BeNil())
+	Expect(resources.Intents).To(BeNil())
 }
 
 func TestConfigFromDirectoryWithoutTables(t *testing.T) {
@@ -157,7 +161,7 @@ func TestConfigFromDirectoryWithoutTables(t *testing.T) {
 	})
 	Expect(err).To(BeNil())
 	Expect(resources.Tables).To(BeEmpty())
-	Expect(resources.Packets).To(BeNil())
+	Expect(resources.Intents).To(BeNil())
 }
 
 func TestConfigFromFileWithoutInputDir(t *testing.T) {

@@ -16,11 +16,8 @@ import (
 )
 
 type Config struct {
-	// Base directory input. Expects tables/, sets/, packets/ sub-directories.
+	// Base directory input. Expects tables/, sets/, intents/ sub-directories.
 	InputDir string
-
-	// LoadPackets controls whether packets/ input is loaded.
-	LoadPackets bool
 
 	// LoadIntents controls whether intents/ input is loaded.
 	LoadIntents bool
@@ -49,14 +46,6 @@ func ConfigFromDirectory(conf Config) (engine.Resources, error) {
 		return engine.Resources{}, err
 	}
 	resources.Tables = tables
-
-	if conf.LoadPackets {
-		pkts, err := ConfigPacketsFromDir(filepath.Join(conf.InputDir, "packets"))
-		if err != nil {
-			return engine.Resources{}, err
-		}
-		resources.Packets = pkts
-	}
 
 	if conf.LoadIntents {
 		intents, err := ConfigIntentsFromDir(filepath.Join(conf.InputDir, "intents"))
