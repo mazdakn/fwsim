@@ -63,10 +63,7 @@ func (t *Table) Match(matchContext *match.MatchContext) bool {
 	t.DefaultAction.IncrementPacketCount()
 	matchContext.Trace = append(matchContext.Trace, t.DefaultAction)
 	matchContext.Verdict = &t.DefaultAction.Action
-	if t.DefaultAction.Action == rule.Pass {
-		return false
-	}
-	return true
+	return t.DefaultAction.Action != rule.Pass
 }
 
 func SortTables(tables []*Table) {
