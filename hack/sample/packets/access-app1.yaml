@@ -1,7 +1,0 @@
-metadata:
-  name: access app1
-src_addr: 10.0.0.1
-dst_addr: 2.2.2.2
-proto: 7
-src_port: 12345
-dst_port: 8080
