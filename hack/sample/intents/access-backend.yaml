@@ -1,0 +1,9 @@
+name: access backend
+packet:
+  src_addr: 192.168.1.5
+  dst_addr: 1.1.1.1
+  proto: 7
+  src_port: 30000
+  dst_port: 80
+expected_verdict: Accept
+hit_by_rule: allow-192.168-to-1.1.1.1

@@ -1,0 +1,8 @@
+name: dns traffic
+packet:
+  src_addr: 172.16.0.1
+  dst_addr: 8.8.8.8
+  proto: 17
+  src_port: 54321
+  dst_port: 53
+expected_verdict: Accept

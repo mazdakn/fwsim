@@ -11,6 +11,7 @@ type Resources struct {
 	Sets    map[string]set.Set
 	Tables  []*table.Table
 	Packets []*packet.Packet
+	Intents []*match.MatchContext
 }
 
 type Engine struct {
@@ -39,6 +40,9 @@ func (e *Engine) LoadResources(resources Resources) {
 	}
 	if resources.Packets != nil {
 		e.matches = toMatches(resources.Packets)
+	}
+	if resources.Intents != nil {
+		e.matches = resources.Intents
 	}
 }
 
