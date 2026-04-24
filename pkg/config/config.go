@@ -15,13 +15,7 @@ import (
 	"github.com/mazdakn/fwsim/pkg/table"
 )
 
-type Config struct {
-	// Base directory input. Expects tables/, sets/, intents/ sub-directories.
-	InputDir string
-
-	// LoadIntents controls whether intents/ input is loaded.
-	LoadIntents bool
-}
+type Config = engine.Config
 
 func ConfigFromFile(conf Config) (*engine.Engine, []*match.MatchContext, error) {
 	if conf.InputDir == "" {

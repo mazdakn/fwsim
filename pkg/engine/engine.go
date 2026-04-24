@@ -6,6 +6,14 @@ import (
 	"github.com/mazdakn/fwsim/pkg/table"
 )
 
+type Config struct {
+	// Base directory input. Expects tables/, sets/, intents/ sub-directories.
+	InputDir string
+
+	// LoadIntents controls whether intents/ input is loaded.
+	LoadIntents bool
+}
+
 type Engine struct {
 	tables []*table.Table
 	sets   map[string]set.Set
