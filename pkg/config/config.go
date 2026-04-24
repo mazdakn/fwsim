@@ -41,7 +41,7 @@ func ConfigFromDirectory(conf Config) (*engine.Engine, []*match.MatchContext, er
 		e.RegisterSet(name, s)
 	}
 
-	tables, err := ConfigTablesFromDir(filepath.Join(conf.InputDir, "tables"), e.Sets())
+	tables, err := ConfigTablesFromDir(filepath.Join(conf.InputDir, "tables"), sets)
 	if err != nil {
 		return nil, nil, err
 	}
