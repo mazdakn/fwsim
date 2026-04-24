@@ -18,7 +18,8 @@ type Intent struct {
 	Packet Packet `yaml:"packet"`
 	// ExpectedVerdict is the verdict the user expects the packet to receive.
 	// Supported values: Accept, Drop, Pass (case-insensitive).
-	// Leave empty to skip verdict validation.
+	// Leave empty to skip verdict validation; when set, validation fails if the
+	// actual verdict does not match.
 	ExpectedVerdict string `yaml:"expected_verdict,omitempty"`
 	// HitByRule is the name of the rule the user expects to match the packet.
 	// Leave empty to skip rule validation.
