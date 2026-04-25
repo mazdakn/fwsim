@@ -468,13 +468,15 @@ func (r *Rule) String() string {
 	dstNet = appendNotSetStrings(dstNet, filterEndpointSetsByType(r.NotDestination.Sets, set.TypeIP))
 
 	base := fmt.Sprintf("%s %s{%s:%s->%s:%s}", &r.Action, proto, srcNet, srcPort, dstNet, dstPort)
-	switch {
-	case len(r.IngressIface) > 0 && len(r.NotIngressIface) > 0:
-		base += " iface=" + strings.Join(r.IngressIface, ",") + ",!" + strings.Join(r.NotIngressIface, ",!")
-	case len(r.IngressIface) > 0:
-		base += " iface=" + strings.Join(r.IngressIface, ",")
-	case len(r.NotIngressIface) > 0:
-		base += " iface=!" + strings.Join(r.NotIngressIface, ",!")
+	if len(r.IngressIface) > 0 || len(r.NotIngressIface) > 0 {
+		iface := strings.Join(r.IngressIface, ",")
+		for _, v := range r.NotIngressIface {
+			if iface != "" {
+				iface += ","
+			}
+			iface += "!" + v
+		}
+		base += " iface=" + iface
 	}
 	return base
 }

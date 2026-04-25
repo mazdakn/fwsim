@@ -783,4 +783,7 @@ func TestIngressIfaceRuleString(t *testing.T) {
 
 	rBoth := New(WithAction(Accept), WithIngressIface("eth0"), WithNotIngressIface("eth1"))
 	Expect(rBoth.String()).To(Equal("Accept *{*:*->*:*} iface=eth0,!eth1"))
+
+	rMultiNot := New(WithAction(Accept), WithIngressIface("eth0"), WithIngressIface("eth1"), WithNotIngressIface("eth2"), WithNotIngressIface("eth3"))
+	Expect(rMultiNot.String()).To(Equal("Accept *{*:*->*:*} iface=eth0,eth1,!eth2,!eth3"))
 }
