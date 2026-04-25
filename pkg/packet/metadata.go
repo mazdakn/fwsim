@@ -2,12 +2,6 @@ package packet
 
 type MetadataOption func(*Metadata)
 
-func WithIngressIface(iface string) MetadataOption {
-	return func(meta *Metadata) {
-		meta.IngressIface = iface
-	}
-}
-
 type Metadata struct {
 	IngressIface string `yaml:"ingressIface,omitempty"`
 	Name         string `yaml:"name,omitempty"`

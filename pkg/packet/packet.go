@@ -45,6 +45,12 @@ func WithDstAddr(addr string) PacketOption {
 	}
 }
 
+func WithIngressIface(iface string) PacketOption {
+	return func(p *Packet) {
+		p.Metadata.IngressIface = iface
+	}
+}
+
 func New(opts ...PacketOption) *Packet {
 	p := Packet{
 		Metadata: NewMetadata(),

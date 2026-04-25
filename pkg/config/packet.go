@@ -32,6 +32,7 @@ func (p *Packet) ToPacket() *packet.Packet {
 		packet.WithProto(p.Proto),
 		packet.WithSrcPort(p.SrcPort.Resolve()),
 		packet.WithDstPort(p.DstPort.Resolve()),
+		packet.WithIngressIface(p.Metadata.IngressIface),
 	)
 }
 

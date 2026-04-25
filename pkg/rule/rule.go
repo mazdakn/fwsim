@@ -284,6 +284,20 @@ func WithNotDstIPSet(s set.Set) RuleOption {
 	}
 }
 
+// Ingress interface options.
+
+func WithIngressIface(iface string) RuleOption {
+	return func(r *Rule) {
+		r.IngressIface = append(r.IngressIface, iface)
+	}
+}
+
+func WithNotIngressIface(iface string) RuleOption {
+	return func(r *Rule) {
+		r.NotIngressIface = append(r.NotIngressIface, iface)
+	}
+}
+
 func New(opts ...RuleOption) *Rule {
 	r := Rule{
 		packetCount: counter.New(),
@@ -311,6 +325,9 @@ type Rule struct {
 	NotSource      Endpoint
 	NotDestination Endpoint
 	NotProto       *set.ProtoSet
+
+	IngressIface    []string
+	NotIngressIface []string
 
 	Action Action
 
@@ -360,6 +377,12 @@ func (r *Rule) Match(pkt *packet.Packet) bool {
 		return false
 	}
 	if matchAnyNamedSet(r.NotDestination.Sets, pkt.DstAddr, pkt.DstPort, dstIPPort) {
+		return false
+	}
+	if len(r.IngressIface) > 0 && !containsString(r.IngressIface, pkt.Metadata.IngressIface) {
+		return false
+	}
+	if len(r.NotIngressIface) > 0 && containsString(r.NotIngressIface, pkt.Metadata.IngressIface) {
 		return false
 	}
 	// All conditions passed - increment packet counter
@@ -443,7 +466,19 @@ func (r *Rule) String() string {
 	}
 	dstNet = appendSetStrings(dstNet, filterEndpointSetsByType(r.Destination.Sets, set.TypeIP))
 	dstNet = appendNotSetStrings(dstNet, filterEndpointSetsByType(r.NotDestination.Sets, set.TypeIP))
-	return fmt.Sprintf("%s %s{%s:%s->%s:%s}", &r.Action, proto, srcNet, srcPort, dstNet, dstPort)
+
+	base := fmt.Sprintf("%s %s{%s:%s->%s:%s}", &r.Action, proto, srcNet, srcPort, dstNet, dstPort)
+	if len(r.IngressIface) > 0 || len(r.NotIngressIface) > 0 {
+		iface := strings.Join(r.IngressIface, ",")
+		for _, v := range r.NotIngressIface {
+			if iface != "" {
+				iface += ","
+			}
+			iface += "!" + v
+		}
+		base += " iface=" + iface
+	}
+	return base
 }
 
 // matchAllNamedSets returns true when every set in sets matches the packet
@@ -545,4 +580,14 @@ func MustParseCIDR(cidr string) *net.IPNet {
 		panic(fmt.Sprintf("CIDR %s is invalid", cidr))
 	}
 	return ipnet
+}
+
+// containsString reports whether slice contains s.
+func containsString(slice []string, s string) bool {
+	for _, v := range slice {
+		if v == s {
+			return true
+		}
+	}
+	return false
 }
