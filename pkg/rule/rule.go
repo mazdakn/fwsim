@@ -298,6 +298,30 @@ func WithNotIngressIface(iface string) RuleOption {
 	}
 }
 
+func WithSrcIfaceSet(s set.Set) RuleOption {
+	return func(r *Rule) {
+		r.Source.Sets = append(r.Source.Sets, s)
+	}
+}
+
+func WithNotSrcIfaceSet(s set.Set) RuleOption {
+	return func(r *Rule) {
+		r.NotSource.Sets = append(r.NotSource.Sets, s)
+	}
+}
+
+func WithDstIfaceSet(s set.Set) RuleOption {
+	return func(r *Rule) {
+		r.Destination.Sets = append(r.Destination.Sets, s)
+	}
+}
+
+func WithNotDstIfaceSet(s set.Set) RuleOption {
+	return func(r *Rule) {
+		r.NotDestination.Sets = append(r.NotDestination.Sets, s)
+	}
+}
+
 func New(opts ...RuleOption) *Rule {
 	r := Rule{
 		packetCount: counter.New(),
@@ -367,16 +391,16 @@ func (r *Rule) Match(pkt *packet.Packet) bool {
 	}
 	srcIPPort := set.IPPortTuple{IP: pkt.SrcAddr, Port: pkt.SrcPort}
 	dstIPPort := set.IPPortTuple{IP: pkt.DstAddr, Port: pkt.DstPort}
-	if !matchAllNamedSets(r.Source.Sets, pkt.SrcAddr, pkt.SrcPort, srcIPPort) {
+	if !matchAllNamedSets(r.Source.Sets, pkt.SrcAddr, pkt.SrcPort, srcIPPort, pkt.Metadata.IngressIface) {
 		return false
 	}
-	if !matchAllNamedSets(r.Destination.Sets, pkt.DstAddr, pkt.DstPort, dstIPPort) {
+	if !matchAllNamedSets(r.Destination.Sets, pkt.DstAddr, pkt.DstPort, dstIPPort, pkt.Metadata.IngressIface) {
 		return false
 	}
-	if matchAnyNamedSet(r.NotSource.Sets, pkt.SrcAddr, pkt.SrcPort, srcIPPort) {
+	if matchAnyNamedSet(r.NotSource.Sets, pkt.SrcAddr, pkt.SrcPort, srcIPPort, pkt.Metadata.IngressIface) {
 		return false
 	}
-	if matchAnyNamedSet(r.NotDestination.Sets, pkt.DstAddr, pkt.DstPort, dstIPPort) {
+	if matchAnyNamedSet(r.NotDestination.Sets, pkt.DstAddr, pkt.DstPort, dstIPPort, pkt.Metadata.IngressIface) {
 		return false
 	}
 	if len(r.IngressIface) > 0 && !containsString(r.IngressIface, pkt.Metadata.IngressIface) {
@@ -468,7 +492,13 @@ func (r *Rule) String() string {
 	dstNet = appendNotSetStrings(dstNet, filterEndpointSetsByType(r.NotDestination.Sets, set.TypeIP))
 
 	base := fmt.Sprintf("%s %s{%s:%s->%s:%s}", &r.Action, proto, srcNet, srcPort, dstNet, dstPort)
-	if len(r.IngressIface) > 0 || len(r.NotIngressIface) > 0 {
+
+	ifaceSets := filterEndpointSetsByType(r.Source.Sets, set.TypeIface)
+	ifaceSets = append(ifaceSets, filterEndpointSetsByType(r.Destination.Sets, set.TypeIface)...)
+	notIfaceSets := filterEndpointSetsByType(r.NotSource.Sets, set.TypeIface)
+	notIfaceSets = append(notIfaceSets, filterEndpointSetsByType(r.NotDestination.Sets, set.TypeIface)...)
+
+	if len(r.IngressIface) > 0 || len(r.NotIngressIface) > 0 || len(ifaceSets) > 0 || len(notIfaceSets) > 0 {
 		iface := strings.Join(r.IngressIface, ",")
 		for _, v := range r.NotIngressIface {
 			if iface != "" {
@@ -476,6 +506,8 @@ func (r *Rule) String() string {
 			}
 			iface += "!" + v
 		}
+		iface = appendSetStrings(iface, ifaceSets)
+		iface = appendNotSetStrings(iface, notIfaceSets)
 		base += " iface=" + iface
 	}
 	return base
@@ -483,9 +515,9 @@ func (r *Rule) String() string {
 
 // matchAllNamedSets returns true when every set in sets matches the packet
 // value corresponding to the set's type.
-func matchAllNamedSets(sets []set.Set, ip any, port any, ipPort any) bool {
+func matchAllNamedSets(sets []set.Set, ip any, port any, ipPort any, iface any) bool {
 	for _, s := range sets {
-		if !matchNamedSetByType(s, ip, port, ipPort) {
+		if !matchNamedSetByType(s, ip, port, ipPort, iface) {
 			return false
 		}
 	}
@@ -494,16 +526,16 @@ func matchAllNamedSets(sets []set.Set, ip any, port any, ipPort any) bool {
 
 // matchAnyNamedSet returns true when any set in sets matches the packet value
 // corresponding to the set's type.
-func matchAnyNamedSet(sets []set.Set, ip any, port any, ipPort any) bool {
+func matchAnyNamedSet(sets []set.Set, ip any, port any, ipPort any, iface any) bool {
 	for _, s := range sets {
-		if matchNamedSetByType(s, ip, port, ipPort) {
+		if matchNamedSetByType(s, ip, port, ipPort, iface) {
 			return true
 		}
 	}
 	return false
 }
 
-func matchNamedSetByType(s set.Set, ip any, port any, ipPort any) bool {
+func matchNamedSetByType(s set.Set, ip any, port any, ipPort any, iface any) bool {
 	switch s.Type() {
 	case set.TypeIP:
 		return s.Match(ip)
@@ -511,6 +543,8 @@ func matchNamedSetByType(s set.Set, ip any, port any, ipPort any) bool {
 		return s.Match(port)
 	case set.TypeIPPort:
 		return s.Match(ipPort)
+	case set.TypeIface:
+		return s.Match(iface)
 	default:
 		return false
 	}
@@ -527,7 +561,7 @@ func appendSetString(base string, s set.Set) string {
 	if !ok {
 		return base
 	}
-	if base == "*" {
+	if base == "*" || base == "" {
 		return st.String()
 	}
 	return base + "," + st.String()
@@ -544,7 +578,7 @@ func appendNotSetString(base string, s set.Set) string {
 		return base
 	}
 	neg := "!" + st.String()
-	if base == "*" {
+	if base == "*" || base == "" {
 		return neg
 	}
 	return base + "," + neg

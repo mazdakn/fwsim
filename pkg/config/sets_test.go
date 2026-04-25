@@ -125,3 +125,19 @@ func TestSetToSetInvalidMember(t *testing.T) {
 	Expect(err).ToNot(BeNil())
 	Expect(result).To(BeNil())
 }
+
+func TestSetToSetIface(t *testing.T) {
+	RegisterTestingT(t)
+
+	s := &Set{
+		Name:    "my-ifaces",
+		Type:    "iface",
+		Members: []string{"eth0", "eth1"},
+	}
+	result, err := s.ToSet()
+	Expect(err).To(BeNil())
+	Expect(result).ToNot(BeNil())
+	Expect(result.Match("eth0")).To(BeTrue())
+	Expect(result.Match("eth1")).To(BeTrue())
+	Expect(result.Match("eth2")).To(BeFalse())
+}

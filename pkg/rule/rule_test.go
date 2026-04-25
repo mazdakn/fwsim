@@ -787,3 +787,64 @@ func TestIngressIfaceRuleString(t *testing.T) {
 	rMultiNot := New(WithAction(Accept), WithIngressIface("eth0"), WithIngressIface("eth1"), WithNotIngressIface("eth2"), WithNotIngressIface("eth3"))
 	Expect(rMultiNot.String()).To(Equal("Accept *{*:*->*:*} iface=eth0,eth1,!eth2,!eth3"))
 }
+
+func TestIfaceSetRuleMatch(t *testing.T) {
+	RegisterTestingT(t)
+
+	ifaceSet := set.NewIfaceSet()
+	_ = ifaceSet.Add("eth0")
+	_ = ifaceSet.Add("eth1")
+
+	pktEth0 := packet.New(packet.WithSrcAddr("10.0.0.1"), packet.WithIngressIface("eth0"))
+	pktEth1 := packet.New(packet.WithSrcAddr("10.0.0.2"), packet.WithIngressIface("eth1"))
+	pktEth2 := packet.New(packet.WithSrcAddr("10.0.0.3"), packet.WithIngressIface("eth2"))
+	pktNoIface := packet.New(packet.WithSrcAddr("10.0.0.4"))
+
+	// IfaceSet on Source — matches eth0 and eth1 only.
+	rSrc := New(WithSrcIfaceSet(ifaceSet))
+	Expect(rSrc.Match(pktEth0)).To(BeTrue())
+	Expect(rSrc.Match(pktEth1)).To(BeTrue())
+	Expect(rSrc.Match(pktEth2)).To(BeFalse())
+	Expect(rSrc.Match(pktNoIface)).To(BeFalse())
+
+	// IfaceSet on Destination — same semantics.
+	rDst := New(WithDstIfaceSet(ifaceSet))
+	Expect(rDst.Match(pktEth0)).To(BeTrue())
+	Expect(rDst.Match(pktEth2)).To(BeFalse())
+}
+
+func TestNotIfaceSetRuleMatch(t *testing.T) {
+	RegisterTestingT(t)
+
+	ifaceSet := set.NewIfaceSet()
+	_ = ifaceSet.Add("eth0")
+
+	pktEth0 := packet.New(packet.WithSrcAddr("10.0.0.1"), packet.WithIngressIface("eth0"))
+	pktEth1 := packet.New(packet.WithSrcAddr("10.0.0.2"), packet.WithIngressIface("eth1"))
+
+	// NotSrcIfaceSet: packets on eth0 should NOT match.
+	rNotSrc := New(WithNotSrcIfaceSet(ifaceSet))
+	Expect(rNotSrc.Match(pktEth0)).To(BeFalse())
+	Expect(rNotSrc.Match(pktEth1)).To(BeTrue())
+
+	// NotDstIfaceSet: same semantics.
+	rNotDst := New(WithNotDstIfaceSet(ifaceSet))
+	Expect(rNotDst.Match(pktEth0)).To(BeFalse())
+	Expect(rNotDst.Match(pktEth1)).To(BeTrue())
+}
+
+func TestIfaceSetRuleString(t *testing.T) {
+	RegisterTestingT(t)
+
+	ifaceSet := set.NewIfaceSet()
+	_ = ifaceSet.Add("eth0")
+
+	rSrc := New(WithAction(Accept), WithSrcIfaceSet(ifaceSet))
+	Expect(rSrc.String()).To(Equal("Accept *{*:*->*:*} iface=eth0"))
+
+	notIfaceSet := set.NewIfaceSet()
+	_ = notIfaceSet.Add("eth1")
+
+	rNotSrc := New(WithAction(Drop), WithNotSrcIfaceSet(notIfaceSet))
+	Expect(rNotSrc.String()).To(Equal("Drop *{*:*->*:*} iface=!eth1"))
+}

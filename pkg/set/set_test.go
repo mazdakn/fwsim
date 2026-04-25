@@ -336,4 +336,59 @@ func TestSetTypes(t *testing.T) {
 	Expect(NewPortSet().Type()).To(Equal(TypePort))
 	Expect(NewProtoSet().Type()).To(Equal(TypeProto))
 	Expect(NewIPPortSet().Type()).To(Equal(TypeIPPort))
+	Expect(NewIfaceSet().Type()).To(Equal(TypeIface))
+}
+
+func TestIfaceSetAdd(t *testing.T) {
+	RegisterTestingT(t)
+
+	s := NewIfaceSet()
+
+	Expect(s.Add("eth0")).To(Succeed())
+	Expect(s.Match("eth0")).To(BeTrue())
+	Expect(s.Match("eth1")).To(BeFalse())
+}
+
+func TestIfaceSetAddUnsupportedType(t *testing.T) {
+	RegisterTestingT(t)
+
+	s := NewIfaceSet()
+	Expect(s.Add(42)).To(HaveOccurred())
+}
+
+func TestIfaceSetMatch(t *testing.T) {
+	RegisterTestingT(t)
+
+	s := NewIfaceSet()
+
+	Expect(s.Match("eth0")).To(BeFalse())
+
+	Expect(s.Add("eth0")).To(Succeed())
+	Expect(s.Match("eth0")).To(BeTrue())
+	Expect(s.Match("eth1")).To(BeFalse())
+}
+
+func TestIfaceSetMatchWrongType(t *testing.T) {
+	RegisterTestingT(t)
+
+	s := NewIfaceSet()
+	Expect(s.Add("eth0")).To(Succeed())
+	Expect(s.Match(42)).To(BeFalse())
+}
+
+func TestIfaceSetStringOneIface(t *testing.T) {
+	RegisterTestingT(t)
+
+	s := NewIfaceSet()
+	Expect(s.Add("eth0")).To(Succeed())
+	Expect(s.String()).To(Equal("eth0"))
+}
+
+func TestIfaceSetStringMultipleIfaces(t *testing.T) {
+	RegisterTestingT(t)
+
+	s := NewIfaceSet()
+	Expect(s.Add("eth1")).To(Succeed())
+	Expect(s.Add("eth0")).To(Succeed())
+	Expect(s.String()).To(Equal("{eth0,eth1}"))
 }
