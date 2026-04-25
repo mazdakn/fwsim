@@ -371,3 +371,51 @@ default_action: Drop
 	Expect(rc.Rules[0].IngressIface).To(Equal([]string{"eth0"}))
 	Expect(rc.Rules[0].NotIngressIface).To(Equal([]string{"eth1"}))
 }
+
+func TestToRuleWithIfaceSet(t *testing.T) {
+	RegisterTestingT(t)
+
+	ifaceSet := set.NewIfaceSet()
+	_ = ifaceSet.Add("eth0")
+
+	sets := map[string]set.Set{
+		"trusted-ifaces": ifaceSet,
+	}
+
+	r := &Rule{
+		Name:           "iface-rule",
+		Source:         Endpoint{Sets: []string{"trusted-ifaces"}},
+		Destination:    Endpoint{Sets: []string{"trusted-ifaces"}},
+		NotSource:      Endpoint{Sets: []string{"trusted-ifaces"}},
+		NotDestination: Endpoint{Sets: []string{"trusted-ifaces"}},
+		Action:         "Accept",
+	}
+	mRule, err := r.ToRule(sets)
+	Expect(err).To(BeNil())
+	Expect(mRule).ToNot(BeNil())
+	Expect(mRule.Source.Sets).To(HaveLen(1))
+	Expect(mRule.Source.Sets[0]).To(Equal(sets["trusted-ifaces"]))
+	Expect(mRule.NotSource.Sets[0]).To(Equal(sets["trusted-ifaces"]))
+}
+
+func TestTableFromBytesWithIfaceSetField(t *testing.T) {
+	RegisterTestingT(t)
+
+	yaml := `
+name: main
+rules:
+  - name: allow-trusted-ifaces
+    src:
+      sets: [trusted-ifaces]
+    not_src:
+      sets: [blocked-ifaces]
+    action: Accept
+default_action: Drop
+`
+	rc, err := TableFromBytes([]byte(yaml))
+	Expect(err).To(BeNil())
+	Expect(rc).ToNot(BeNil())
+	Expect(rc.Rules).To(HaveLen(1))
+	Expect(rc.Rules[0].Source.Sets).To(Equal([]string{"trusted-ifaces"}))
+	Expect(rc.Rules[0].NotSource.Sets).To(Equal([]string{"blocked-ifaces"}))
+}

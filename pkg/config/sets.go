@@ -21,7 +21,7 @@ func (s *Set) Validate() error {
 }
 
 // ToSet converts a Set config into the appropriate set.Set implementation
-// based on the Type field ("ip", "port", "proto", or "ipport").
+// based on the Type field ("ip", "port", "proto", "ipport", or "iface").
 func (s *Set) ToSet() (set.Set, error) {
 	var result set.Set
 	switch s.Type {
@@ -33,6 +33,8 @@ func (s *Set) ToSet() (set.Set, error) {
 		result = set.NewProtoSet()
 	case "ipport":
 		result = set.NewIPPortSet()
+	case "iface":
+		result = set.NewIfaceSet()
 	default:
 		return nil, fmt.Errorf("unknown set type %q", s.Type)
 	}
