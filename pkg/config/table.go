@@ -78,11 +78,13 @@ type Rule struct {
 	Order          uint64        `yaml:"order,omitempty"`
 	Source         Endpoint      `yaml:"src,omitempty"`
 	Destination    Endpoint      `yaml:"dst,omitempty"`
-	Protocol       []proto.Proto `yaml:"proto,omitempty"     validate:"isProtoValid"`
+	Protocol       []proto.Proto `yaml:"proto,omitempty"          validate:"isProtoValid"`
 	NotSource      Endpoint      `yaml:"not_src,omitempty"`
 	NotDestination Endpoint      `yaml:"not_dst,omitempty"`
-	NotProto       []proto.Proto `yaml:"not_proto,omitempty" validate:"isProtoValid"`
-	Action         string        `yaml:"action,omitempty"    validate:"isValidAction"`
+	NotProto       []proto.Proto `yaml:"not_proto,omitempty"      validate:"isProtoValid"`
+	IngressIface   []string      `yaml:"ingress_iface,omitempty"`
+	NotIngressIface []string     `yaml:"not_ingress_iface,omitempty"`
+	Action         string        `yaml:"action,omitempty"         validate:"isValidAction"`
 }
 
 // ToRule converts a Rule config into a Rule domain object.
@@ -132,6 +134,9 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	mRule.IngressIface = r.IngressIface
+	mRule.NotIngressIface = r.NotIngressIface
 
 	return mRule, nil
 }

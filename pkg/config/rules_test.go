@@ -321,3 +321,53 @@ default_action: Pass
 	Expect(rc).ToNot(BeNil())
 	Expect(rc.DefaultAction).To(Equal("Pass"))
 }
+
+func TestToRuleWithIngressIface(t *testing.T) {
+	RegisterTestingT(t)
+
+	r := &Rule{
+		Name:          "allow-eth0",
+		IngressIface:  []string{"eth0"},
+		Action:        "Accept",
+	}
+	mRule, err := r.ToRule(nil)
+	Expect(err).To(BeNil())
+	Expect(mRule).ToNot(BeNil())
+	Expect(mRule.IngressIface).To(Equal([]string{"eth0"}))
+	Expect(mRule.NotIngressIface).To(BeEmpty())
+}
+
+func TestToRuleWithNotIngressIface(t *testing.T) {
+	RegisterTestingT(t)
+
+	r := &Rule{
+		Name:            "drop-eth1",
+		NotIngressIface: []string{"eth1"},
+		Action:          "Drop",
+	}
+	mRule, err := r.ToRule(nil)
+	Expect(err).To(BeNil())
+	Expect(mRule).ToNot(BeNil())
+	Expect(mRule.NotIngressIface).To(Equal([]string{"eth1"}))
+	Expect(mRule.IngressIface).To(BeEmpty())
+}
+
+func TestTableFromBytesWithIngressIface(t *testing.T) {
+	RegisterTestingT(t)
+
+	yaml := `
+name: main
+rules:
+  - name: allow-eth0-only
+    ingress_iface: [eth0]
+    not_ingress_iface: [eth1]
+    action: Accept
+default_action: Drop
+`
+	rc, err := TableFromBytes([]byte(yaml))
+	Expect(err).To(BeNil())
+	Expect(rc).ToNot(BeNil())
+	Expect(rc.Rules).To(HaveLen(1))
+	Expect(rc.Rules[0].IngressIface).To(Equal([]string{"eth0"}))
+	Expect(rc.Rules[0].NotIngressIface).To(Equal([]string{"eth1"}))
+}
