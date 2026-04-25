@@ -51,6 +51,12 @@ func WithIngressIface(iface string) PacketOption {
 	}
 }
 
+func WithEgressIface(iface string) PacketOption {
+	return func(p *Packet) {
+		p.Metadata.EgressIface = iface
+	}
+}
+
 func New(opts ...PacketOption) *Packet {
 	p := Packet{
 		Metadata: NewMetadata(),

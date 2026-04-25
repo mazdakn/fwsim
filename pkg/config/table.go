@@ -82,8 +82,10 @@ type Rule struct {
 	NotSource      Endpoint      `yaml:"not_src,omitempty"`
 	NotDestination Endpoint      `yaml:"not_dst,omitempty"`
 	NotProto       []proto.Proto `yaml:"not_proto,omitempty"      validate:"isProtoValid"`
-	IngressIface   []string      `yaml:"ingress_iface,omitempty"`
-	NotIngressIface []string     `yaml:"not_ingress_iface,omitempty"`
+	IngressIface    []string      `yaml:"ingress_iface,omitempty"`
+	NotIngressIface []string      `yaml:"not_ingress_iface,omitempty"`
+	EgressIface     []string      `yaml:"egress_iface,omitempty"`
+	NotEgressIface  []string      `yaml:"not_egress_iface,omitempty"`
 	Action         string        `yaml:"action,omitempty"         validate:"isValidAction"`
 }
 
@@ -137,6 +139,8 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 
 	mRule.IngressIface = r.IngressIface
 	mRule.NotIngressIface = r.NotIngressIface
+	mRule.EgressIface = r.EgressIface
+	mRule.NotEgressIface = r.NotEgressIface
 
 	return mRule, nil
 }

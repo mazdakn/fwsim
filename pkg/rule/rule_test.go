@@ -776,16 +776,92 @@ func TestIngressIfaceRuleString(t *testing.T) {
 	RegisterTestingT(t)
 
 	r := New(WithAction(Accept), WithIngressIface("eth0"))
-	Expect(r.String()).To(Equal("Accept *{*:*->*:*} iface=eth0"))
+	Expect(r.String()).To(Equal("Accept *{*:*->*:*} ingress_iface=eth0"))
 
 	rNot := New(WithAction(Drop), WithNotIngressIface("eth0"))
-	Expect(rNot.String()).To(Equal("Drop *{*:*->*:*} iface=!eth0"))
+	Expect(rNot.String()).To(Equal("Drop *{*:*->*:*} ingress_iface=!eth0"))
 
 	rBoth := New(WithAction(Accept), WithIngressIface("eth0"), WithNotIngressIface("eth1"))
-	Expect(rBoth.String()).To(Equal("Accept *{*:*->*:*} iface=eth0,!eth1"))
+	Expect(rBoth.String()).To(Equal("Accept *{*:*->*:*} ingress_iface=eth0,!eth1"))
 
 	rMultiNot := New(WithAction(Accept), WithIngressIface("eth0"), WithIngressIface("eth1"), WithNotIngressIface("eth2"), WithNotIngressIface("eth3"))
-	Expect(rMultiNot.String()).To(Equal("Accept *{*:*->*:*} iface=eth0,eth1,!eth2,!eth3"))
+	Expect(rMultiNot.String()).To(Equal("Accept *{*:*->*:*} ingress_iface=eth0,eth1,!eth2,!eth3"))
+}
+
+func TestEgressIfaceMatch(t *testing.T) {
+	RegisterTestingT(t)
+
+	pktEth0 := packet.New(packet.WithDstAddr("10.0.0.1"), packet.WithEgressIface("eth0"))
+	pktEth1 := packet.New(packet.WithDstAddr("10.0.0.2"), packet.WithEgressIface("eth1"))
+	pktNoIface := packet.New(packet.WithDstAddr("10.0.0.3"))
+
+	// Rule matches only eth0
+	r := New(WithEgressIface("eth0"))
+	Expect(r.Match(pktEth0)).To(BeTrue())
+	Expect(r.Match(pktEth1)).To(BeFalse())
+	Expect(r.Match(pktNoIface)).To(BeFalse())
+
+	// Rule matches eth0 or eth1
+	rMulti := New(WithEgressIface("eth0"), WithEgressIface("eth1"))
+	Expect(rMulti.Match(pktEth0)).To(BeTrue())
+	Expect(rMulti.Match(pktEth1)).To(BeTrue())
+	Expect(rMulti.Match(pktNoIface)).To(BeFalse())
+
+	// Rule with no interface constraint matches all
+	rAny := New()
+	Expect(rAny.Match(pktEth0)).To(BeTrue())
+	Expect(rAny.Match(pktNoIface)).To(BeTrue())
+}
+
+func TestNotEgressIfaceMatch(t *testing.T) {
+	RegisterTestingT(t)
+
+	pktEth0 := packet.New(packet.WithDstAddr("10.0.0.1"), packet.WithEgressIface("eth0"))
+	pktEth1 := packet.New(packet.WithDstAddr("10.0.0.2"), packet.WithEgressIface("eth1"))
+	pktNoIface := packet.New(packet.WithDstAddr("10.0.0.3"))
+
+	// Rule excludes eth0
+	r := New(WithNotEgressIface("eth0"))
+	Expect(r.Match(pktEth0)).To(BeFalse())
+	Expect(r.Match(pktEth1)).To(BeTrue())
+	Expect(r.Match(pktNoIface)).To(BeTrue())
+}
+
+func TestEgressIfaceAndNotEgressIfaceMatch(t *testing.T) {
+	RegisterTestingT(t)
+
+	pktEth0 := packet.New(packet.WithDstAddr("10.0.0.1"), packet.WithEgressIface("eth0"))
+	pktEth1 := packet.New(packet.WithDstAddr("10.0.0.2"), packet.WithEgressIface("eth1"))
+	pktEth2 := packet.New(packet.WithDstAddr("10.0.0.3"), packet.WithEgressIface("eth2"))
+
+	// Allow eth0 and eth1, but not eth1 (net effect: only eth0)
+	r := New(WithEgressIface("eth0"), WithEgressIface("eth1"), WithNotEgressIface("eth1"))
+	Expect(r.Match(pktEth0)).To(BeTrue())
+	Expect(r.Match(pktEth1)).To(BeFalse())
+	Expect(r.Match(pktEth2)).To(BeFalse())
+}
+
+func TestEgressIfaceRuleString(t *testing.T) {
+	RegisterTestingT(t)
+
+	r := New(WithAction(Accept), WithEgressIface("eth0"))
+	Expect(r.String()).To(Equal("Accept *{*:*->*:*} egress_iface=eth0"))
+
+	rNot := New(WithAction(Drop), WithNotEgressIface("eth0"))
+	Expect(rNot.String()).To(Equal("Drop *{*:*->*:*} egress_iface=!eth0"))
+
+	rBoth := New(WithAction(Accept), WithEgressIface("eth0"), WithNotEgressIface("eth1"))
+	Expect(rBoth.String()).To(Equal("Accept *{*:*->*:*} egress_iface=eth0,!eth1"))
+
+	rMultiNot := New(WithAction(Accept), WithEgressIface("eth0"), WithEgressIface("eth1"), WithNotEgressIface("eth2"), WithNotEgressIface("eth3"))
+	Expect(rMultiNot.String()).To(Equal("Accept *{*:*->*:*} egress_iface=eth0,eth1,!eth2,!eth3"))
+}
+
+func TestBothIngressAndEgressIfaceRuleString(t *testing.T) {
+	RegisterTestingT(t)
+
+	r := New(WithAction(Accept), WithIngressIface("eth0"), WithEgressIface("eth1"))
+	Expect(r.String()).To(Equal("Accept *{*:*->*:*} ingress_iface=eth0 egress_iface=eth1"))
 }
 
 func TestIfaceSetRuleMatch(t *testing.T) {
@@ -795,22 +871,27 @@ func TestIfaceSetRuleMatch(t *testing.T) {
 	_ = ifaceSet.Add("eth0")
 	_ = ifaceSet.Add("eth1")
 
-	pktEth0 := packet.New(packet.WithSrcAddr("10.0.0.1"), packet.WithIngressIface("eth0"))
-	pktEth1 := packet.New(packet.WithSrcAddr("10.0.0.2"), packet.WithIngressIface("eth1"))
-	pktEth2 := packet.New(packet.WithSrcAddr("10.0.0.3"), packet.WithIngressIface("eth2"))
+	pktIngressEth0 := packet.New(packet.WithSrcAddr("10.0.0.1"), packet.WithIngressIface("eth0"))
+	pktIngressEth1 := packet.New(packet.WithSrcAddr("10.0.0.2"), packet.WithIngressIface("eth1"))
+	pktIngressEth2 := packet.New(packet.WithSrcAddr("10.0.0.3"), packet.WithIngressIface("eth2"))
 	pktNoIface := packet.New(packet.WithSrcAddr("10.0.0.4"))
 
-	// IfaceSet on Source — matches eth0 and eth1 only.
+	// IfaceSet on Source — matches against ingress iface.
 	rSrc := New(WithSrcIfaceSet(ifaceSet))
-	Expect(rSrc.Match(pktEth0)).To(BeTrue())
-	Expect(rSrc.Match(pktEth1)).To(BeTrue())
-	Expect(rSrc.Match(pktEth2)).To(BeFalse())
+	Expect(rSrc.Match(pktIngressEth0)).To(BeTrue())
+	Expect(rSrc.Match(pktIngressEth1)).To(BeTrue())
+	Expect(rSrc.Match(pktIngressEth2)).To(BeFalse())
 	Expect(rSrc.Match(pktNoIface)).To(BeFalse())
 
-	// IfaceSet on Destination — same semantics.
+	pktEgressEth0 := packet.New(packet.WithDstAddr("10.0.0.1"), packet.WithEgressIface("eth0"))
+	pktEgressEth1 := packet.New(packet.WithDstAddr("10.0.0.2"), packet.WithEgressIface("eth1"))
+	pktEgressEth2 := packet.New(packet.WithDstAddr("10.0.0.3"), packet.WithEgressIface("eth2"))
+
+	// IfaceSet on Destination — matches against egress iface.
 	rDst := New(WithDstIfaceSet(ifaceSet))
-	Expect(rDst.Match(pktEth0)).To(BeTrue())
-	Expect(rDst.Match(pktEth2)).To(BeFalse())
+	Expect(rDst.Match(pktEgressEth0)).To(BeTrue())
+	Expect(rDst.Match(pktEgressEth1)).To(BeTrue())
+	Expect(rDst.Match(pktEgressEth2)).To(BeFalse())
 }
 
 func TestNotIfaceSetRuleMatch(t *testing.T) {
@@ -819,18 +900,21 @@ func TestNotIfaceSetRuleMatch(t *testing.T) {
 	ifaceSet := set.NewIfaceSet()
 	_ = ifaceSet.Add("eth0")
 
-	pktEth0 := packet.New(packet.WithSrcAddr("10.0.0.1"), packet.WithIngressIface("eth0"))
-	pktEth1 := packet.New(packet.WithSrcAddr("10.0.0.2"), packet.WithIngressIface("eth1"))
+	pktIngressEth0 := packet.New(packet.WithSrcAddr("10.0.0.1"), packet.WithIngressIface("eth0"))
+	pktIngressEth1 := packet.New(packet.WithSrcAddr("10.0.0.2"), packet.WithIngressIface("eth1"))
 
-	// NotSrcIfaceSet: packets on eth0 should NOT match.
+	// NotSrcIfaceSet: packets on ingress eth0 should NOT match.
 	rNotSrc := New(WithNotSrcIfaceSet(ifaceSet))
-	Expect(rNotSrc.Match(pktEth0)).To(BeFalse())
-	Expect(rNotSrc.Match(pktEth1)).To(BeTrue())
+	Expect(rNotSrc.Match(pktIngressEth0)).To(BeFalse())
+	Expect(rNotSrc.Match(pktIngressEth1)).To(BeTrue())
 
-	// NotDstIfaceSet: same semantics.
+	pktEgressEth0 := packet.New(packet.WithDstAddr("10.0.0.1"), packet.WithEgressIface("eth0"))
+	pktEgressEth1 := packet.New(packet.WithDstAddr("10.0.0.2"), packet.WithEgressIface("eth1"))
+
+	// NotDstIfaceSet: packets on egress eth0 should NOT match.
 	rNotDst := New(WithNotDstIfaceSet(ifaceSet))
-	Expect(rNotDst.Match(pktEth0)).To(BeFalse())
-	Expect(rNotDst.Match(pktEth1)).To(BeTrue())
+	Expect(rNotDst.Match(pktEgressEth0)).To(BeFalse())
+	Expect(rNotDst.Match(pktEgressEth1)).To(BeTrue())
 }
 
 func TestIfaceSetRuleString(t *testing.T) {
@@ -840,11 +924,11 @@ func TestIfaceSetRuleString(t *testing.T) {
 	_ = ifaceSet.Add("eth0")
 
 	rSrc := New(WithAction(Accept), WithSrcIfaceSet(ifaceSet))
-	Expect(rSrc.String()).To(Equal("Accept *{*:*->*:*} iface=eth0"))
+	Expect(rSrc.String()).To(Equal("Accept *{*:*->*:*} ingress_iface=eth0"))
 
 	notIfaceSet := set.NewIfaceSet()
 	_ = notIfaceSet.Add("eth1")
 
 	rNotSrc := New(WithAction(Drop), WithNotSrcIfaceSet(notIfaceSet))
-	Expect(rNotSrc.String()).To(Equal("Drop *{*:*->*:*} iface=!eth1"))
+	Expect(rNotSrc.String()).To(Equal("Drop *{*:*->*:*} ingress_iface=!eth1"))
 }
