@@ -26,12 +26,13 @@ func (t *Table) Validate() error {
 	return nil
 }
 
-// Endpoint groups the network and port match criteria for one traffic direction
+// Endpoint groups the network, port, and interface match criteria for one traffic direction
 // in the YAML configuration.
 type Endpoint struct {
-	Net  []string    `yaml:"net,omitempty"        validate:"isValidCIDR"`
-	Port []port.Port `yaml:"port,omitempty"       validate:"isPortValid"`
-	Sets []string    `yaml:"sets,omitempty"`
+	Net   []string    `yaml:"net,omitempty"        validate:"isValidCIDR"`
+	Port  []port.Port `yaml:"port,omitempty"       validate:"isPortValid"`
+	Iface []string    `yaml:"iface,omitempty"`
+	Sets  []string    `yaml:"sets,omitempty"`
 }
 
 // toEndpoint converts an Endpoint config into a rule.Endpoint domain object.
@@ -53,6 +54,15 @@ func (e *Endpoint) toEndpoint(ruleName string, sets map[string]set.Set) (rule.En
 		ep.Port = set.NewPortSet()
 		for _, p := range e.Port {
 			if err := ep.Port.Add(p); err != nil {
+				return rule.Endpoint{}, err
+			}
+		}
+	}
+
+	if len(e.Iface) > 0 {
+		ep.Iface = set.NewIfaceSet()
+		for _, iface := range e.Iface {
+			if err := ep.Iface.Add(iface); err != nil {
 				return rule.Endpoint{}, err
 			}
 		}
@@ -82,10 +92,6 @@ type Rule struct {
 	NotSource      Endpoint      `yaml:"not_src,omitempty"`
 	NotDestination Endpoint      `yaml:"not_dst,omitempty"`
 	NotProto       []proto.Proto `yaml:"not_proto,omitempty"      validate:"isProtoValid"`
-	IngressIface    []string      `yaml:"ingress_iface,omitempty"`
-	NotIngressIface []string      `yaml:"not_ingress_iface,omitempty"`
-	EgressIface     []string      `yaml:"egress_iface,omitempty"`
-	NotEgressIface  []string      `yaml:"not_egress_iface,omitempty"`
 	Action         string        `yaml:"action,omitempty"         validate:"isValidAction"`
 }
 
@@ -136,11 +142,6 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	mRule.IngressIface = r.IngressIface
-	mRule.NotIngressIface = r.NotIngressIface
-	mRule.EgressIface = r.EgressIface
-	mRule.NotEgressIface = r.NotEgressIface
 
 	return mRule, nil
 }
