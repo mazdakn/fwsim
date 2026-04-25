@@ -298,6 +298,20 @@ func WithNotIngressIface(iface string) RuleOption {
 	}
 }
 
+// Egress interface options.
+
+func WithEgressIface(iface string) RuleOption {
+	return func(r *Rule) {
+		r.EgressIface = append(r.EgressIface, iface)
+	}
+}
+
+func WithNotEgressIface(iface string) RuleOption {
+	return func(r *Rule) {
+		r.NotEgressIface = append(r.NotEgressIface, iface)
+	}
+}
+
 func WithSrcIfaceSet(s set.Set) RuleOption {
 	return func(r *Rule) {
 		r.Source.Sets = append(r.Source.Sets, s)
@@ -353,6 +367,9 @@ type Rule struct {
 	IngressIface    []string
 	NotIngressIface []string
 
+	EgressIface    []string
+	NotEgressIface []string
+
 	Action Action
 
 	packetCount *counter.Counter
@@ -394,19 +411,25 @@ func (r *Rule) Match(pkt *packet.Packet) bool {
 	if !matchAllNamedSets(r.Source.Sets, pkt.SrcAddr, pkt.SrcPort, srcIPPort, pkt.Metadata.IngressIface) {
 		return false
 	}
-	if !matchAllNamedSets(r.Destination.Sets, pkt.DstAddr, pkt.DstPort, dstIPPort, pkt.Metadata.IngressIface) {
+	if !matchAllNamedSets(r.Destination.Sets, pkt.DstAddr, pkt.DstPort, dstIPPort, pkt.Metadata.EgressIface) {
 		return false
 	}
 	if matchAnyNamedSet(r.NotSource.Sets, pkt.SrcAddr, pkt.SrcPort, srcIPPort, pkt.Metadata.IngressIface) {
 		return false
 	}
-	if matchAnyNamedSet(r.NotDestination.Sets, pkt.DstAddr, pkt.DstPort, dstIPPort, pkt.Metadata.IngressIface) {
+	if matchAnyNamedSet(r.NotDestination.Sets, pkt.DstAddr, pkt.DstPort, dstIPPort, pkt.Metadata.EgressIface) {
 		return false
 	}
 	if len(r.IngressIface) > 0 && !containsString(r.IngressIface, pkt.Metadata.IngressIface) {
 		return false
 	}
 	if len(r.NotIngressIface) > 0 && containsString(r.NotIngressIface, pkt.Metadata.IngressIface) {
+		return false
+	}
+	if len(r.EgressIface) > 0 && !containsString(r.EgressIface, pkt.Metadata.EgressIface) {
+		return false
+	}
+	if len(r.NotEgressIface) > 0 && containsString(r.NotEgressIface, pkt.Metadata.EgressIface) {
 		return false
 	}
 	// All conditions passed - increment packet counter
@@ -493,12 +516,12 @@ func (r *Rule) String() string {
 
 	base := fmt.Sprintf("%s %s{%s:%s->%s:%s}", &r.Action, proto, srcNet, srcPort, dstNet, dstPort)
 
-	ifaceSets := filterEndpointSetsByType(r.Source.Sets, set.TypeIface)
-	ifaceSets = append(ifaceSets, filterEndpointSetsByType(r.Destination.Sets, set.TypeIface)...)
-	notIfaceSets := filterEndpointSetsByType(r.NotSource.Sets, set.TypeIface)
-	notIfaceSets = append(notIfaceSets, filterEndpointSetsByType(r.NotDestination.Sets, set.TypeIface)...)
+	ingressIfaceSets := filterEndpointSetsByType(r.Source.Sets, set.TypeIface)
+	notIngressIfaceSets := filterEndpointSetsByType(r.NotSource.Sets, set.TypeIface)
+	egressIfaceSets := filterEndpointSetsByType(r.Destination.Sets, set.TypeIface)
+	notEgressIfaceSets := filterEndpointSetsByType(r.NotDestination.Sets, set.TypeIface)
 
-	if len(r.IngressIface) > 0 || len(r.NotIngressIface) > 0 || len(ifaceSets) > 0 || len(notIfaceSets) > 0 {
+	if len(r.IngressIface) > 0 || len(r.NotIngressIface) > 0 || len(ingressIfaceSets) > 0 || len(notIngressIfaceSets) > 0 {
 		iface := strings.Join(r.IngressIface, ",")
 		for _, v := range r.NotIngressIface {
 			if iface != "" {
@@ -506,9 +529,21 @@ func (r *Rule) String() string {
 			}
 			iface += "!" + v
 		}
-		iface = appendSetStrings(iface, ifaceSets)
-		iface = appendNotSetStrings(iface, notIfaceSets)
-		base += " iface=" + iface
+		iface = appendSetStrings(iface, ingressIfaceSets)
+		iface = appendNotSetStrings(iface, notIngressIfaceSets)
+		base += " ingress_iface=" + iface
+	}
+	if len(r.EgressIface) > 0 || len(r.NotEgressIface) > 0 || len(egressIfaceSets) > 0 || len(notEgressIfaceSets) > 0 {
+		iface := strings.Join(r.EgressIface, ",")
+		for _, v := range r.NotEgressIface {
+			if iface != "" {
+				iface += ","
+			}
+			iface += "!" + v
+		}
+		iface = appendSetStrings(iface, egressIfaceSets)
+		iface = appendNotSetStrings(iface, notEgressIfaceSets)
+		base += " egress_iface=" + iface
 	}
 	return base
 }

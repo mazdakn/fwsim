@@ -398,6 +398,56 @@ func TestToRuleWithIfaceSet(t *testing.T) {
 	Expect(mRule.NotSource.Sets[0]).To(Equal(sets["trusted-ifaces"]))
 }
 
+func TestToRuleWithEgressIface(t *testing.T) {
+	RegisterTestingT(t)
+
+	r := &Rule{
+		Name:        "allow-eth0-egress",
+		EgressIface: []string{"eth0"},
+		Action:      "Accept",
+	}
+	mRule, err := r.ToRule(nil)
+	Expect(err).To(BeNil())
+	Expect(mRule).ToNot(BeNil())
+	Expect(mRule.EgressIface).To(Equal([]string{"eth0"}))
+	Expect(mRule.NotEgressIface).To(BeEmpty())
+}
+
+func TestToRuleWithNotEgressIface(t *testing.T) {
+	RegisterTestingT(t)
+
+	r := &Rule{
+		Name:           "drop-eth1-egress",
+		NotEgressIface: []string{"eth1"},
+		Action:         "Drop",
+	}
+	mRule, err := r.ToRule(nil)
+	Expect(err).To(BeNil())
+	Expect(mRule).ToNot(BeNil())
+	Expect(mRule.NotEgressIface).To(Equal([]string{"eth1"}))
+	Expect(mRule.EgressIface).To(BeEmpty())
+}
+
+func TestTableFromBytesWithEgressIface(t *testing.T) {
+	RegisterTestingT(t)
+
+	yaml := `
+name: main
+rules:
+  - name: allow-eth0-egress-only
+    egress_iface: [eth0]
+    not_egress_iface: [eth1]
+    action: Accept
+default_action: Drop
+`
+	rc, err := TableFromBytes([]byte(yaml))
+	Expect(err).To(BeNil())
+	Expect(rc).ToNot(BeNil())
+	Expect(rc.Rules).To(HaveLen(1))
+	Expect(rc.Rules[0].EgressIface).To(Equal([]string{"eth0"}))
+	Expect(rc.Rules[0].NotEgressIface).To(Equal([]string{"eth1"}))
+}
+
 func TestTableFromBytesWithIfaceSetField(t *testing.T) {
 	RegisterTestingT(t)
 
