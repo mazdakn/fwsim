@@ -284,31 +284,51 @@ func WithNotDstIPSet(s set.Set) RuleOption {
 	}
 }
 
-// Ingress interface options.
+// Source interface options.
 
-func WithIngressIface(iface string) RuleOption {
+func WithSrcIface(iface string) RuleOption {
 	return func(r *Rule) {
-		r.IngressIface = append(r.IngressIface, iface)
+		if r.Source.Iface == nil {
+			r.Source.Iface = set.NewIfaceSet()
+		}
+		if err := r.Source.Iface.Add(iface); err != nil {
+			panic(fmt.Sprintf("invalid interface %s", iface))
+		}
 	}
 }
 
-func WithNotIngressIface(iface string) RuleOption {
+func WithNotSrcIface(iface string) RuleOption {
 	return func(r *Rule) {
-		r.NotIngressIface = append(r.NotIngressIface, iface)
+		if r.NotSource.Iface == nil {
+			r.NotSource.Iface = set.NewIfaceSet()
+		}
+		if err := r.NotSource.Iface.Add(iface); err != nil {
+			panic(fmt.Sprintf("invalid interface %s", iface))
+		}
 	}
 }
 
-// Egress interface options.
+// Destination interface options.
 
-func WithEgressIface(iface string) RuleOption {
+func WithDstIface(iface string) RuleOption {
 	return func(r *Rule) {
-		r.EgressIface = append(r.EgressIface, iface)
+		if r.Destination.Iface == nil {
+			r.Destination.Iface = set.NewIfaceSet()
+		}
+		if err := r.Destination.Iface.Add(iface); err != nil {
+			panic(fmt.Sprintf("invalid interface %s", iface))
+		}
 	}
 }
 
-func WithNotEgressIface(iface string) RuleOption {
+func WithNotDstIface(iface string) RuleOption {
 	return func(r *Rule) {
-		r.NotEgressIface = append(r.NotEgressIface, iface)
+		if r.NotDestination.Iface == nil {
+			r.NotDestination.Iface = set.NewIfaceSet()
+		}
+		if err := r.NotDestination.Iface.Add(iface); err != nil {
+			panic(fmt.Sprintf("invalid interface %s", iface))
+		}
 	}
 }
 
@@ -346,11 +366,12 @@ func New(opts ...RuleOption) *Rule {
 	return &r
 }
 
-// Endpoint groups the network and port match criteria for one traffic direction.
+// Endpoint groups the network, port, and interface match criteria for one traffic direction.
 type Endpoint struct {
-	Net  *set.IPSet
-	Port *set.PortSet
-	Sets []set.Set
+	Net   *set.IPSet
+	Port  *set.PortSet
+	Iface *set.IfaceSet
+	Sets  []set.Set
 }
 
 type Rule struct {
@@ -363,12 +384,6 @@ type Rule struct {
 	NotSource      Endpoint
 	NotDestination Endpoint
 	NotProto       *set.ProtoSet
-
-	IngressIface    []string
-	NotIngressIface []string
-
-	EgressIface    []string
-	NotEgressIface []string
 
 	Action Action
 
@@ -420,16 +435,16 @@ func (r *Rule) Match(pkt *packet.Packet) bool {
 	if matchAnyNamedSet(r.NotDestination.Sets, pkt.DstAddr, pkt.DstPort, dstIPPort, pkt.Metadata.EgressIface) {
 		return false
 	}
-	if len(r.IngressIface) > 0 && !containsString(r.IngressIface, pkt.Metadata.IngressIface) {
+	if r.Source.Iface != nil && !r.Source.Iface.Match(pkt.Metadata.IngressIface) {
 		return false
 	}
-	if len(r.NotIngressIface) > 0 && containsString(r.NotIngressIface, pkt.Metadata.IngressIface) {
+	if r.NotSource.Iface != nil && r.NotSource.Iface.Match(pkt.Metadata.IngressIface) {
 		return false
 	}
-	if len(r.EgressIface) > 0 && !containsString(r.EgressIface, pkt.Metadata.EgressIface) {
+	if r.Destination.Iface != nil && !r.Destination.Iface.Match(pkt.Metadata.EgressIface) {
 		return false
 	}
-	if len(r.NotEgressIface) > 0 && containsString(r.NotEgressIface, pkt.Metadata.EgressIface) {
+	if r.NotDestination.Iface != nil && r.NotDestination.Iface.Match(pkt.Metadata.EgressIface) {
 		return false
 	}
 	// All conditions passed - increment packet counter
@@ -521,25 +536,35 @@ func (r *Rule) String() string {
 	egressIfaceSets := filterEndpointSetsByType(r.Destination.Sets, set.TypeIface)
 	notEgressIfaceSets := filterEndpointSetsByType(r.NotDestination.Sets, set.TypeIface)
 
-	if len(r.IngressIface) > 0 || len(r.NotIngressIface) > 0 || len(ingressIfaceSets) > 0 || len(notIngressIfaceSets) > 0 {
-		iface := strings.Join(r.IngressIface, ",")
-		for _, v := range r.NotIngressIface {
-			if iface != "" {
-				iface += ","
+	if r.Source.Iface != nil || r.NotSource.Iface != nil || len(ingressIfaceSets) > 0 || len(notIngressIfaceSets) > 0 {
+		iface := ""
+		if r.Source.Iface != nil {
+			iface = r.Source.Iface.String()
+		}
+		if r.NotSource.Iface != nil {
+			neg := "!" + r.NotSource.Iface.String()
+			if iface == "" {
+				iface = neg
+			} else {
+				iface += "," + neg
 			}
-			iface += "!" + v
 		}
 		iface = appendSetStrings(iface, ingressIfaceSets)
 		iface = appendNotSetStrings(iface, notIngressIfaceSets)
 		base += " ingress_iface=" + iface
 	}
-	if len(r.EgressIface) > 0 || len(r.NotEgressIface) > 0 || len(egressIfaceSets) > 0 || len(notEgressIfaceSets) > 0 {
-		iface := strings.Join(r.EgressIface, ",")
-		for _, v := range r.NotEgressIface {
-			if iface != "" {
-				iface += ","
+	if r.Destination.Iface != nil || r.NotDestination.Iface != nil || len(egressIfaceSets) > 0 || len(notEgressIfaceSets) > 0 {
+		iface := ""
+		if r.Destination.Iface != nil {
+			iface = r.Destination.Iface.String()
+		}
+		if r.NotDestination.Iface != nil {
+			neg := "!" + r.NotDestination.Iface.String()
+			if iface == "" {
+				iface = neg
+			} else {
+				iface += "," + neg
 			}
-			iface += "!" + v
 		}
 		iface = appendSetStrings(iface, egressIfaceSets)
 		iface = appendNotSetStrings(iface, notEgressIfaceSets)
@@ -649,14 +674,4 @@ func MustParseCIDR(cidr string) *net.IPNet {
 		panic(fmt.Sprintf("CIDR %s is invalid", cidr))
 	}
 	return ipnet
-}
-
-// containsString reports whether slice contains s.
-func containsString(slice []string, s string) bool {
-	for _, v := range slice {
-		if v == s {
-			return true
-		}
-	}
-	return false
 }

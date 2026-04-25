@@ -326,30 +326,32 @@ func TestToRuleWithIngressIface(t *testing.T) {
 	RegisterTestingT(t)
 
 	r := &Rule{
-		Name:          "allow-eth0",
-		IngressIface:  []string{"eth0"},
-		Action:        "Accept",
+		Name:   "allow-eth0",
+		Source: Endpoint{Iface: []string{"eth0"}},
+		Action: "Accept",
 	}
 	mRule, err := r.ToRule(nil)
 	Expect(err).To(BeNil())
 	Expect(mRule).ToNot(BeNil())
-	Expect(mRule.IngressIface).To(Equal([]string{"eth0"}))
-	Expect(mRule.NotIngressIface).To(BeEmpty())
+	Expect(mRule.Source.Iface).ToNot(BeNil())
+	Expect(mRule.Source.Iface.Match("eth0")).To(BeTrue())
+	Expect(mRule.NotSource.Iface).To(BeNil())
 }
 
 func TestToRuleWithNotIngressIface(t *testing.T) {
 	RegisterTestingT(t)
 
 	r := &Rule{
-		Name:            "drop-eth1",
-		NotIngressIface: []string{"eth1"},
-		Action:          "Drop",
+		Name:      "drop-eth1",
+		NotSource: Endpoint{Iface: []string{"eth1"}},
+		Action:    "Drop",
 	}
 	mRule, err := r.ToRule(nil)
 	Expect(err).To(BeNil())
 	Expect(mRule).ToNot(BeNil())
-	Expect(mRule.NotIngressIface).To(Equal([]string{"eth1"}))
-	Expect(mRule.IngressIface).To(BeEmpty())
+	Expect(mRule.NotSource.Iface).ToNot(BeNil())
+	Expect(mRule.NotSource.Iface.Match("eth1")).To(BeTrue())
+	Expect(mRule.Source.Iface).To(BeNil())
 }
 
 func TestTableFromBytesWithIngressIface(t *testing.T) {
@@ -359,8 +361,10 @@ func TestTableFromBytesWithIngressIface(t *testing.T) {
 name: main
 rules:
   - name: allow-eth0-only
-    ingress_iface: [eth0]
-    not_ingress_iface: [eth1]
+    src:
+      iface: [eth0]
+    not_src:
+      iface: [eth1]
     action: Accept
 default_action: Drop
 `
@@ -368,8 +372,8 @@ default_action: Drop
 	Expect(err).To(BeNil())
 	Expect(rc).ToNot(BeNil())
 	Expect(rc.Rules).To(HaveLen(1))
-	Expect(rc.Rules[0].IngressIface).To(Equal([]string{"eth0"}))
-	Expect(rc.Rules[0].NotIngressIface).To(Equal([]string{"eth1"}))
+	Expect(rc.Rules[0].Source.Iface).To(Equal([]string{"eth0"}))
+	Expect(rc.Rules[0].NotSource.Iface).To(Equal([]string{"eth1"}))
 }
 
 func TestToRuleWithIfaceSet(t *testing.T) {
@@ -403,14 +407,15 @@ func TestToRuleWithEgressIface(t *testing.T) {
 
 	r := &Rule{
 		Name:        "allow-eth0-egress",
-		EgressIface: []string{"eth0"},
+		Destination: Endpoint{Iface: []string{"eth0"}},
 		Action:      "Accept",
 	}
 	mRule, err := r.ToRule(nil)
 	Expect(err).To(BeNil())
 	Expect(mRule).ToNot(BeNil())
-	Expect(mRule.EgressIface).To(Equal([]string{"eth0"}))
-	Expect(mRule.NotEgressIface).To(BeEmpty())
+	Expect(mRule.Destination.Iface).ToNot(BeNil())
+	Expect(mRule.Destination.Iface.Match("eth0")).To(BeTrue())
+	Expect(mRule.NotDestination.Iface).To(BeNil())
 }
 
 func TestToRuleWithNotEgressIface(t *testing.T) {
@@ -418,14 +423,15 @@ func TestToRuleWithNotEgressIface(t *testing.T) {
 
 	r := &Rule{
 		Name:           "drop-eth1-egress",
-		NotEgressIface: []string{"eth1"},
+		NotDestination: Endpoint{Iface: []string{"eth1"}},
 		Action:         "Drop",
 	}
 	mRule, err := r.ToRule(nil)
 	Expect(err).To(BeNil())
 	Expect(mRule).ToNot(BeNil())
-	Expect(mRule.NotEgressIface).To(Equal([]string{"eth1"}))
-	Expect(mRule.EgressIface).To(BeEmpty())
+	Expect(mRule.NotDestination.Iface).ToNot(BeNil())
+	Expect(mRule.NotDestination.Iface.Match("eth1")).To(BeTrue())
+	Expect(mRule.Destination.Iface).To(BeNil())
 }
 
 func TestTableFromBytesWithEgressIface(t *testing.T) {
@@ -435,8 +441,10 @@ func TestTableFromBytesWithEgressIface(t *testing.T) {
 name: main
 rules:
   - name: allow-eth0-egress-only
-    egress_iface: [eth0]
-    not_egress_iface: [eth1]
+    dst:
+      iface: [eth0]
+    not_dst:
+      iface: [eth1]
     action: Accept
 default_action: Drop
 `
@@ -444,8 +452,8 @@ default_action: Drop
 	Expect(err).To(BeNil())
 	Expect(rc).ToNot(BeNil())
 	Expect(rc.Rules).To(HaveLen(1))
-	Expect(rc.Rules[0].EgressIface).To(Equal([]string{"eth0"}))
-	Expect(rc.Rules[0].NotEgressIface).To(Equal([]string{"eth1"}))
+	Expect(rc.Rules[0].Destination.Iface).To(Equal([]string{"eth0"}))
+	Expect(rc.Rules[0].NotDestination.Iface).To(Equal([]string{"eth1"}))
 }
 
 func TestTableFromBytesWithIfaceSetField(t *testing.T) {
