@@ -931,4 +931,15 @@ func TestIfaceSetRuleString(t *testing.T) {
 
 	rNotSrc := New(WithAction(Drop), WithNotSrcIfaceSet(notIfaceSet))
 	Expect(rNotSrc.String()).To(Equal("Drop *{*:*->*:*} ingress_iface=!eth1"))
+
+	// Egress (dst) iface set string representation.
+	rDst := New(WithAction(Accept), WithDstIfaceSet(ifaceSet))
+	Expect(rDst.String()).To(Equal("Accept *{*:*->*:*} egress_iface=eth0"))
+
+	rNotDst := New(WithAction(Drop), WithNotDstIfaceSet(notIfaceSet))
+	Expect(rNotDst.String()).To(Equal("Drop *{*:*->*:*} egress_iface=!eth1"))
+
+	// Combined ingress + egress iface sets.
+	rBoth := New(WithAction(Accept), WithSrcIfaceSet(ifaceSet), WithDstIfaceSet(notIfaceSet))
+	Expect(rBoth.String()).To(Equal("Accept *{*:*->*:*} ingress_iface=eth0 egress_iface=eth1"))
 }
