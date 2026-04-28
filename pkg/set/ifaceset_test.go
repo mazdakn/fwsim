@@ -59,3 +59,10 @@ func TestIfaceSetStringMultipleIfaces(t *testing.T) {
 	Expect(s.Add("eth0")).To(Succeed())
 	Expect(s.String()).To(Equal("{eth0,eth1}"))
 }
+
+func TestIfaceSetStringEmpty(t *testing.T) {
+	RegisterTestingT(t)
+
+	s := NewIfaceSet()
+	Expect(s.String()).To(Equal("{}"))
+}

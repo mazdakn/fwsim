@@ -517,3 +517,298 @@ expected_verdict: Accept
 		Expect(m.RuleMatches()).To(BeTrue(), "intent %q: expected rule %q", m.Packet.Metadata.Name, m.HitByRule)
 	}
 }
+
+// TestRunTestsWithIngressIface verifies that rules matching on a specific
+// ingress interface accept or deny traffic accordingly.
+func TestRunTestsWithIngressIface(t *testing.T) {
+	RegisterTestingT(t)
+
+	tbl, err := config.ConfigTableFromBytes([]byte(`
+name: iface-filter
+rules:
+  - name: allow-eth0-ingress
+    src:
+      iface: [eth0]
+    action: Accept
+  - name: deny-all
+    action: Drop
+default_action: Drop
+`), nil)
+	Expect(err).To(BeNil())
+
+	intents := []*config.Intent{
+		// Packet arriving on eth0 → matched by allow-eth0-ingress
+		intentFromYAML(t, `
+name: ingress on eth0
+packet:
+  src_addr: 10.0.0.1
+  dst_addr: 1.1.1.1
+  proto: 6
+  src_port: 12345
+  dst_port: 80
+  metadata:
+    ingressIface: eth0
+expected_verdict: Accept
+hit_by_rule: allow-eth0-ingress
+`),
+		// Packet arriving on eth1 → no iface match → deny-all
+		intentFromYAML(t, `
+name: ingress on eth1
+packet:
+  src_addr: 10.0.0.2
+  dst_addr: 1.1.1.1
+  proto: 6
+  src_port: 12345
+  dst_port: 80
+  metadata:
+    ingressIface: eth1
+expected_verdict: Drop
+hit_by_rule: deny-all
+`),
+		// Packet with no interface set → no iface match → deny-all
+		intentFromYAML(t, `
+name: no ingress iface
+packet:
+  src_addr: 10.0.0.3
+  dst_addr: 1.1.1.1
+  proto: 6
+  src_port: 12345
+  dst_port: 80
+expected_verdict: Drop
+hit_by_rule: deny-all
+`),
+	}
+
+	engine := enginepkg.New(&config.Resource{
+		Tables:  []*table.Table{tbl},
+		Intents: intents,
+	})
+	results := engine.RunTests()
+
+	Expect(results).To(HaveLen(3))
+	for _, m := range results {
+		Expect(m.VerdictMatches()).To(BeTrue(), "intent %q: expected %v got %v", m.Packet.Metadata.Name, m.ExpectedVerdict, m.Verdict)
+		Expect(m.RuleMatches()).To(BeTrue(), "intent %q: expected rule %q", m.Packet.Metadata.Name, m.HitByRule)
+	}
+}
+
+// TestRunTestsWithEgressIface verifies that rules matching on a specific
+// egress interface accept or deny traffic accordingly.
+func TestRunTestsWithEgressIface(t *testing.T) {
+	RegisterTestingT(t)
+
+	tbl, err := config.ConfigTableFromBytes([]byte(`
+name: egress-filter
+rules:
+  - name: allow-eth0-egress
+    dst:
+      iface: [eth0]
+    action: Accept
+  - name: deny-all
+    action: Drop
+default_action: Drop
+`), nil)
+	Expect(err).To(BeNil())
+
+	intents := []*config.Intent{
+		// Packet leaving on eth0 → matched by allow-eth0-egress
+		intentFromYAML(t, `
+name: egress on eth0
+packet:
+  src_addr: 10.0.0.1
+  dst_addr: 1.1.1.1
+  proto: 6
+  src_port: 12345
+  dst_port: 80
+  metadata:
+    egressIface: eth0
+expected_verdict: Accept
+hit_by_rule: allow-eth0-egress
+`),
+		// Packet leaving on eth1 → no iface match → deny-all
+		intentFromYAML(t, `
+name: egress on eth1
+packet:
+  src_addr: 10.0.0.2
+  dst_addr: 1.1.1.1
+  proto: 6
+  src_port: 12345
+  dst_port: 80
+  metadata:
+    egressIface: eth1
+expected_verdict: Drop
+hit_by_rule: deny-all
+`),
+	}
+
+	engine := enginepkg.New(&config.Resource{
+		Tables:  []*table.Table{tbl},
+		Intents: intents,
+	})
+	results := engine.RunTests()
+
+	Expect(results).To(HaveLen(2))
+	for _, m := range results {
+		Expect(m.VerdictMatches()).To(BeTrue(), "intent %q: expected %v got %v", m.Packet.Metadata.Name, m.ExpectedVerdict, m.Verdict)
+		Expect(m.RuleMatches()).To(BeTrue(), "intent %q: expected rule %q", m.Packet.Metadata.Name, m.HitByRule)
+	}
+}
+
+// TestRunTestsWithIfaceSets verifies end-to-end behavior when rules reference
+// a named iface set and intents exercise packets arriving on matching and
+// non-matching interfaces.
+func TestRunTestsWithIfaceSets(t *testing.T) {
+	RegisterTestingT(t)
+
+	sets, err := config.ConfigSetsFromBytes([]byte(`
+name: trusted-ifaces
+type: iface
+members:
+  - eth0
+  - eth1
+`))
+	Expect(err).To(BeNil())
+
+	tbl, err := config.ConfigTableFromBytes([]byte(`
+name: iface-set-filter
+rules:
+  - name: allow-trusted-iface
+    src:
+      sets: [trusted-ifaces]
+    action: Accept
+  - name: deny-all
+    action: Drop
+default_action: Drop
+`), sets)
+	Expect(err).To(BeNil())
+
+	intents := []*config.Intent{
+		// Packet on eth0 → in trusted-ifaces set → Accept
+		intentFromYAML(t, `
+name: ingress eth0 trusted
+packet:
+  src_addr: 10.0.0.1
+  dst_addr: 1.1.1.1
+  proto: 6
+  src_port: 12345
+  dst_port: 80
+  metadata:
+    ingressIface: eth0
+expected_verdict: Accept
+hit_by_rule: allow-trusted-iface
+`),
+		// Packet on eth1 → in trusted-ifaces set → Accept
+		intentFromYAML(t, `
+name: ingress eth1 trusted
+packet:
+  src_addr: 10.0.0.2
+  dst_addr: 1.1.1.1
+  proto: 6
+  src_port: 12345
+  dst_port: 80
+  metadata:
+    ingressIface: eth1
+expected_verdict: Accept
+hit_by_rule: allow-trusted-iface
+`),
+		// Packet on eth2 → NOT in trusted-ifaces set → deny-all
+		intentFromYAML(t, `
+name: ingress eth2 untrusted
+packet:
+  src_addr: 10.0.0.3
+  dst_addr: 1.1.1.1
+  proto: 6
+  src_port: 12345
+  dst_port: 80
+  metadata:
+    ingressIface: eth2
+expected_verdict: Drop
+hit_by_rule: deny-all
+`),
+	}
+
+	engine := enginepkg.New(&config.Resource{
+		Sets:    sets,
+		Tables:  []*table.Table{tbl},
+		Intents: intents,
+	})
+	results := engine.RunTests()
+
+	Expect(results).To(HaveLen(3))
+	for _, m := range results {
+		Expect(m.VerdictMatches()).To(BeTrue(), "intent %q: expected %v got %v", m.Packet.Metadata.Name, m.ExpectedVerdict, m.Verdict)
+		Expect(m.RuleMatches()).To(BeTrue(), "intent %q: expected rule %q", m.Packet.Metadata.Name, m.HitByRule)
+	}
+}
+
+// TestRunTestsWithNegatedIfaceSets verifies that negated named iface sets
+// correctly block or pass packets based on whether the ingress interface is in
+// the set.
+func TestRunTestsWithNegatedIfaceSets(t *testing.T) {
+	RegisterTestingT(t)
+
+	sets, err := config.ConfigSetsFromBytes([]byte(`
+name: blocked-ifaces
+type: iface
+members:
+  - eth2
+`))
+	Expect(err).To(BeNil())
+
+	tbl, err := config.ConfigTableFromBytes([]byte(`
+name: negated-iface-filter
+rules:
+  - name: allow-non-blocked
+    not_src:
+      sets: [blocked-ifaces]
+    action: Accept
+  - name: deny-all
+    action: Drop
+default_action: Drop
+`), sets)
+	Expect(err).To(BeNil())
+
+	intents := []*config.Intent{
+		// Packet on eth0 → NOT in blocked-ifaces → allow-non-blocked fires → Accept
+		intentFromYAML(t, `
+name: ingress eth0 allowed
+packet:
+  src_addr: 10.0.0.1
+  dst_addr: 1.1.1.1
+  proto: 6
+  src_port: 12345
+  dst_port: 80
+  metadata:
+    ingressIface: eth0
+expected_verdict: Accept
+hit_by_rule: allow-non-blocked
+`),
+		// Packet on eth2 → IN blocked-ifaces → negated match excludes rule → deny-all
+		intentFromYAML(t, `
+name: ingress eth2 blocked
+packet:
+  src_addr: 10.0.0.3
+  dst_addr: 1.1.1.1
+  proto: 6
+  src_port: 12345
+  dst_port: 80
+  metadata:
+    ingressIface: eth2
+expected_verdict: Drop
+hit_by_rule: deny-all
+`),
+	}
+
+	engine := enginepkg.New(&config.Resource{
+		Sets:    sets,
+		Tables:  []*table.Table{tbl},
+		Intents: intents,
+	})
+	results := engine.RunTests()
+
+	Expect(results).To(HaveLen(2))
+	for _, m := range results {
+		Expect(m.VerdictMatches()).To(BeTrue(), "intent %q: expected %v got %v", m.Packet.Metadata.Name, m.ExpectedVerdict, m.Verdict)
+		Expect(m.RuleMatches()).To(BeTrue(), "intent %q: expected rule %q", m.Packet.Metadata.Name, m.HitByRule)
+	}
+}
