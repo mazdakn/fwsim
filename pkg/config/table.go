@@ -15,7 +15,7 @@ import (
 type Table struct {
 	Name          string        `yaml:"name"                   validate:"isNonEmpty"`
 	Order         uint64        `yaml:"order,omitempty"`
-	Chains        []ChainConfig `yaml:"chains,omitempty"`
+	Chains        []Chain `yaml:"chains,omitempty"`
 	DefaultAction string        `yaml:"default_action,omitempty" validate:"isValidAction"`
 }
 
@@ -33,8 +33,8 @@ func (t *Table) Validate() error {
 	return nil
 }
 
-// ChainConfig represents the YAML configuration structure for a chain.
-type ChainConfig struct {
+// Chain represents the YAML configuration structure for a chain.
+type Chain struct {
 	Name  string `yaml:"name" validate:"isNonEmpty"`
 	Rules []Rule `yaml:"rules,omitempty"`
 }
