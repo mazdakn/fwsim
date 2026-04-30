@@ -17,6 +17,8 @@ const (
 	Accept Action = iota
 	Drop
 	Pass
+	Jump
+	Return
 )
 
 func (a *Action) String() string {
@@ -30,6 +32,10 @@ func (a *Action) String() string {
 		return "Drop"
 	case Pass:
 		return "Pass"
+	case Jump:
+		return "Jump"
+	case Return:
+		return "Return"
 	default:
 		return fmt.Sprintf("Undefined(%d)", *a)
 	}
@@ -37,7 +43,7 @@ func (a *Action) String() string {
 
 func (a Action) Validate() error {
 	switch a {
-	case Accept, Drop, Pass:
+	case Accept, Drop, Pass, Jump, Return:
 		return nil
 	default:
 		return fmt.Errorf("undefined action %v", &a)
@@ -53,12 +59,16 @@ func ParseAction(s string) (Action, error) {
 		return Drop, nil
 	case "pass":
 		return Pass, nil
+	case "jump":
+		return Jump, nil
+	case "return":
+		return Return, nil
 	default:
 		return Action(0), fmt.Errorf("unknown action: %s", s)
 	}
 }
 
-// ParseAction parses an action string into an Action type
+// MustParseAction parses an action string into an Action type
 func MustParseAction(s string) Action {
 	switch strings.ToLower(s) {
 	case "accept":
@@ -67,12 +77,23 @@ func MustParseAction(s string) Action {
 		return Drop
 	case "pass":
 		return Pass
+	case "jump":
+		return Jump
+	case "return":
+		return Return
 	default:
 		panic(fmt.Sprintf("unknown action: %s", s))
 	}
 }
 
 type RuleOption func(*Rule)
+
+func WithJump(chainName string) RuleOption {
+	return func(r *Rule) {
+		r.Action = Jump
+		r.JumpTarget = chainName
+	}
+}
 
 func WithAction(action Action) RuleOption {
 	return func(r *Rule) {
@@ -385,7 +406,8 @@ type Rule struct {
 	NotDestination Endpoint
 	NotProto       *set.ProtoSet
 
-	Action Action
+	Action     Action
+	JumpTarget string // name of the chain to jump to when Action == Jump
 
 	packetCount *counter.Counter
 }

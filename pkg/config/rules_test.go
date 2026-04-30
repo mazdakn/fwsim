@@ -132,28 +132,31 @@ func TestTableFromBytesWithSetFields(t *testing.T) {
 	yaml := `
 name: main
 order: 7
-rules:
-  - name: allow-trusted
-    src:
-      sets: [trusted-ips, src-ipports]
-    dst:
-      sets: [web-ports, dst-ipports]
-    not_src:
-      sets: [blocked-ips, blocked-src-ipports]
-    not_dst:
-      sets: [banned-ports, blocked-dst-ipports]
-    action: Accept
+chains:
+  - name: default
+    rules:
+      - name: allow-trusted
+        src:
+          sets: [trusted-ips, src-ipports]
+        dst:
+          sets: [web-ports, dst-ipports]
+        not_src:
+          sets: [blocked-ips, blocked-src-ipports]
+        not_dst:
+          sets: [banned-ports, blocked-dst-ipports]
+        action: Accept
 default_action: Drop
 `
 	rc, err := TableFromBytes([]byte(yaml))
 	Expect(err).To(BeNil())
 	Expect(rc).ToNot(BeNil())
 	Expect(rc.Order).To(Equal(uint64(7)))
-	Expect(rc.Rules).To(HaveLen(1))
-	Expect(rc.Rules[0].Source.Sets).To(Equal([]string{"trusted-ips", "src-ipports"}))
-	Expect(rc.Rules[0].Destination.Sets).To(Equal([]string{"web-ports", "dst-ipports"}))
-	Expect(rc.Rules[0].NotSource.Sets).To(Equal([]string{"blocked-ips", "blocked-src-ipports"}))
-	Expect(rc.Rules[0].NotDestination.Sets).To(Equal([]string{"banned-ports", "blocked-dst-ipports"}))
+	Expect(rc.Chains).To(HaveLen(1))
+	Expect(rc.Chains[0].Rules).To(HaveLen(1))
+	Expect(rc.Chains[0].Rules[0].Source.Sets).To(Equal([]string{"trusted-ips", "src-ipports"}))
+	Expect(rc.Chains[0].Rules[0].Destination.Sets).To(Equal([]string{"web-ports", "dst-ipports"}))
+	Expect(rc.Chains[0].Rules[0].NotSource.Sets).To(Equal([]string{"blocked-ips", "blocked-src-ipports"}))
+	Expect(rc.Chains[0].Rules[0].NotDestination.Sets).To(Equal([]string{"banned-ports", "blocked-dst-ipports"}))
 }
 
 func TestToRuleWithValidNegatedSets(t *testing.T) {
@@ -311,9 +314,11 @@ func TestTableFromBytesAcceptsPassDefaultAction(t *testing.T) {
 
 	yaml := `
 name: main
-rules:
-  - name: continue-http
-    action: Pass
+chains:
+  - name: default
+    rules:
+      - name: continue-http
+        action: Pass
 default_action: Pass
 `
 	rc, err := TableFromBytes([]byte(yaml))
@@ -359,21 +364,24 @@ func TestTableFromBytesWithIngressIface(t *testing.T) {
 
 	yaml := `
 name: main
-rules:
-  - name: allow-eth0-only
-    src:
-      iface: [eth0]
-    not_src:
-      iface: [eth1]
-    action: Accept
+chains:
+  - name: default
+    rules:
+      - name: allow-eth0-only
+        src:
+          iface: [eth0]
+        not_src:
+          iface: [eth1]
+        action: Accept
 default_action: Drop
 `
 	rc, err := TableFromBytes([]byte(yaml))
 	Expect(err).To(BeNil())
 	Expect(rc).ToNot(BeNil())
-	Expect(rc.Rules).To(HaveLen(1))
-	Expect(rc.Rules[0].Source.Iface).To(Equal([]string{"eth0"}))
-	Expect(rc.Rules[0].NotSource.Iface).To(Equal([]string{"eth1"}))
+	Expect(rc.Chains).To(HaveLen(1))
+	Expect(rc.Chains[0].Rules).To(HaveLen(1))
+	Expect(rc.Chains[0].Rules[0].Source.Iface).To(Equal([]string{"eth0"}))
+	Expect(rc.Chains[0].Rules[0].NotSource.Iface).To(Equal([]string{"eth1"}))
 }
 
 func TestToRuleWithIfaceSet(t *testing.T) {
@@ -439,21 +447,24 @@ func TestTableFromBytesWithEgressIface(t *testing.T) {
 
 	yaml := `
 name: main
-rules:
-  - name: allow-eth0-egress-only
-    dst:
-      iface: [eth0]
-    not_dst:
-      iface: [eth1]
-    action: Accept
+chains:
+  - name: default
+    rules:
+      - name: allow-eth0-egress-only
+        dst:
+          iface: [eth0]
+        not_dst:
+          iface: [eth1]
+        action: Accept
 default_action: Drop
 `
 	rc, err := TableFromBytes([]byte(yaml))
 	Expect(err).To(BeNil())
 	Expect(rc).ToNot(BeNil())
-	Expect(rc.Rules).To(HaveLen(1))
-	Expect(rc.Rules[0].Destination.Iface).To(Equal([]string{"eth0"}))
-	Expect(rc.Rules[0].NotDestination.Iface).To(Equal([]string{"eth1"}))
+	Expect(rc.Chains).To(HaveLen(1))
+	Expect(rc.Chains[0].Rules).To(HaveLen(1))
+	Expect(rc.Chains[0].Rules[0].Destination.Iface).To(Equal([]string{"eth0"}))
+	Expect(rc.Chains[0].Rules[0].NotDestination.Iface).To(Equal([]string{"eth1"}))
 }
 
 func TestTableFromBytesWithIfaceSetField(t *testing.T) {
@@ -461,19 +472,22 @@ func TestTableFromBytesWithIfaceSetField(t *testing.T) {
 
 	yaml := `
 name: main
-rules:
-  - name: allow-trusted-ifaces
-    src:
-      sets: [trusted-ifaces]
-    not_src:
-      sets: [blocked-ifaces]
-    action: Accept
+chains:
+  - name: default
+    rules:
+      - name: allow-trusted-ifaces
+        src:
+          sets: [trusted-ifaces]
+        not_src:
+          sets: [blocked-ifaces]
+        action: Accept
 default_action: Drop
 `
 	rc, err := TableFromBytes([]byte(yaml))
 	Expect(err).To(BeNil())
 	Expect(rc).ToNot(BeNil())
-	Expect(rc.Rules).To(HaveLen(1))
-	Expect(rc.Rules[0].Source.Sets).To(Equal([]string{"trusted-ifaces"}))
-	Expect(rc.Rules[0].NotSource.Sets).To(Equal([]string{"blocked-ifaces"}))
+	Expect(rc.Chains).To(HaveLen(1))
+	Expect(rc.Chains[0].Rules).To(HaveLen(1))
+	Expect(rc.Chains[0].Rules[0].Source.Sets).To(Equal([]string{"trusted-ifaces"}))
+	Expect(rc.Chains[0].Rules[0].NotSource.Sets).To(Equal([]string{"blocked-ifaces"}))
 }

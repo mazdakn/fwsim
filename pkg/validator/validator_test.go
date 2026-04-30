@@ -45,8 +45,10 @@ func TestConfigValidateMissingDefaultAction(t *testing.T) {
 	RegisterTestingT(t)
 
 	c := &config.Table{Name: "main",
-		Rules: []config.Rule{
-			{Source: config.Endpoint{Net: []string{"192.168.1.0/24"}}, Action: "Accept"},
+		Chains: []config.Chain{
+			{Name: "default", Rules: []config.Rule{
+				{Source: config.Endpoint{Net: []string{"192.168.1.0/24"}}, Action: "Accept"},
+			}},
 		},
 	}
 	Expect(c.DefaultAction).To(BeEmpty())
@@ -76,8 +78,10 @@ func TestConfigValidateInvalidSrcNet(t *testing.T) {
 	RegisterTestingT(t)
 
 	c := &config.Table{Name: "main",
-		Rules: []config.Rule{
-			{Source: config.Endpoint{Net: []string{"not-a-cidr"}}, Action: "Accept"},
+		Chains: []config.Chain{
+			{Name: "default", Rules: []config.Rule{
+				{Source: config.Endpoint{Net: []string{"not-a-cidr"}}, Action: "Accept"},
+			}},
 		},
 		DefaultAction: "Accept",
 	}
@@ -90,8 +94,10 @@ func TestConfigValidateInvalidDstNet(t *testing.T) {
 	RegisterTestingT(t)
 
 	c := &config.Table{Name: "main",
-		Rules: []config.Rule{
-			{Destination: config.Endpoint{Net: []string{"bad-cidr"}}, Action: "Drop"},
+		Chains: []config.Chain{
+			{Name: "default", Rules: []config.Rule{
+				{Destination: config.Endpoint{Net: []string{"bad-cidr"}}, Action: "Drop"},
+			}},
 		},
 		DefaultAction: "Accept",
 	}
@@ -104,8 +110,10 @@ func TestConfigValidateInvalidNotSrcNet(t *testing.T) {
 	RegisterTestingT(t)
 
 	c := &config.Table{Name: "main",
-		Rules: []config.Rule{
-			{NotSource: config.Endpoint{Net: []string{"256.0.0.0/8"}}, Action: "Drop"},
+		Chains: []config.Chain{
+			{Name: "default", Rules: []config.Rule{
+				{NotSource: config.Endpoint{Net: []string{"256.0.0.0/8"}}, Action: "Drop"},
+			}},
 		},
 		DefaultAction: "Accept",
 	}
@@ -118,8 +126,10 @@ func TestConfigValidateInvalidNotDstNet(t *testing.T) {
 	RegisterTestingT(t)
 
 	c := &config.Table{Name: "main",
-		Rules: []config.Rule{
-			{NotDestination: config.Endpoint{Net: []string{"abc"}}, Action: "Drop"},
+		Chains: []config.Chain{
+			{Name: "default", Rules: []config.Rule{
+				{NotDestination: config.Endpoint{Net: []string{"abc"}}, Action: "Drop"},
+			}},
 		},
 		DefaultAction: "Accept",
 	}
@@ -132,8 +142,10 @@ func TestConfigValidateInvalidRuleAction(t *testing.T) {
 	RegisterTestingT(t)
 
 	c := &config.Table{Name: "main",
-		Rules: []config.Rule{
-			{Source: config.Endpoint{Net: []string{"10.0.0.0/8"}}, Action: "unknown"},
+		Chains: []config.Chain{
+			{Name: "default", Rules: []config.Rule{
+				{Source: config.Endpoint{Net: []string{"10.0.0.0/8"}}, Action: "unknown"},
+			}},
 		},
 		DefaultAction: "Accept",
 	}
@@ -291,14 +303,16 @@ func TestConfigValidateValid(t *testing.T) {
 	RegisterTestingT(t)
 
 	c := &config.Table{Name: "main",
-		Rules: []config.Rule{
-			{
-				Source:         config.Endpoint{Net: []string{"192.168.1.0/24"}},
-				Destination:    config.Endpoint{Net: []string{"1.1.1.1/32"}},
-				NotSource:      config.Endpoint{Net: []string{"192.168.1.128/25"}},
-				NotDestination: config.Endpoint{Net: []string{"1.1.1.0/30"}},
-				Action:         "Accept",
-			},
+		Chains: []config.Chain{
+			{Name: "default", Rules: []config.Rule{
+				{
+					Source:         config.Endpoint{Net: []string{"192.168.1.0/24"}},
+					Destination:    config.Endpoint{Net: []string{"1.1.1.1/32"}},
+					NotSource:      config.Endpoint{Net: []string{"192.168.1.128/25"}},
+					NotDestination: config.Endpoint{Net: []string{"1.1.1.0/30"}},
+					Action:         "Accept",
+				},
+			}},
 		},
 		DefaultAction: "Drop",
 	}
@@ -370,16 +384,18 @@ func TestConfigValidateValidRuleWithPortsAndProto(t *testing.T) {
 	RegisterTestingT(t)
 
 	c := &config.Table{Name: "main",
-		Rules: []config.Rule{
-			{
-				Source:         config.Endpoint{Net: []string{"192.168.1.0/24"}, Port: []port.Port{{Number: 30000}}},
-				Destination:    config.Endpoint{Net: []string{"1.1.1.1/32"}, Port: []port.Port{{Number: 80}, {Number: 443}}},
-				Protocol:       []proto.Proto{proto.TCP, proto.UDP},
-				NotProto:       []proto.Proto{proto.ICMP},
-				NotSource:      config.Endpoint{Port: []port.Port{{Number: 22}}},
-				NotDestination: config.Endpoint{Port: []port.Port{{Number: 8080}}},
-				Action:         "Accept",
-			},
+		Chains: []config.Chain{
+			{Name: "default", Rules: []config.Rule{
+				{
+					Source:         config.Endpoint{Net: []string{"192.168.1.0/24"}, Port: []port.Port{{Number: 30000}}},
+					Destination:    config.Endpoint{Net: []string{"1.1.1.1/32"}, Port: []port.Port{{Number: 80}, {Number: 443}}},
+					Protocol:       []proto.Proto{proto.TCP, proto.UDP},
+					NotProto:       []proto.Proto{proto.ICMP},
+					NotSource:      config.Endpoint{Port: []port.Port{{Number: 22}}},
+					NotDestination: config.Endpoint{Port: []port.Port{{Number: 8080}}},
+					Action:         "Accept",
+				},
+			}},
 		},
 		DefaultAction: "Drop",
 	}
@@ -391,12 +407,14 @@ func TestConfigValidateValidRuleWithNamedPorts(t *testing.T) {
 	RegisterTestingT(t)
 
 	c := &config.Table{Name: "main",
-		Rules: []config.Rule{
-			{
-				Source:      config.Endpoint{Port: []port.Port{{Number: 22, Name: "ssh"}}},
-				Destination: config.Endpoint{Port: []port.Port{{Number: 80, Name: "http"}, {Number: 443, Name: "https"}}},
-				Action:      "Accept",
-			},
+		Chains: []config.Chain{
+			{Name: "default", Rules: []config.Rule{
+				{
+					Source:      config.Endpoint{Port: []port.Port{{Number: 22, Name: "ssh"}}},
+					Destination: config.Endpoint{Port: []port.Port{{Number: 80, Name: "http"}, {Number: 443, Name: "https"}}},
+					Action:      "Accept",
+				},
+			}},
 		},
 		DefaultAction: "Drop",
 	}
@@ -408,11 +426,13 @@ func TestConfigValidateRuleWithInvalidPortName(t *testing.T) {
 	RegisterTestingT(t)
 
 	c := &config.Table{Name: "main",
-		Rules: []config.Rule{
-			{
-				Destination: config.Endpoint{Port: []port.Port{{Name: "notaservice"}}},
-				Action:      "Accept",
-			},
+		Chains: []config.Chain{
+			{Name: "default", Rules: []config.Rule{
+				{
+					Destination: config.Endpoint{Port: []port.Port{{Name: "notaservice"}}},
+					Action:      "Accept",
+				},
+			}},
 		},
 		DefaultAction: "Drop",
 	}

@@ -13,28 +13,30 @@ import (
 
 const testRulesYAML = `
 name: main
-rules:
-  - name: allow-192.168-to-1.1.1.1
-    src:
-      net: [192.168.1.0/24]
-      port: [30000]
-    dst:
-      net: [1.1.1.1/32]
-      port: [80]
-    proto: [7]
-    action: Accept
-  - name: deny-access-http
-    dst:
-      net: [1.1.1.1/32]
-      port: [80]
-    proto: [7]
-    action: Drop
-  - name: deny-tcp-8080
-    dst:
-      net: [2.2.2.2/32]
-      port: [8080]
-    proto: [7]
-    action: Drop
+chains:
+  - name: default
+    rules:
+      - name: allow-192.168-to-1.1.1.1
+        src:
+          net: [192.168.1.0/24]
+          port: [30000]
+        dst:
+          net: [1.1.1.1/32]
+          port: [80]
+        proto: [7]
+        action: Accept
+      - name: deny-access-http
+        dst:
+          net: [1.1.1.1/32]
+          port: [80]
+        proto: [7]
+        action: Drop
+      - name: deny-tcp-8080
+        dst:
+          net: [2.2.2.2/32]
+          port: [8080]
+        proto: [7]
+        action: Drop
 default_action: Accept
 `
 
@@ -95,19 +97,21 @@ members:
 
 const testRulesNamedPortYAML = `
 name: main
-rules:
-  - name: allow-http
-    dst:
-      port: [http]
-    proto: [6]
-    action: Accept
-  - name: allow-https
-    dst:
-      port: [https]
-    proto: [6]
-    action: Accept
-  - name: deny-all
-    action: Drop
+chains:
+  - name: default
+    rules:
+      - name: allow-http
+        dst:
+          port: [http]
+        proto: [6]
+        action: Accept
+      - name: allow-https
+        dst:
+          port: [https]
+        proto: [6]
+        action: Accept
+      - name: deny-all
+        action: Drop
 default_action: Drop
 `
 
@@ -185,13 +189,15 @@ func TestEngineWithNamedPortsInSets(t *testing.T) {
 
 	const rulesWithNamedPortSetYAML = `
 name: main
-rules:
-  - name: allow-named-web
-    dst:
-      sets: [named-web-ports]
-    action: Accept
-  - name: deny-all
-    action: Drop
+chains:
+  - name: default
+    rules:
+      - name: allow-named-web
+        dst:
+          sets: [named-web-ports]
+        action: Accept
+      - name: deny-all
+        action: Drop
 default_action: Drop
 `
 	tbl, err := config.ConfigTableFromBytes([]byte(rulesWithNamedPortSetYAML), sets)
@@ -232,12 +238,14 @@ func TestEnginePassRuleContinuesToNextTable(t *testing.T) {
 	passTable, err := config.ConfigTableFromBytes([]byte(`
 name: pass-table
 order: 1
-rules:
-  - name: pass-http
-    dst:
-      port: [80]
-    proto: [6]
-    action: Pass
+chains:
+  - name: default
+    rules:
+      - name: pass-http
+        dst:
+          port: [80]
+        proto: [6]
+        action: Pass
 default_action: Drop
 `), nil)
 	Expect(err).To(BeNil())
@@ -245,12 +253,14 @@ default_action: Drop
 	acceptTable, err := config.ConfigTableFromBytes([]byte(`
 name: accept-table
 order: 2
-rules:
-  - name: accept-http
-    dst:
-      port: [80]
-    proto: [6]
-    action: Accept
+chains:
+  - name: default
+    rules:
+      - name: accept-http
+        dst:
+          port: [80]
+        proto: [6]
+        action: Accept
 default_action: Drop
 `), nil)
 	Expect(err).To(BeNil())
@@ -276,7 +286,9 @@ func TestEnginePassDefaultActionContinuesToNextTable(t *testing.T) {
 	passDefaultTable, err := config.ConfigTableFromBytes([]byte(`
 name: pass-default
 order: 1
-rules: []
+chains:
+  - name: default
+    rules: []
 default_action: Pass
 `), nil)
 	Expect(err).To(BeNil())
@@ -284,12 +296,14 @@ default_action: Pass
 	dropTable, err := config.ConfigTableFromBytes([]byte(`
 name: drop-table
 order: 2
-rules:
-  - name: drop-http
-    dst:
-      port: [80]
-    proto: [6]
-    action: Drop
+chains:
+  - name: default
+    rules:
+      - name: drop-http
+        dst:
+          port: [80]
+        proto: [6]
+        action: Drop
 default_action: Accept
 `), nil)
 	Expect(err).To(BeNil())
@@ -315,7 +329,9 @@ func TestEngineAllTablesPassResultsInNoMatch(t *testing.T) {
 	firstTable, err := config.ConfigTableFromBytes([]byte(`
 name: first-pass
 order: 1
-rules: []
+chains:
+  - name: default
+    rules: []
 default_action: Pass
 `), nil)
 	Expect(err).To(BeNil())
@@ -323,12 +339,14 @@ default_action: Pass
 	secondTable, err := config.ConfigTableFromBytes([]byte(`
 name: second-pass
 order: 2
-rules:
-  - name: pass-http
-    dst:
-      port: [80]
-    proto: [6]
-    action: Pass
+chains:
+  - name: default
+    rules:
+      - name: pass-http
+        dst:
+          port: [80]
+        proto: [6]
+        action: Pass
 default_action: Drop
 `), nil)
 	Expect(err).To(BeNil())
@@ -400,15 +418,17 @@ func TestLoadSetsFromBytes(t *testing.T) {
 
 const testRulesWithSetsYAML = `
 name: main
-rules:
-  - name: allow-trusted-to-web
-    src:
-      sets: [trusted-ips]
-    dst:
-      sets: [web-ports]
-    action: Accept
-  - name: deny-all
-    action: Drop
+chains:
+  - name: default
+    rules:
+      - name: allow-trusted-to-web
+        src:
+          sets: [trusted-ips]
+        dst:
+          sets: [web-ports]
+        action: Accept
+      - name: deny-all
+        action: Drop
 default_action: Drop
 `
 
@@ -427,9 +447,11 @@ func TestRulesReferencingNamedSets(t *testing.T) {
 	tbl, err := config.ConfigTableFromBytes([]byte(testRulesWithSetsYAML), sets)
 	Expect(err).To(BeNil())
 
-	Expect(len(tbl.Rules)).To(Equal(2))
+	defaultChain := tbl.Chains["default"]
+	Expect(defaultChain).ToNot(BeNil())
+	Expect(defaultChain.Rules).To(HaveLen(2))
 
-	rule1 := tbl.Rules[0]
+	rule1 := defaultChain.Rules[0]
 	Expect(rule1.Source.Sets).To(HaveLen(1))
 	Expect(rule1.Destination.Sets).To(HaveLen(1))
 	Expect(rule1.Source.Net).To(BeNil())
@@ -485,13 +507,15 @@ func TestRulesWithNamedSetsMatch(t *testing.T) {
 
 const testRulesWithNotSetsYAML = `
 name: main
-rules:
-  - name: allow-non-blocked-src
-    not_src:
-      sets: [trusted-ips]
-    action: Accept
-  - name: deny-all
-    action: Drop
+chains:
+  - name: default
+    rules:
+      - name: allow-non-blocked-src
+        not_src:
+          sets: [trusted-ips]
+        action: Accept
+      - name: deny-all
+        action: Drop
 default_action: Drop
 `
 
@@ -504,8 +528,10 @@ func TestRulesReferencingNegatedNamedSets(t *testing.T) {
 	tbl, err := config.ConfigTableFromBytes([]byte(testRulesWithNotSetsYAML), sets)
 	Expect(err).To(BeNil())
 
-	Expect(len(tbl.Rules)).To(Equal(2))
-	Expect(tbl.Rules[0].NotSource.Sets).To(HaveLen(1))
+	defaultChain := tbl.Chains["default"]
+	Expect(defaultChain).ToNot(BeNil())
+	Expect(defaultChain.Rules).To(HaveLen(2))
+	Expect(defaultChain.Rules[0].NotSource.Sets).To(HaveLen(1))
 }
 
 func TestRulesWithNegatedNamedSetsMatch(t *testing.T) {
@@ -550,10 +576,12 @@ func TestLoadRulesFromBytes(t *testing.T) {
 	tbl, err := config.ConfigTableFromBytes([]byte(testRulesYAML), nil)
 	Expect(err).To(BeNil())
 
-	Expect(len(tbl.Rules)).To(Equal(3))
+	defaultChain := tbl.Chains["default"]
+	Expect(defaultChain).ToNot(BeNil())
+	Expect(defaultChain.Rules).To(HaveLen(3))
 
 	// Verify first rule
-	rule1 := tbl.Rules[0]
+	rule1 := defaultChain.Rules[0]
 	Expect(rule1.Source.Net).ToNot(BeNil())
 	Expect(rule1.Source.Net.String()).To(Equal("192.168.1.0/24"))
 	Expect(rule1.Destination.Net).ToNot(BeNil())
@@ -563,7 +591,7 @@ func TestLoadRulesFromBytes(t *testing.T) {
 	Expect(rule1.Action.String()).To(Equal("Accept"))
 
 	// Verify second rule
-	rule2 := tbl.Rules[1]
+	rule2 := defaultChain.Rules[1]
 	Expect(rule2.Destination.Net).ToNot(BeNil())
 	Expect(rule2.Destination.Net.String()).To(Equal("1.1.1.1/32"))
 	Expect(rule2.Proto).ToNot(BeNil())
@@ -572,4 +600,110 @@ func TestLoadRulesFromBytes(t *testing.T) {
 
 	// Verify default action is set
 	Expect(tbl.DefaultAction.Action.String()).To(Equal("Accept"))
+}
+
+const testChainsYAML = `
+name: main
+chains:
+  - name: entry
+    rules:
+      - name: jump-to-admin
+        src:
+          net: [10.0.0.0/8]
+        action: jump
+        jump_target: admin
+      - name: deny-all
+        action: Drop
+  - name: admin
+    rules:
+      - name: allow-admin-http
+        dst:
+          port: [80]
+        proto: [6]
+        action: Accept
+default_action: Drop
+`
+
+func TestLoadTableWithExplicitChains(t *testing.T) {
+	RegisterTestingT(t)
+
+	tbl, err := config.ConfigTableFromBytes([]byte(testChainsYAML), nil)
+	Expect(err).To(BeNil())
+	Expect(tbl.Chains).To(HaveLen(2))
+	Expect(tbl.Chains).To(HaveKey("entry"))
+	Expect(tbl.Chains).To(HaveKey("admin"))
+	Expect(tbl.Chains["entry"].Rules).To(HaveLen(2))
+	Expect(tbl.Chains["admin"].Rules).To(HaveLen(1))
+}
+
+func TestEngineJumpChainAccept(t *testing.T) {
+	RegisterTestingT(t)
+
+	tbl, err := config.ConfigTableFromBytes([]byte(testChainsYAML), nil)
+	Expect(err).To(BeNil())
+
+	// Packet from 10.0.0.1 to port 80 (TCP) — should jump to admin and be accepted.
+	intent, err := config.IntentFromBytes([]byte(`
+name: admin http
+packet:
+  src_addr: 10.0.0.1
+  dst_addr: 1.1.1.1
+  proto: 6
+  src_port: 12345
+  dst_port: 80
+`))
+	Expect(err).To(BeNil())
+
+	engine := enginepkg.New(&config.Resource{
+		Tables:  []*table.Table{tbl},
+		Intents: []*config.Intent{intent},
+	})
+	results := engine.RunTests()
+
+	Expect(results[0].Verdict).To(HaveValue(Equal(rule.Accept)))
+}
+
+func TestEngineJumpChainNoMatchFallsThrough(t *testing.T) {
+	RegisterTestingT(t)
+
+	tbl, err := config.ConfigTableFromBytes([]byte(testChainsYAML), nil)
+	Expect(err).To(BeNil())
+
+	// Packet from 10.0.0.1 to port 443 — jumps to admin but admin has no rule for 443 → fall through → deny-all.
+	intent, err := config.IntentFromBytes([]byte(`
+name: admin https
+packet:
+  src_addr: 10.0.0.1
+  dst_addr: 1.1.1.1
+  proto: 6
+  src_port: 12345
+  dst_port: 443
+`))
+	Expect(err).To(BeNil())
+
+	engine := enginepkg.New(&config.Resource{
+		Tables:  []*table.Table{tbl},
+		Intents: []*config.Intent{intent},
+	})
+	results := engine.RunTests()
+
+	// admin chain returned without a verdict → continue in entry → deny-all (Drop)
+	Expect(results[0].Verdict).To(HaveValue(Equal(rule.Drop)))
+}
+
+func TestEngineJumpChainUnknownTargetError(t *testing.T) {
+	RegisterTestingT(t)
+
+	_, err := config.ConfigTableFromBytes([]byte(`
+name: bad-table
+chains:
+  - name: entry
+    rules:
+      - name: jump-nowhere
+        action: jump
+        jump_target: nonexistent
+default_action: Drop
+`), nil)
+	Expect(err).ToNot(BeNil())
+	Expect(err.Error()).To(ContainSubstring("unknown chain"))
 }
