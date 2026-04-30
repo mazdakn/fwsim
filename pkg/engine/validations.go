@@ -10,9 +10,11 @@ func (e *Engine) Validate() []string {
 
 func (e *Engine) validateAllRulesUsed() (o []string) {
 	for _, t := range e.resources.Tables {
-		for i, r := range t.Rules {
-			if r.PacketCount() == 0 {
-				o = append(o, fmt.Sprintf("Table %s Rule %d not used", t.Name, i))
+		for _, c := range t.Chains {
+			for i, r := range c.Rules {
+				if r.PacketCount() == 0 {
+					o = append(o, fmt.Sprintf("Table %s Chain %s Rule %d not used", t.Name, c.Name, i))
+				}
 			}
 		}
 	}

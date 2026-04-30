@@ -13,17 +13,34 @@ import (
 )
 
 type Table struct {
-	Name          string `yaml:"name"                   validate:"isNonEmpty"`
-	Order         uint64 `yaml:"order,omitempty"`
-	Rules         []Rule `yaml:"rules,omitempty"`
-	DefaultAction string `yaml:"default_action,omitempty" validate:"isValidAction"`
+	Name          string        `yaml:"name"                   validate:"isNonEmpty"`
+	Order         uint64        `yaml:"order,omitempty"`
+	Chains        []ChainConfig `yaml:"chains,omitempty"`
+	Rules         []Rule        `yaml:"rules,omitempty"` // legacy: wrapped in a "default" chain
+	DefaultAction string        `yaml:"default_action,omitempty" validate:"isValidAction"`
 }
 
 func (t *Table) Validate() error {
 	if err := validator.ValidateStructFields(t); err != nil {
 		return err
 	}
+	if len(t.Chains) > 0 && len(t.Rules) > 0 {
+		return fmt.Errorf("table %q cannot specify both 'chains' and 'rules'", t.Name)
+	}
+	seen := make(map[string]bool)
+	for _, c := range t.Chains {
+		if seen[c.Name] {
+			return fmt.Errorf("table %q has duplicate chain name %q", t.Name, c.Name)
+		}
+		seen[c.Name] = true
+	}
 	return nil
+}
+
+// ChainConfig represents the YAML configuration structure for a chain.
+type ChainConfig struct {
+	Name  string `yaml:"name" validate:"isNonEmpty"`
+	Rules []Rule `yaml:"rules,omitempty"`
 }
 
 // Endpoint groups the network, port, and interface match criteria for one traffic direction
@@ -93,6 +110,7 @@ type Rule struct {
 	NotDestination Endpoint      `yaml:"not_dst,omitempty"`
 	NotProto       []proto.Proto `yaml:"not_proto,omitempty"      validate:"isProtoValid"`
 	Action         string        `yaml:"action,omitempty"         validate:"isValidAction"`
+	JumpTarget     string        `yaml:"jump_target,omitempty"`
 }
 
 // ToRule converts a Rule config into a Rule domain object.
@@ -103,6 +121,11 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 	mRule.Name = r.Name
 	mRule.Order = r.Order
 	mRule.Action = rule.MustParseAction(r.Action)
+	mRule.JumpTarget = r.JumpTarget
+
+	if mRule.Action == rule.Jump && mRule.JumpTarget == "" {
+		return nil, fmt.Errorf("rule %q has jump action but no jump_target", r.Name)
+	}
 
 	if len(r.Protocol) > 0 {
 		mRule.Proto = set.NewProtoSet()
