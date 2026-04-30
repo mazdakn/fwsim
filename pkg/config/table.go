@@ -16,16 +16,12 @@ type Table struct {
 	Name          string        `yaml:"name"                   validate:"isNonEmpty"`
 	Order         uint64        `yaml:"order,omitempty"`
 	Chains        []ChainConfig `yaml:"chains,omitempty"`
-	Rules         []Rule        `yaml:"rules,omitempty"` // legacy: wrapped in a "default" chain
 	DefaultAction string        `yaml:"default_action,omitempty" validate:"isValidAction"`
 }
 
 func (t *Table) Validate() error {
 	if err := validator.ValidateStructFields(t); err != nil {
 		return err
-	}
-	if len(t.Chains) > 0 && len(t.Rules) > 0 {
-		return fmt.Errorf("table %q cannot specify both 'chains' and 'rules'", t.Name)
 	}
 	seen := make(map[string]bool)
 	for _, c := range t.Chains {

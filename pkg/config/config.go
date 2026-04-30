@@ -235,23 +235,9 @@ func toTable(t *Table, sets map[string]set.Set) (*table.Table, error) {
 
 	tbl := table.New(t.Name, t.Order, rule.MustParseAction(t.DefaultAction))
 
-	if len(t.Chains) > 0 {
-		// New explicit chains format.
-		for _, c := range t.Chains {
-			chain := table.NewChain(c.Name)
-			for _, r := range c.Rules {
-				mRule, err := r.ToRule(sets)
-				if err != nil {
-					return nil, err
-				}
-				chain.AddRule(mRule)
-			}
-			tbl.AddChain(chain)
-		}
-	} else {
-		// Legacy format: wrap top-level rules in the "default" chain.
-		chain := table.NewChain("default")
-		for _, r := range t.Rules {
+	for _, c := range t.Chains {
+		chain := table.NewChain(c.Name)
+		for _, r := range c.Rules {
 			mRule, err := r.ToRule(sets)
 			if err != nil {
 				return nil, err

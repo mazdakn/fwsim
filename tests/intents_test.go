@@ -34,14 +34,16 @@ func TestRunTestsBasicAcceptAndDrop(t *testing.T) {
 
 	tbl, err := config.ConfigTableFromBytes([]byte(`
 name: basic
-rules:
-  - name: allow-http
-    dst:
-      port: [80]
-    proto: [6]
-    action: Accept
-  - name: deny-all
-    action: Drop
+chains:
+  - name: default
+    rules:
+      - name: allow-http
+        dst:
+          port: [80]
+        proto: [6]
+        action: Accept
+      - name: deny-all
+        action: Drop
 default_action: Drop
 `), nil)
 	Expect(err).To(BeNil())
@@ -93,12 +95,14 @@ func TestRunTestsNoMatchReturnsNilVerdict(t *testing.T) {
 	// packet just flows through without a verdict.
 	tbl, err := config.ConfigTableFromBytes([]byte(`
 name: pass-all
-rules:
-  - name: pass-http
-    dst:
-      port: [80]
-    proto: [6]
-    action: Pass
+chains:
+  - name: default
+    rules:
+      - name: pass-http
+        dst:
+          port: [80]
+        proto: [6]
+        action: Pass
 default_action: Pass
 `), nil)
 	Expect(err).To(BeNil())
@@ -130,7 +134,9 @@ func TestRunTestsWrongExpectedVerdictDetected(t *testing.T) {
 
 	tbl, err := config.ConfigTableFromBytes([]byte(`
 name: strict-drop
-rules: []
+chains:
+  - name: default
+    rules: []
 default_action: Drop
 `), nil)
 	Expect(err).To(BeNil())
@@ -165,14 +171,16 @@ func TestRunTestsWrongExpectedRuleDetected(t *testing.T) {
 
 	tbl, err := config.ConfigTableFromBytes([]byte(`
 name: simple
-rules:
-  - name: allow-http
-    dst:
-      port: [80]
-    proto: [6]
-    action: Accept
-  - name: deny-all
-    action: Drop
+chains:
+  - name: default
+    rules:
+      - name: allow-http
+        dst:
+          port: [80]
+        proto: [6]
+        action: Accept
+      - name: deny-all
+        action: Drop
 default_action: Drop
 `), nil)
 	Expect(err).To(BeNil())
@@ -230,15 +238,17 @@ members:
 
 	tbl, err := config.ConfigTableFromBytes([]byte(`
 name: set-rules
-rules:
-  - name: allow-trusted-web
-    src:
-      sets: [trusted-nets]
-    dst:
-      sets: [web-ports]
-    action: Accept
-  - name: deny-all
-    action: Drop
+chains:
+  - name: default
+    rules:
+      - name: allow-trusted-web
+        src:
+          sets: [trusted-nets]
+        dst:
+          sets: [web-ports]
+        action: Accept
+      - name: deny-all
+        action: Drop
 default_action: Drop
 `), sets)
 	Expect(err).To(BeNil())
@@ -305,13 +315,15 @@ func TestRunTestsMultiTablePassContinuation(t *testing.T) {
 	filterTable, err := config.ConfigTableFromBytes([]byte(`
 name: filter
 order: 1
-rules:
-  - name: pass-internal
-    src:
-      net: [10.0.0.0/8]
-    action: Pass
-  - name: deny-external
-    action: Drop
+chains:
+  - name: default
+    rules:
+      - name: pass-internal
+        src:
+          net: [10.0.0.0/8]
+        action: Pass
+      - name: deny-external
+        action: Drop
 default_action: Drop
 `), nil)
 	Expect(err).To(BeNil())
@@ -319,19 +331,21 @@ default_action: Drop
 	forwardTable, err := config.ConfigTableFromBytes([]byte(`
 name: forward
 order: 2
-rules:
-  - name: allow-http
-    dst:
-      port: [80]
-    proto: [6]
-    action: Accept
-  - name: allow-https
-    dst:
-      port: [443]
-    proto: [6]
-    action: Accept
-  - name: deny-rest
-    action: Drop
+chains:
+  - name: default
+    rules:
+      - name: allow-http
+        dst:
+          port: [80]
+        proto: [6]
+        action: Accept
+      - name: allow-https
+        dst:
+          port: [443]
+        proto: [6]
+        action: Accept
+      - name: deny-rest
+        action: Drop
 default_action: Drop
 `), nil)
 	Expect(err).To(BeNil())
@@ -407,14 +421,16 @@ func TestRunTestsVaryingIntentCounts(t *testing.T) {
 
 	tbl, err := config.ConfigTableFromBytes([]byte(`
 name: main
-rules:
-  - name: allow-udp-dns
-    dst:
-      port: [53]
-    proto: [17]
-    action: Accept
-  - name: deny-all
-    action: Drop
+chains:
+  - name: default
+    rules:
+      - name: allow-udp-dns
+        dst:
+          port: [53]
+        proto: [17]
+        action: Accept
+      - name: deny-all
+        action: Drop
 default_action: Drop
 `), nil)
 	Expect(err).To(BeNil())
@@ -471,10 +487,12 @@ func TestRunTestsDefaultActionVerdict(t *testing.T) {
 
 	tbl, err := config.ConfigTableFromBytes([]byte(`
 name: accept-by-default
-rules:
-  - name: drop-udp
-    proto: [17]
-    action: Drop
+chains:
+  - name: default
+    rules:
+      - name: drop-udp
+        proto: [17]
+        action: Drop
 default_action: Accept
 `), nil)
 	Expect(err).To(BeNil())
@@ -525,13 +543,15 @@ func TestRunTestsWithIngressIface(t *testing.T) {
 
 	tbl, err := config.ConfigTableFromBytes([]byte(`
 name: iface-filter
-rules:
-  - name: allow-eth0-ingress
-    src:
-      iface: [eth0]
-    action: Accept
-  - name: deny-all
-    action: Drop
+chains:
+  - name: default
+    rules:
+      - name: allow-eth0-ingress
+        src:
+          iface: [eth0]
+        action: Accept
+      - name: deny-all
+        action: Drop
 default_action: Drop
 `), nil)
 	Expect(err).To(BeNil())
@@ -599,13 +619,15 @@ func TestRunTestsWithEgressIface(t *testing.T) {
 
 	tbl, err := config.ConfigTableFromBytes([]byte(`
 name: egress-filter
-rules:
-  - name: allow-eth0-egress
-    dst:
-      iface: [eth0]
-    action: Accept
-  - name: deny-all
-    action: Drop
+chains:
+  - name: default
+    rules:
+      - name: allow-eth0-egress
+        dst:
+          iface: [eth0]
+        action: Accept
+      - name: deny-all
+        action: Drop
 default_action: Drop
 `), nil)
 	Expect(err).To(BeNil())
@@ -671,13 +693,15 @@ members:
 
 	tbl, err := config.ConfigTableFromBytes([]byte(`
 name: iface-set-filter
-rules:
-  - name: allow-trusted-iface
-    src:
-      sets: [trusted-ifaces]
-    action: Accept
-  - name: deny-all
-    action: Drop
+chains:
+  - name: default
+    rules:
+      - name: allow-trusted-iface
+        src:
+          sets: [trusted-ifaces]
+        action: Accept
+      - name: deny-all
+        action: Drop
 default_action: Drop
 `), sets)
 	Expect(err).To(BeNil())
@@ -757,13 +781,15 @@ members:
 
 	tbl, err := config.ConfigTableFromBytes([]byte(`
 name: negated-iface-filter
-rules:
-  - name: allow-non-blocked
-    not_src:
-      sets: [blocked-ifaces]
-    action: Accept
-  - name: deny-all
-    action: Drop
+chains:
+  - name: default
+    rules:
+      - name: allow-non-blocked
+        not_src:
+          sets: [blocked-ifaces]
+        action: Accept
+      - name: deny-all
+        action: Drop
 default_action: Drop
 `), sets)
 	Expect(err).To(BeNil())

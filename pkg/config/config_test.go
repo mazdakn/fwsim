@@ -18,11 +18,13 @@ func TestConfigFromDirectory(t *testing.T) {
 
 	Expect(os.WriteFile(filepath.Join(dir, "tables", "tables.yaml"), []byte(`
 name: main
-rules:
-  - name: allow-http
-    dst:
-      port: [80]
-    action: Accept
+chains:
+  - name: default
+    rules:
+      - name: allow-http
+        dst:
+          port: [80]
+        action: Accept
 default_action: Drop
 `), 0o600)).To(Succeed())
 
@@ -70,13 +72,17 @@ func TestConfigTablesFromDirSortsByOrder(t *testing.T) {
 	Expect(os.WriteFile(filepath.Join(tablesDir, "a.yaml"), []byte(`
 name: first
 order: 10
-rules: []
+chains:
+  - name: default
+    rules: []
 default_action: Accept
 `), 0o600)).To(Succeed())
 	Expect(os.WriteFile(filepath.Join(tablesDir, "b.yaml"), []byte(`
 name: second
 order: 5
-rules: []
+chains:
+  - name: default
+    rules: []
 default_action: Drop
 `), 0o600)).To(Succeed())
 
@@ -96,13 +102,17 @@ func TestConfigTablesFromDirStableForEqualOrder(t *testing.T) {
 	Expect(os.WriteFile(filepath.Join(tablesDir, "a.yaml"), []byte(`
 name: first
 order: 10
-rules: []
+chains:
+  - name: default
+    rules: []
 default_action: Accept
 `), 0o600)).To(Succeed())
 	Expect(os.WriteFile(filepath.Join(tablesDir, "b.yaml"), []byte(`
 name: second
 order: 10
-rules: []
+chains:
+  - name: default
+    rules: []
 default_action: Drop
 `), 0o600)).To(Succeed())
 
@@ -136,7 +146,9 @@ func TestConfigFromDirectoryWithoutIntentsWhenNotRequested(t *testing.T) {
 	Expect(os.MkdirAll(filepath.Join(dir, "tables"), 0o755)).To(Succeed())
 	Expect(os.WriteFile(filepath.Join(dir, "tables", "tables.yaml"), []byte(`
 name: main
-rules: []
+chains:
+  - name: default
+    rules: []
 default_action: Accept
 `), 0o600)).To(Succeed())
 
