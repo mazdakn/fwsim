@@ -164,7 +164,7 @@ func TestTableMatchNoRuleAndDefaultPassReturnsNoMatchVerdict(t *testing.T) {
 	matched := tbl.Match(&m)
 
 	Expect(matched).To(BeFalse())
-	Expect(m.Verdict).To(HaveValue(Equal(rule.Pass)))
+	Expect(m.Verdict).To(BeNil())
 	Expect(m.Trace).To(HaveLen(1))
 	Expect(m.Trace[0].Name).To(Equal("table test default action"))
 	Expect(m.Trace[0].Action).To(Equal(rule.Pass))
@@ -278,4 +278,3 @@ func TestTableReturnActionReturnsToCallerChain(t *testing.T) {
 	Expect(m.Verdict).To(HaveValue(Equal(rule.Accept)))
 	Expect(m.Trace[len(m.Trace)-1].Name).To(Equal("accept-all"))
 }
-

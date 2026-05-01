@@ -41,6 +41,10 @@ func (a *Action) String() string {
 	}
 }
 
+func (a Action) IsTerminal() bool {
+	return a == Accept || a == Drop
+}
+
 func (a Action) Validate() error {
 	switch a {
 	case Accept, Drop, Pass, Jump, Return:

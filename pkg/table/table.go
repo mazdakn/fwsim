@@ -54,27 +54,34 @@ func (t *Table) SetEntryChain(name string) {
 func (t *Table) Match(matchContext *match.MatchContext) bool {
 	t.logCtx.Debugf("Matching packet %+v", matchContext.Packet)
 	entry, ok := t.Chains[t.entryChain]
-	if !ok {
-		panic(fmt.Sprintf("table %s: entry chain %q not found", t.Name, t.entryChain))
-	}
-	result := entry.match(matchContext, t.Chains)
-	switch result {
-	case chainDecided:
-		t.logCtx.Debugf("Chain determined verdict %s", matchContext.Verdict)
-		return true
-	case chainPass:
-		t.logCtx.Debugf("Chain pass action, continuing to next table")
-		return false
-	default: // chainContinue: entry chain fell through
-		if t.DefaultAction == nil {
-			panic("No rule matched and no default action is set")
+	if ok {
+		result := entry.match(matchContext, t.Chains)
+		switch result {
+		case chainDecided:
+			t.logCtx.Debugf("Chain determined verdict %s", matchContext.Verdict)
+			return true
+		case chainPass:
+			t.logCtx.Debugf("Chain pass action, continuing to next table")
+			return false
 		}
-		t.logCtx.Debugf("No rule matched, using default action %s", t.DefaultAction.Action.String())
-		t.DefaultAction.IncrementPacketCount()
-		matchContext.Trace = append(matchContext.Trace, t.DefaultAction)
-		matchContext.Verdict = &t.DefaultAction.Action
-		return t.DefaultAction.Action != rule.Pass
 	}
+	// chainContinue: entry chain fell through
+	t.logCtx.Debugf("No rule matched, using default action %v", t.DefaultAction.Action)
+	return t.MatchDefaultRule(matchContext)
+}
+
+func (t *Table) MatchDefaultRule(mc *match.MatchContext) bool {
+	if t.DefaultAction != nil {
+		t.DefaultAction.IncrementPacketCount()
+		mc.Trace = append(mc.Trace, t.DefaultAction)
+		if t.DefaultAction.Action.IsTerminal() {
+			mc.Verdict = &t.DefaultAction.Action
+			return true
+		}
+		return false
+	}
+	return false
+
 }
 
 func SortTables(tables []*Table) {
