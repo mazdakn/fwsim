@@ -599,7 +599,7 @@ func TestLoadRulesFromBytes(t *testing.T) {
 	Expect(rule2.Action.String()).To(Equal("Drop"))
 
 	// Verify default action is set
-	Expect(tbl.DefaultAction.Action.String()).To(Equal("Accept"))
+	Expect(tbl.DefaultRule.Action.String()).To(Equal("Accept"))
 }
 
 const testChainsYAML = `
