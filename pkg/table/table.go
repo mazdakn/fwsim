@@ -16,7 +16,7 @@ type Table struct {
 	Order         uint64
 	Chains        map[string]*Chain
 	entryChain    string
-	DefaultAction *rule.Rule
+	DefaultRule *rule.Rule
 	logCtx        *logrus.Entry
 }
 
@@ -25,7 +25,7 @@ func New(name string, order uint64, defaultAction rule.Action) *Table {
 		Name:   name,
 		Order:  order,
 		Chains: make(map[string]*Chain),
-		DefaultAction: rule.New(
+		DefaultRule: rule.New(
 			rule.WithAction(defaultAction),
 			rule.WithName(fmt.Sprintf("table %s default action", name)),
 		),
@@ -66,16 +66,16 @@ func (t *Table) Match(mc *match.MatchContext) bool {
 		}
 	}
 	// chainContinue: entry chain fell through
-	t.logCtx.Debugf("No rule matched, using default action %v", t.DefaultAction.Action)
+	t.logCtx.Debugf("No rule matched, using default action %v", t.DefaultRule.Action)
 	return t.MatchDefaultRule(mc)
 }
 
 func (t *Table) MatchDefaultRule(mc *match.MatchContext) bool {
-	if t.DefaultAction != nil {
-		t.DefaultAction.IncrementPacketCount()
-		mc.Trace = append(mc.Trace, t.DefaultAction)
-		if t.DefaultAction.Action.IsTerminal() {
-			mc.Verdict = &t.DefaultAction.Action
+	if t.DefaultRule != nil {
+		t.DefaultRule.IncrementPacketCount()
+		mc.Trace = append(mc.Trace, t.DefaultRule)
+		if t.DefaultRule.Action.IsTerminal() {
+			mc.Verdict = &t.DefaultRule.Action
 			return true
 		}
 		return false
