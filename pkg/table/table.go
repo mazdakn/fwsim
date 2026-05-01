@@ -66,12 +66,12 @@ func (t *Table) Match(mc *match.MatchContext) bool {
 		}
 	}
 	// chainContinue: entry chain fell through
-	t.logCtx.Debugf("No rule matched, using default action %v", t.DefaultRule.Action)
 	return t.MatchDefaultRule(mc)
 }
 
 func (t *Table) MatchDefaultRule(mc *match.MatchContext) bool {
 	if t.DefaultRule != nil {
+		t.logCtx.Debugf("No rule matched, using default action %v", t.DefaultRule.Action)
 		t.DefaultRule.IncrementPacketCount()
 		mc.Trace = append(mc.Trace, t.DefaultRule)
 		if t.DefaultRule.Action.IsTerminal() {
@@ -80,8 +80,8 @@ func (t *Table) MatchDefaultRule(mc *match.MatchContext) bool {
 		}
 		return false
 	}
+	t.logCtx.Debugf("No rule matched and no default rule set")
 	return false
-
 }
 
 func SortTables(tables []*Table) {

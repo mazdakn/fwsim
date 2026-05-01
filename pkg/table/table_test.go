@@ -242,6 +242,29 @@ func TestTableJumpChainNoMatchReturnsToCaller(t *testing.T) {
 	Expect(mc.Verdict).To(HaveValue(Equal(rule.Drop)))
 }
 
+func TestTableMatchNilDefaultRuleReturnsNoMatch(t *testing.T) {
+	RegisterTestingT(t)
+
+	tbl := New("test", 0, rule.Drop)
+	tbl.DefaultRule = nil
+	chain := NewChain("main")
+	tbl.AddChain(chain)
+
+	pkt := packet.New(
+		packet.WithSrcAddr("10.0.0.1"),
+		packet.WithDstAddr("1.1.1.1"),
+		packet.WithProto(6),
+		packet.WithDstPort(80),
+	)
+
+	mc := match.MatchContext{Packet: pkt}
+	matched := tbl.Match(&mc)
+
+	Expect(matched).To(BeFalse())
+	Expect(mc.Verdict).To(BeNil())
+	Expect(mc.Trace).To(BeEmpty())
+}
+
 func TestTableReturnActionReturnsToCallerChain(t *testing.T) {
 	RegisterTestingT(t)
 
