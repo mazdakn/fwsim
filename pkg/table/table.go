@@ -51,14 +51,14 @@ func (t *Table) SetEntryChain(name string) {
 	t.entryChain = name
 }
 
-func (t *Table) Match(matchContext *match.MatchContext) bool {
-	t.logCtx.Debugf("Matching packet %+v", matchContext.Packet)
+func (t *Table) Match(mc *match.MatchContext) bool {
+	t.logCtx.Debugf("Matching packet %+v", mc.Packet)
 	entry, ok := t.Chains[t.entryChain]
 	if ok {
-		result := entry.match(matchContext, t.Chains)
+		result := entry.match(mc, t.Chains)
 		switch result {
 		case chainDecided:
-			t.logCtx.Debugf("Chain determined verdict %s", matchContext.Verdict)
+			t.logCtx.Debugf("Chain determined verdict %s", mc.Verdict)
 			return true
 		case chainPass:
 			t.logCtx.Debugf("Chain pass action, continuing to next table")
@@ -67,7 +67,7 @@ func (t *Table) Match(matchContext *match.MatchContext) bool {
 	}
 	// chainContinue: entry chain fell through
 	t.logCtx.Debugf("No rule matched, using default action %v", t.DefaultAction.Action)
-	return t.MatchDefaultRule(matchContext)
+	return t.MatchDefaultRule(mc)
 }
 
 func (t *Table) MatchDefaultRule(mc *match.MatchContext) bool {
