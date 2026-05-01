@@ -66,7 +66,11 @@ func (t *Table) Match(mc *match.MatchContext) bool {
 		}
 	}
 	// chainContinue: entry chain fell through
-	t.logCtx.Debugf("No rule matched, using default action %v", t.DefaultRule.Action)
+	if t.DefaultRule != nil {
+		t.logCtx.Debugf("No rule matched, using default action %v", t.DefaultRule.Action)
+	} else {
+		t.logCtx.Debugf("No rule matched and no default rule set")
+	}
 	return t.MatchDefaultRule(mc)
 }
 
