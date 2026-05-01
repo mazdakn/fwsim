@@ -1,25 +1,27 @@
 name: main
 order: 10
-rules:
-  - name: allow-192.168-to-1.1.1.1
-    src:
-      net: [192.168.1.0/24]
-      port: [30000]
-    dst:
-      net: [1.1.1.1/32]
-      port: [80]
-    proto: [7]
-    action: Accept
-  - name: deny-access-http
-    dst:
-      net: [1.1.1.1/32]
-      port: [80]
-    proto: [7]
-    action: Drop
-  - name: deny-tcp-8080
-    dst:
-      net: [2.2.2.2/32]
-      port: [8080]
-    proto: [7]
-    action: Drop
+chains:
+  - name: default
+    rules:
+      - name: allow-192.168-to-1.1.1.1
+        src:
+          net: [192.168.1.0/24]
+          port: [30000]
+        dst:
+          net: [1.1.1.1/32]
+          port: [80]
+        proto: [7]
+        action: Accept
+      - name: deny-access-http
+        dst:
+          net: [1.1.1.1/32]
+          port: [80]
+        proto: [7]
+        action: Drop
+      - name: deny-tcp-8080
+        dst:
+          net: [2.2.2.2/32]
+          port: [8080]
+        proto: [7]
+        action: Drop
 default_action: Accept
