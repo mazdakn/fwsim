@@ -86,9 +86,9 @@ func TestTableMatchUsesAscendingOrder(t *testing.T) {
 	chain.AddRule(lowOrderAccept)
 	tbl.AddChain(chain)
 
-	m := match.MatchContext{Packet: pkt}
-	tbl.Match(&m)
-	Expect(m.Verdict).To(HaveValue(Equal(rule.Accept)))
+	mc := match.MatchContext{Packet: pkt}
+	tbl.Match(&mc)
+	Expect(mc.Verdict).To(HaveValue(Equal(rule.Accept)))
 }
 
 func TestTableMatchPassContinuesToNextTable(t *testing.T) {
@@ -109,13 +109,13 @@ func TestTableMatchPassContinuesToNextTable(t *testing.T) {
 	chain.AddRule(passRule)
 	tbl.AddChain(chain)
 
-	m := match.MatchContext{Packet: pkt}
-	matched := tbl.Match(&m)
+	mc := match.MatchContext{Packet: pkt}
+	matched := tbl.Match(&mc)
 
 	Expect(matched).To(BeFalse())
-	Expect(m.Verdict).To(HaveValue(Equal(rule.Pass)))
-	Expect(m.Trace).To(HaveLen(1))
-	Expect(m.Trace[0].Name).To(Equal("pass-http"))
+	Expect(mc.Verdict).To(HaveValue(Equal(rule.Pass)))
+	Expect(mc.Trace).To(HaveLen(1))
+	Expect(mc.Trace[0].Name).To(Equal("pass-http"))
 }
 
 func TestTableMatchPassRuleDoesNotEvaluateDefaultAction(t *testing.T) {
@@ -137,13 +137,13 @@ func TestTableMatchPassRuleDoesNotEvaluateDefaultAction(t *testing.T) {
 	chain.AddRule(passRule)
 	tbl.AddChain(chain)
 
-	m := match.MatchContext{Packet: pkt}
-	matched := tbl.Match(&m)
+	mc := match.MatchContext{Packet: pkt}
+	matched := tbl.Match(&mc)
 
 	Expect(matched).To(BeFalse())
-	Expect(m.Verdict).To(HaveValue(Equal(rule.Pass)))
-	Expect(m.Trace).To(HaveLen(1))
-	Expect(m.Trace[0].Name).To(Equal("pass-http"))
+	Expect(mc.Verdict).To(HaveValue(Equal(rule.Pass)))
+	Expect(mc.Trace).To(HaveLen(1))
+	Expect(mc.Trace[0].Name).To(Equal("pass-http"))
 }
 
 func TestTableMatchNoRuleAndDefaultPassReturnsNoMatchVerdict(t *testing.T) {
@@ -160,14 +160,14 @@ func TestTableMatchNoRuleAndDefaultPassReturnsNoMatchVerdict(t *testing.T) {
 		packet.WithDstPort(80),
 	)
 
-	m := match.MatchContext{Packet: pkt}
-	matched := tbl.Match(&m)
+	mc := match.MatchContext{Packet: pkt}
+	matched := tbl.Match(&mc)
 
 	Expect(matched).To(BeFalse())
-	Expect(m.Verdict).To(BeNil())
-	Expect(m.Trace).To(HaveLen(1))
-	Expect(m.Trace[0].Name).To(Equal("table test default action"))
-	Expect(m.Trace[0].Action).To(Equal(rule.Pass))
+	Expect(mc.Verdict).To(BeNil())
+	Expect(mc.Trace).To(HaveLen(1))
+	Expect(mc.Trace[0].Name).To(Equal("table test default action"))
+	Expect(mc.Trace[0].Action).To(Equal(rule.Pass))
 }
 
 func TestTableJumpToChainAndReturn(t *testing.T) {
@@ -197,14 +197,14 @@ func TestTableJumpToChainAndReturn(t *testing.T) {
 	tbl.AddChain(mainChain)
 	tbl.AddChain(helperChain)
 
-	m := match.MatchContext{Packet: pkt}
-	matched := tbl.Match(&m)
+	mc := match.MatchContext{Packet: pkt}
+	matched := tbl.Match(&mc)
 
 	Expect(matched).To(BeTrue())
-	Expect(m.Verdict).To(HaveValue(Equal(rule.Accept)))
-	Expect(m.Trace).To(HaveLen(2))
-	Expect(m.Trace[0].Name).To(Equal("jump-to-helper"))
-	Expect(m.Trace[1].Name).To(Equal("accept-http"))
+	Expect(mc.Verdict).To(HaveValue(Equal(rule.Accept)))
+	Expect(mc.Trace).To(HaveLen(2))
+	Expect(mc.Trace[0].Name).To(Equal("jump-to-helper"))
+	Expect(mc.Trace[1].Name).To(Equal("accept-http"))
 }
 
 func TestTableJumpChainNoMatchReturnsToCaller(t *testing.T) {
@@ -234,12 +234,12 @@ func TestTableJumpChainNoMatchReturnsToCaller(t *testing.T) {
 	tbl.AddChain(mainChain)
 	tbl.AddChain(helperChain)
 
-	m := match.MatchContext{Packet: pkt}
-	matched := tbl.Match(&m)
+	mc := match.MatchContext{Packet: pkt}
+	matched := tbl.Match(&mc)
 
 	// helper chain returned, entry chain fell through → default Drop
 	Expect(matched).To(BeTrue())
-	Expect(m.Verdict).To(HaveValue(Equal(rule.Drop)))
+	Expect(mc.Verdict).To(HaveValue(Equal(rule.Drop)))
 }
 
 func TestTableReturnActionReturnsToCallerChain(t *testing.T) {
@@ -270,11 +270,11 @@ func TestTableReturnActionReturnsToCallerChain(t *testing.T) {
 	tbl.AddChain(mainChain)
 	tbl.AddChain(helperChain)
 
-	m := match.MatchContext{Packet: pkt}
-	matched := tbl.Match(&m)
+	mc := match.MatchContext{Packet: pkt}
+	matched := tbl.Match(&mc)
 
 	// Return in helper → continues in main after jump-to-helper → accept-all
 	Expect(matched).To(BeTrue())
-	Expect(m.Verdict).To(HaveValue(Equal(rule.Accept)))
-	Expect(m.Trace[len(m.Trace)-1].Name).To(Equal("accept-all"))
+	Expect(mc.Verdict).To(HaveValue(Equal(rule.Accept)))
+	Expect(mc.Trace[len(mc.Trace)-1].Name).To(Equal("accept-all"))
 }

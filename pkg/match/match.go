@@ -22,49 +22,49 @@ type MatchContextOption func(*MatchContext)
 
 // WithExpectedVerdict sets the verdict the intent expects the packet to receive.
 func WithExpectedVerdict(a rule.Action) MatchContextOption {
-	return func(m *MatchContext) {
-		m.ExpectedVerdict = &a
+	return func(mc *MatchContext) {
+		mc.ExpectedVerdict = &a
 	}
 }
 
 // WithExpectedRule sets the name of the rule expected to be the decisive match.
 func WithExpectedRule(name string) MatchContextOption {
-	return func(m *MatchContext) {
-		m.HitByRule = name
+	return func(mc *MatchContext) {
+		mc.HitByRule = name
 	}
 }
 
 func New(pkt *packet.Packet, opts ...MatchContextOption) *MatchContext {
-	m := &MatchContext{
+	mc := &MatchContext{
 		Packet: pkt,
 	}
 	for _, opt := range opts {
-		opt(m)
+		opt(mc)
 	}
-	return m
+	return mc
 }
 
 // VerdictMatches reports whether the actual verdict satisfies the intent.
 // Returns true when no expected verdict was specified (nil).
-func (m *MatchContext) VerdictMatches() bool {
-	if m.ExpectedVerdict == nil {
+func (mc *MatchContext) VerdictMatches() bool {
+	if mc.ExpectedVerdict == nil {
 		return true
 	}
-	if m.Verdict == nil {
+	if mc.Verdict == nil {
 		return false
 	}
-	return *m.ExpectedVerdict == *m.Verdict
+	return *mc.ExpectedVerdict == *mc.Verdict
 }
 
 // RuleMatches reports whether the expected rule was the decisive rule that
 // determined the verdict. Returns true when no expected rule was specified.
 // Returns false when the verdict is nil (no rule fired).
-func (m *MatchContext) RuleMatches() bool {
-	if m.HitByRule == "" {
+func (mc *MatchContext) RuleMatches() bool {
+	if mc.HitByRule == "" {
 		return true
 	}
-	if m.Verdict == nil || len(m.Trace) == 0 {
+	if mc.Verdict == nil || len(mc.Trace) == 0 {
 		return false
 	}
-	return m.Trace[len(m.Trace)-1].Name == m.HitByRule
+	return mc.Trace[len(mc.Trace)-1].Name == mc.HitByRule
 }

@@ -146,16 +146,16 @@ func runPackets(cmd *cobra.Command, args []string) {
 	printValidations(e.Validate())
 }
 
-func printResult(m *match.MatchContext) {
-	fmt.Printf("Packet: %s  Verdict: %s\n", m.Packet, m.Verdict)
-	if len(m.Trace) == 0 {
+func printResult(mc *match.MatchContext) {
+	fmt.Printf("Packet: %s  Verdict: %s\n", mc.Packet, mc.Verdict)
+	if len(mc.Trace) == 0 {
 		return
 	}
 	t := tablewriter.NewWriter(os.Stdout)
 	t.SetHeader([]string{"Rule", "Action", "Hit Count"})
 	t.SetBorder(true)
 	t.SetRowLine(true)
-	for _, r := range m.Trace {
+	for _, r := range mc.Trace {
 		t.Append([]string{
 			r.String(),
 			r.Action.String(),
@@ -165,19 +165,19 @@ func printResult(m *match.MatchContext) {
 	t.Render()
 }
 
-func printIntentResult(m *match.MatchContext) {
-	if m.ExpectedVerdict != nil {
-		if m.VerdictMatches() {
-			fmt.Printf("  [OK] Verdict matches expected: %s\n", m.ExpectedVerdict)
+func printIntentResult(mc *match.MatchContext) {
+	if mc.ExpectedVerdict != nil {
+		if mc.VerdictMatches() {
+			fmt.Printf("  [OK] Verdict matches expected: %s\n", mc.ExpectedVerdict)
 		} else {
-			fmt.Printf("  [FAIL] Verdict mismatch: expected %s, got %s\n", m.ExpectedVerdict, m.Verdict)
+			fmt.Printf("  [FAIL] Verdict mismatch: expected %s, got %s\n", mc.ExpectedVerdict, mc.Verdict)
 		}
 	}
-	if m.HitByRule != "" {
-		if m.RuleMatches() {
-			fmt.Printf("  [OK] Rule matched as expected: %s\n", m.HitByRule)
+	if mc.HitByRule != "" {
+		if mc.RuleMatches() {
+			fmt.Printf("  [OK] Rule matched as expected: %s\n", mc.HitByRule)
 		} else {
-			fmt.Printf("  [FAIL] Rule mismatch: expected rule %q to match, but it did not\n", m.HitByRule)
+			fmt.Printf("  [FAIL] Rule mismatch: expected rule %q to match, but it did not\n", mc.HitByRule)
 		}
 	}
 }
