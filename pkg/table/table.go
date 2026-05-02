@@ -51,6 +51,11 @@ func (t *Table) SetEntryChain(name string) {
 	t.entryChain = name
 }
 
+// EntryChain returns the name of the entry chain for this table.
+func (t *Table) EntryChain() string {
+	return t.entryChain
+}
+
 func (t *Table) Match(mc *match.MatchContext) bool {
 	t.logCtx.Debugf("Matching packet %+v", mc.Packet)
 	entry, ok := t.Chains[t.entryChain]

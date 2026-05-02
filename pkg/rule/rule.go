@@ -490,10 +490,24 @@ func (r *Rule) ResetPacketCount() {
 	r.packetCount.Reset()
 }
 
+// String returns the rule's name when one is set, otherwise a compact
+// description of its match conditions and action (see Description).
 func (r *Rule) String() string {
 	if r.Name != "" {
 		return r.Name
 	}
+	return r.Description()
+}
+
+// Description always returns a compact representation of the rule's action
+// and match conditions, regardless of whether a name is set.
+func (r *Rule) Description() string {
+	return fmt.Sprintf("%s %s", &r.Action, r.MatchConditions())
+}
+
+// MatchConditions returns a compact string describing only the match criteria
+// (protocol, source, destination, interfaces) without the action.
+func (r *Rule) MatchConditions() string {
 	proto := "*"
 	switch {
 	case r.Proto != nil && r.NotProto != nil:
@@ -555,7 +569,7 @@ func (r *Rule) String() string {
 	dstNet = appendSetStrings(dstNet, filterEndpointSetsByType(r.Destination.Sets, set.TypeIP))
 	dstNet = appendNotSetStrings(dstNet, filterEndpointSetsByType(r.NotDestination.Sets, set.TypeIP))
 
-	base := fmt.Sprintf("%s %s{%s:%s->%s:%s}", &r.Action, proto, srcNet, srcPort, dstNet, dstPort)
+	base := fmt.Sprintf("%s{%s:%s->%s:%s}", proto, srcNet, srcPort, dstNet, dstPort)
 
 	ingressIfaceSets := filterEndpointSetsByType(r.Source.Sets, set.TypeIface)
 	notIngressIfaceSets := filterEndpointSetsByType(r.NotSource.Sets, set.TypeIface)
