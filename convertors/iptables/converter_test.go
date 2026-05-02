@@ -11,13 +11,17 @@ import (
 	"github.com/mazdakn/fwsim/pkg/rule"
 )
 
-// parseIP is a test helper that parses a dotted IPv4 string into a net.IP.
+// parseIP is a test helper that parses an IP address string into a net.IP.
+// IPv4 addresses are returned as 4-byte form; IPv6 as 16-byte form.
 func parseIP(s string) net.IP {
 	ip := net.ParseIP(s)
 	if ip == nil {
 		panic("invalid IP: " + s)
 	}
-	return ip.To4()
+	if v4 := ip.To4(); v4 != nil {
+		return v4
+	}
+	return ip
 }
 
 // ── basic table / chain structure ────────────────────────────────────────────

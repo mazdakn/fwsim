@@ -153,7 +153,7 @@ func Convert(input string) ([]*table.Table, error) {
 	return result, nil
 }
 
-// tokenize splits a rule line into tokens, respecting quoted strings.
+// tokenize splits a rule line into tokens.
 func tokenize(s string) []string {
 	return strings.Fields(s)
 }
