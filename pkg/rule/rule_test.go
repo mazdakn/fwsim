@@ -5,6 +5,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/mazdakn/fwsim/pkg/conntrack"
 	"github.com/mazdakn/fwsim/pkg/packet"
 	"github.com/mazdakn/fwsim/pkg/proto"
 	"github.com/mazdakn/fwsim/pkg/set"
@@ -122,6 +123,57 @@ func TestRuleMatchV6(t *testing.T) {
 			Expect(r.Match(pktShouldNotMatch)).To(BeFalse())
 		})
 	}
+}
+
+func TestRuleConntrackStateMatch(t *testing.T) {
+	RegisterTestingT(t)
+
+	pkt := packet.New(
+		packet.WithSrcAddr("10.0.0.1"),
+		packet.WithSrcPort(12345),
+		packet.WithDstAddr("1.1.1.1"),
+		packet.WithDstPort(80),
+		packet.WithProto(proto.TCP),
+	)
+	r := New(
+		WithProto(proto.TCP),
+		WithDstPort(80),
+		WithConnState(conntrack.StateEstablished),
+	)
+
+	Expect(r.MatchWithConntrackState(pkt, conntrack.StateEstablished)).To(BeTrue())
+	Expect(r.MatchWithConntrackState(pkt, conntrack.StateNew)).To(BeFalse())
+}
+
+func TestRuleNegatedConntrackStateMatch(t *testing.T) {
+	RegisterTestingT(t)
+
+	pkt := packet.New(
+		packet.WithSrcAddr("10.0.0.1"),
+		packet.WithSrcPort(12345),
+		packet.WithDstAddr("1.1.1.1"),
+		packet.WithDstPort(80),
+		packet.WithProto(proto.TCP),
+	)
+	r := New(
+		WithProto(proto.TCP),
+		WithDstPort(80),
+		WithNotConnState(conntrack.StateEstablished),
+	)
+
+	Expect(r.MatchWithConntrackState(pkt, conntrack.StateNew)).To(BeTrue())
+	Expect(r.MatchWithConntrackState(pkt, conntrack.StateEstablished)).To(BeFalse())
+}
+
+func TestRuleMatchConditionsIncludeConntrackState(t *testing.T) {
+	RegisterTestingT(t)
+
+	r := New(
+		WithConnState(conntrack.StateNew),
+		WithNotConnState(conntrack.StateEstablished),
+	)
+
+	Expect(r.MatchConditions()).To(ContainSubstring("ct_state=new,!established"))
 }
 
 func TestActionString(t *testing.T) {

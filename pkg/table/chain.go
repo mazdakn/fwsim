@@ -55,7 +55,7 @@ func (c *Chain) AddRule(r *rule.Rule) {
 func (c *Chain) match(mc *match.MatchContext, chains map[string]*Chain) chainMatchResult {
 	for _, r := range c.Rules {
 		mc.Trace = append(mc.Trace, r)
-		if r.Match(mc.Packet) {
+		if r.MatchWithConntrackState(mc.Packet, mc.ConnState) {
 			switch r.Action {
 			case rule.Accept, rule.Drop:
 				mc.Verdict = &r.Action

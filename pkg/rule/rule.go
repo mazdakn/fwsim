@@ -5,6 +5,7 @@ import (
 	"net"
 	"strings"
 
+	"github.com/mazdakn/fwsim/pkg/conntrack"
 	"github.com/mazdakn/fwsim/pkg/counter"
 	"github.com/mazdakn/fwsim/pkg/packet"
 	"github.com/mazdakn/fwsim/pkg/proto"
@@ -102,6 +103,18 @@ func WithJump(chainName string) RuleOption {
 func WithAction(action Action) RuleOption {
 	return func(r *Rule) {
 		r.Action = action
+	}
+}
+
+func WithConnState(state conntrack.State) RuleOption {
+	return func(r *Rule) {
+		r.ConnState = append(r.ConnState, state)
+	}
+}
+
+func WithNotConnState(state conntrack.State) RuleOption {
+	return func(r *Rule) {
+		r.NotConnState = append(r.NotConnState, state)
 	}
 }
 
@@ -409,6 +422,8 @@ type Rule struct {
 	NotSource      Endpoint
 	NotDestination Endpoint
 	NotProto       *set.ProtoSet
+	ConnState      []conntrack.State
+	NotConnState   []conntrack.State
 
 	Action     Action
 	JumpTarget string // name of the chain to jump to when Action == Jump
@@ -417,6 +432,19 @@ type Rule struct {
 }
 
 func (r *Rule) Match(pkt *packet.Packet) bool {
+	return r.MatchWithConntrackState(pkt, conntrack.StateNew)
+}
+
+func (r *Rule) MatchWithConntrackState(pkt *packet.Packet, state conntrack.State) bool {
+	if state == "" {
+		state = conntrack.StateNew
+	}
+	if len(r.ConnState) > 0 && !matchConnState(r.ConnState, state) {
+		return false
+	}
+	if len(r.NotConnState) > 0 && matchConnState(r.NotConnState, state) {
+		return false
+	}
 	if r.Proto != nil && !r.Proto.Match(pkt.Proto) {
 		return false
 	}
@@ -610,7 +638,31 @@ func (r *Rule) MatchConditions() string {
 		iface = appendNotSetStrings(iface, notEgressIfaceSets)
 		base += " egress_iface=" + iface
 	}
+	if len(r.ConnState) > 0 || len(r.NotConnState) > 0 {
+		connStates := formatConnStates(r.ConnState, r.NotConnState)
+		base += " ct_state=" + connStates
+	}
 	return base
+}
+
+func matchConnState(states []conntrack.State, state conntrack.State) bool {
+	for _, candidate := range states {
+		if candidate == state {
+			return true
+		}
+	}
+	return false
+}
+
+func formatConnStates(states []conntrack.State, notStates []conntrack.State) string {
+	parts := make([]string, 0, len(states)+len(notStates))
+	for _, state := range states {
+		parts = append(parts, state.String())
+	}
+	for _, state := range notStates {
+		parts = append(parts, "!"+state.String())
+	}
+	return strings.Join(parts, ",")
 }
 
 // matchAllNamedSets returns true when every set in sets matches the packet

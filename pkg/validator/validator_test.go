@@ -223,6 +223,15 @@ func TestValidateSetType(t *testing.T) {
 	Expect(validator.ValidateSetType("bad")).To(BeFalse())
 }
 
+func TestValidateConnState(t *testing.T) {
+	RegisterTestingT(t)
+
+	Expect(validator.ValidateConnState("new")).To(BeTrue())
+	Expect(validator.ValidateConnState("ESTABLISHED")).To(BeTrue())
+	Expect(validator.ValidateConnState("related")).To(BeFalse())
+	Expect(validator.ValidateConnState("")).To(BeFalse())
+}
+
 func TestValidateStructFieldsRecursiveSlice(t *testing.T) {
 	RegisterTestingT(t)
 
@@ -318,6 +327,24 @@ func TestConfigValidateValid(t *testing.T) {
 	}
 	err := c.Validate()
 	Expect(err).To(BeNil())
+}
+
+func TestConfigValidateInvalidConnState(t *testing.T) {
+	RegisterTestingT(t)
+
+	c := &config.Table{
+		Name: "main",
+		Chains: []config.Chain{
+			{Name: "default", Rules: []config.Rule{
+				{ConnState: []string{"invalid"}, Action: "Accept"},
+			}},
+		},
+		DefaultAction: "Drop",
+	}
+
+	err := c.Validate()
+	Expect(err).ToNot(BeNil())
+	Expect(err.Error()).To(ContainSubstring("invalid ct_state"))
 }
 
 func TestConfigValidateInvalidPortTag(t *testing.T) {

@@ -8,6 +8,7 @@ import (
 	"github.com/mazdakn/fwsim/pkg/set"
 	. "github.com/onsi/gomega"
 )
+
 func TestConfigFromDirectory(t *testing.T) {
 	RegisterTestingT(t)
 
@@ -200,4 +201,35 @@ members: ["443"]
 	Expect(err).ToNot(BeNil())
 	Expect(err.Error()).To(ContainSubstring("duplicate set"))
 	Expect(sets).To(BeNil())
+}
+
+func TestConfigIntentsFromDirSortsByFilename(t *testing.T) {
+	RegisterTestingT(t)
+
+	dir := filepath.Join(t.TempDir(), "intents")
+	Expect(os.MkdirAll(dir, 0o755)).To(Succeed())
+	Expect(os.WriteFile(filepath.Join(dir, "20-reply.yaml"), []byte(`
+name: reply
+packet:
+  src_addr: 1.1.1.1
+  dst_addr: 10.0.0.1
+  proto: 6
+  src_port: 80
+  dst_port: 12345
+`), 0o600)).To(Succeed())
+	Expect(os.WriteFile(filepath.Join(dir, "10-request.yaml"), []byte(`
+name: request
+packet:
+  src_addr: 10.0.0.1
+  dst_addr: 1.1.1.1
+  proto: 6
+  src_port: 12345
+  dst_port: 80
+`), 0o600)).To(Succeed())
+
+	intents, err := ConfigIntentsFromDir(dir)
+	Expect(err).To(BeNil())
+	Expect(intents).To(HaveLen(2))
+	Expect(intents[0].Name).To(Equal("request"))
+	Expect(intents[1].Name).To(Equal("reply"))
 }

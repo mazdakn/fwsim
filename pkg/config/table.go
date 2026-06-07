@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/goccy/go-yaml"
+	"github.com/mazdakn/fwsim/pkg/conntrack"
 	"github.com/mazdakn/fwsim/pkg/port"
 	"github.com/mazdakn/fwsim/pkg/proto"
 	"github.com/mazdakn/fwsim/pkg/rule"
@@ -13,10 +14,10 @@ import (
 )
 
 type Table struct {
-	Name          string        `yaml:"name"                   validate:"isNonEmpty"`
-	Order         uint64        `yaml:"order,omitempty"`
+	Name          string  `yaml:"name"                   validate:"isNonEmpty"`
+	Order         uint64  `yaml:"order,omitempty"`
 	Chains        []Chain `yaml:"chains,omitempty"`
-	DefaultAction string        `yaml:"default_action,omitempty" validate:"isValidAction"`
+	DefaultAction string  `yaml:"default_action,omitempty" validate:"isValidAction"`
 }
 
 func (t *Table) Validate() error {
@@ -102,9 +103,11 @@ type Rule struct {
 	Source         Endpoint      `yaml:"src,omitempty"`
 	Destination    Endpoint      `yaml:"dst,omitempty"`
 	Protocol       []proto.Proto `yaml:"proto,omitempty"          validate:"isProtoValid"`
+	ConnState      []string      `yaml:"ct_state,omitempty"       validate:"isValidConnState"`
 	NotSource      Endpoint      `yaml:"not_src,omitempty"`
 	NotDestination Endpoint      `yaml:"not_dst,omitempty"`
 	NotProto       []proto.Proto `yaml:"not_proto,omitempty"      validate:"isProtoValid"`
+	NotConnState   []string      `yaml:"not_ct_state,omitempty"   validate:"isValidConnState"`
 	Action         string        `yaml:"action,omitempty"         validate:"isValidAction"`
 	JumpTarget     string        `yaml:"jump_target,omitempty"`
 }
@@ -139,6 +142,22 @@ func (r *Rule) ToRule(sets map[string]set.Set) (*rule.Rule, error) {
 				return nil, err
 			}
 		}
+	}
+
+	for _, rawState := range r.ConnState {
+		state, err := conntrack.ParseState(rawState)
+		if err != nil {
+			return nil, err
+		}
+		mRule.ConnState = append(mRule.ConnState, state)
+	}
+
+	for _, rawState := range r.NotConnState {
+		state, err := conntrack.ParseState(rawState)
+		if err != nil {
+			return nil, err
+		}
+		mRule.NotConnState = append(mRule.NotConnState, state)
 	}
 
 	var err error

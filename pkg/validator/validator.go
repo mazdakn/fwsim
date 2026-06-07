@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/mazdakn/fwsim/pkg/conntrack"
 	"github.com/mazdakn/fwsim/pkg/port"
 	"github.com/mazdakn/fwsim/pkg/rule"
 )
@@ -63,6 +64,11 @@ func ValidateSetType(setType string) bool {
 	}
 }
 
+func ValidateConnState(state string) bool {
+	_, err := conntrack.ParseState(state)
+	return err == nil
+}
+
 // validateByTag validates value using the function identified by tag.
 // It returns an error if tag is not a recognised function name, so that
 // a typo in a struct tag is surfaced immediately rather than silently failing.
@@ -76,6 +82,8 @@ func validateByTag(tag, value string) (bool, error) {
 		return ValidateIP(value), nil
 	case "isValidSetType":
 		return ValidateSetType(value), nil
+	case "isValidConnState":
+		return ValidateConnState(value), nil
 	case "isNonEmpty":
 		return len(value) > 0, nil
 	default:

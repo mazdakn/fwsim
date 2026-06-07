@@ -9,7 +9,7 @@ import (
 )
 
 func printResult(mc *match.MatchContext) {
-	fmt.Printf("Packet: %s  Verdict: %s\n", mc.Packet, mc.Verdict)
+	fmt.Printf("Packet: %s  Conntrack: %s  Verdict: %s\n", mc.Packet, mc.ConnState, mc.Verdict)
 	if len(mc.Trace) == 0 {
 		return
 	}

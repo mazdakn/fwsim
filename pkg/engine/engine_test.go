@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/mazdakn/fwsim/pkg/config"
+	"github.com/mazdakn/fwsim/pkg/conntrack"
 	enginepkg "github.com/mazdakn/fwsim/pkg/engine"
 	"github.com/mazdakn/fwsim/pkg/proto"
 	"github.com/mazdakn/fwsim/pkg/rule"
@@ -706,4 +707,124 @@ default_action: Drop
 `), nil)
 	Expect(err).ToNot(BeNil())
 	Expect(err.Error()).To(ContainSubstring("unknown chain"))
+}
+
+func TestEngineConnectionTrackingNewAndEstablished(t *testing.T) {
+	RegisterTestingT(t)
+
+	tbl, err := config.ConfigTableFromBytes([]byte(`
+name: stateful
+chains:
+  - name: default
+    rules:
+      - name: allow-new-http
+        ct_state: [new]
+        dst:
+          port: [80]
+        proto: [6]
+        action: Accept
+      - name: allow-established
+        ct_state: [established]
+        proto: [6]
+        action: Accept
+      - name: deny-all
+        action: Drop
+default_action: Drop
+`), nil)
+	Expect(err).To(BeNil())
+
+	request, err := config.IntentFromBytes([]byte(`
+name: request
+packet:
+  src_addr: 10.0.0.1
+  dst_addr: 1.1.1.1
+  proto: 6
+  src_port: 12345
+  dst_port: 80
+expected_verdict: Accept
+hit_by_rule: allow-new-http
+`))
+	Expect(err).To(BeNil())
+
+	reply, err := config.IntentFromBytes([]byte(`
+name: reply
+packet:
+  src_addr: 1.1.1.1
+  dst_addr: 10.0.0.1
+  proto: 6
+  src_port: 80
+  dst_port: 12345
+expected_verdict: Accept
+hit_by_rule: allow-established
+`))
+	Expect(err).To(BeNil())
+
+	results := enginepkg.New(&config.Resource{
+		Tables:  []*table.Table{tbl},
+		Intents: []*config.Intent{request, reply},
+	}).RunTests()
+
+	Expect(results).To(HaveLen(2))
+	Expect(results[0].ConnState).To(Equal(conntrack.StateNew))
+	Expect(results[0].VerdictMatches()).To(BeTrue())
+	Expect(results[0].RuleMatches()).To(BeTrue())
+	Expect(results[1].ConnState).To(Equal(conntrack.StateEstablished))
+	Expect(results[1].VerdictMatches()).To(BeTrue())
+	Expect(results[1].RuleMatches()).To(BeTrue())
+}
+
+func TestEngineConnectionTrackingDoesNotCommitDroppedPackets(t *testing.T) {
+	RegisterTestingT(t)
+
+	tbl, err := config.ConfigTableFromBytes([]byte(`
+name: stateful
+chains:
+  - name: default
+    rules:
+      - name: deny-new-http
+        ct_state: [new]
+        dst:
+          port: [80]
+        proto: [6]
+        action: Drop
+      - name: allow-established
+        ct_state: [established]
+        proto: [6]
+        action: Accept
+default_action: Drop
+`), nil)
+	Expect(err).To(BeNil())
+
+	request, err := config.IntentFromBytes([]byte(`
+name: request
+packet:
+  src_addr: 10.0.0.1
+  dst_addr: 1.1.1.1
+  proto: 6
+  src_port: 12345
+  dst_port: 80
+`))
+	Expect(err).To(BeNil())
+
+	reply, err := config.IntentFromBytes([]byte(`
+name: reply
+packet:
+  src_addr: 1.1.1.1
+  dst_addr: 10.0.0.1
+  proto: 6
+  src_port: 80
+  dst_port: 12345
+`))
+	Expect(err).To(BeNil())
+
+	results := enginepkg.New(&config.Resource{
+		Tables:  []*table.Table{tbl},
+		Intents: []*config.Intent{request, reply},
+	}).RunTests()
+
+	Expect(results).To(HaveLen(2))
+	Expect(results[0].ConnState).To(Equal(conntrack.StateNew))
+	Expect(results[0].Verdict).To(HaveValue(Equal(rule.Drop)))
+	Expect(results[1].ConnState).To(Equal(conntrack.StateNew))
+	Expect(results[1].Verdict).To(HaveValue(Equal(rule.Drop)))
 }

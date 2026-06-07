@@ -5,6 +5,7 @@ import (
 
 	. "github.com/onsi/gomega"
 
+	"github.com/mazdakn/fwsim/pkg/conntrack"
 	"github.com/mazdakn/fwsim/pkg/port"
 	"github.com/mazdakn/fwsim/pkg/rule"
 	"github.com/mazdakn/fwsim/pkg/set"
@@ -67,6 +68,43 @@ func TestToRuleWithPassAction(t *testing.T) {
 	Expect(err).To(BeNil())
 	Expect(mRule).ToNot(BeNil())
 	Expect(mRule.Action).To(Equal(rule.Pass))
+}
+
+func TestToRuleWithConntrackState(t *testing.T) {
+	RegisterTestingT(t)
+
+	r := &Rule{
+		Name:         "allow-established-http",
+		ConnState:    []string{"new", "established"},
+		NotConnState: []string{"new"},
+		Action:       "Accept",
+	}
+
+	mRule, err := r.ToRule(nil)
+	Expect(err).To(BeNil())
+	Expect(mRule.ConnState).To(Equal([]conntrack.State{conntrack.StateNew, conntrack.StateEstablished}))
+	Expect(mRule.NotConnState).To(Equal([]conntrack.State{conntrack.StateNew}))
+}
+
+func TestTableFromBytesWithConntrackState(t *testing.T) {
+	RegisterTestingT(t)
+
+	rc, err := TableFromBytes([]byte(`
+name: main
+chains:
+  - name: default
+    rules:
+      - name: allow-established-http
+        ct_state: [established]
+        not_ct_state: [new]
+        dst:
+          port: [80]
+        action: Accept
+default_action: Drop
+`))
+	Expect(err).To(BeNil())
+	Expect(rc.Chains[0].Rules[0].ConnState).To(Equal([]string{"established"}))
+	Expect(rc.Chains[0].Rules[0].NotConnState).To(Equal([]string{"new"}))
 }
 
 func TestToRuleWithUnknownSrcIPSet(t *testing.T) {

@@ -1,0 +1,17 @@
+name: stateful
+chains:
+  - name: default
+    rules:
+      - name: allow-new-http
+        ct_state: [new]
+        dst:
+          port: [80]
+        proto: [tcp]
+        action: Accept
+      - name: allow-established
+        ct_state: [established]
+        proto: [tcp]
+        action: Accept
+      - name: deny-all
+        action: Drop
+default_action: Drop

@@ -1,0 +1,9 @@
+name: reply
+packet:
+  src_addr: 1.1.1.1
+  dst_addr: 10.0.0.1
+  proto: tcp
+  src_port: 80
+  dst_port: 12345
+expected_verdict: Accept
+hit_by_rule: allow-established

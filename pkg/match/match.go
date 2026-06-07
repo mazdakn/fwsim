@@ -1,14 +1,16 @@
 package match
 
 import (
+	"github.com/mazdakn/fwsim/pkg/conntrack"
 	"github.com/mazdakn/fwsim/pkg/packet"
 	"github.com/mazdakn/fwsim/pkg/rule"
 )
 
 type MatchContext struct {
-	Packet  *packet.Packet
-	Verdict *rule.Action
-	Trace   []*rule.Rule
+	Packet    *packet.Packet
+	ConnState conntrack.State
+	Verdict   *rule.Action
+	Trace     []*rule.Rule
 
 	// ExpectedVerdict is the verdict expected by the intent. When nil, verdict
 	// validation is skipped.
@@ -36,7 +38,8 @@ func WithExpectedRule(name string) MatchContextOption {
 
 func New(pkt *packet.Packet, opts ...MatchContextOption) *MatchContext {
 	mc := &MatchContext{
-		Packet: pkt,
+		Packet:    pkt,
+		ConnState: conntrack.StateNew,
 	}
 	for _, opt := range opts {
 		opt(mc)
