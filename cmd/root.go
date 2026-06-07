@@ -16,7 +16,7 @@ var (
 )
 
 func init() {
-	rootCmd.PersistentFlags().StringVarP(&inputDir, "dir", "d", "", "base input directory with tables/, sets/, and packets/ subdirectories")
+	rootCmd.PersistentFlags().StringVarP(&inputDir, "dir", "d", "", "base input directory with tables/, sets/, and intents/ subdirectories")
 	if err := rootCmd.MarkPersistentFlagRequired("dir"); err != nil {
 		panic(err)
 	}

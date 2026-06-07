@@ -6,6 +6,7 @@ tables, chains, rules, named sets, and ordered intents.
 
 At a high level, the codebase provides:
 - a CLI for evaluating single packets or ordered intent sequences
+- a CLI path for replaying packets from `.pcap` captures through the rule engine
 - a rule engine with table/chain traversal, named sets, and verdict tracing
 - configuration loaders and validators for firewall resources
 - optional connection tracking for `new` and `established` flow matching

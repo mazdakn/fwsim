@@ -11,6 +11,7 @@ Features
 --------
 - Evaluate one packet from CLI flags (`evaluate`)
 - Run multiple intents from YAML files (`run`)
+- Replay packets from a `.pcap` file through the firewall engine (`run --pcap`)
 - YAML-based rules, sets, and packet definitions
 - Named sets for IPs, ports, protocols, IP:port tuples, and interfaces
 - Connection tracking with `ct_state: [new|established]` rule matches
@@ -81,9 +82,15 @@ Commands
 
   fwsim -d ./hack/sample run
 
-Stateful example:
+3. Evaluate packets from a pcap capture:
+
+  fwsim -d ./hack/sample run --pcap ./traffic.pcap
+
+Stateful examples:
 
   fwsim -d ./hack/conntrack-sample run
+
+  fwsim -d ./hack/conntrack-sample run --pcap ./traffic.pcap
 
 Protocol values:
 - Name: `tcp`, `udp`, `icmp`
@@ -210,6 +217,14 @@ One intent per file:
 
 Intents are loaded in lexicographic filename order, which is how stateful
 sequences should be expressed.
+
+PCAP Input
+----------
+`run --pcap <file>` reads packets from the capture in file order and converts
+each IPv4/IPv6 packet into an intent-like evaluation item. TCP and UDP source
+and destination ports are preserved; other IP protocols are evaluated with port
+`0`. Non-IP packets currently fail fast with an error so the capture contents
+stay explicit.
 
 Example (`hack/sample/intents/access-app1.yaml`):
 

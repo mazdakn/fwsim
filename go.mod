@@ -4,6 +4,7 @@ go 1.24.1
 
 require (
 	github.com/goccy/go-yaml v1.19.2
+	github.com/google/gopacket v1.1.19
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/onsi/gomega v1.38.2
 	github.com/sirupsen/logrus v1.9.3
