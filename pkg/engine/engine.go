@@ -3,25 +3,25 @@ package engine
 import (
 	"fmt"
 
-	runtimeengine "github.com/mazdakn/firecore/engine"
+	firecore "github.com/mazdakn/firecore/engine"
 	"github.com/mazdakn/firecore/match"
 	"github.com/mazdakn/fwsim/pkg/config"
 )
 
 type Engine struct {
-	runtime *runtimeengine.Engine
+	runtime *firecore.Engine
 	intents []*config.Intent
 }
 
 func New(r *config.Resource) *Engine {
 	if r != nil {
 		return &Engine{
-			runtime: runtimeengine.New(r.Tables),
+			runtime: firecore.New(r.Tables),
 			intents: r.Intents,
 		}
 	}
 	return &Engine{
-		runtime: runtimeengine.New(nil),
+		runtime: firecore.New(nil),
 		intents: []*config.Intent{},
 	}
 }
