@@ -1,5 +1,5 @@
 build:
-	go build -o bin/fwsime ./cmd/
+	go build -o bin/fwsim ./cmd/
 
 static-check:
 	go vet ./...

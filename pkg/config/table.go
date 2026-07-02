@@ -5,11 +5,11 @@ import (
 	"os"
 
 	"github.com/goccy/go-yaml"
-	"github.com/mazdakn/fwsim/pkg/conntrack"
-	"github.com/mazdakn/fwsim/pkg/port"
-	"github.com/mazdakn/fwsim/pkg/proto"
-	"github.com/mazdakn/fwsim/pkg/rule"
-	"github.com/mazdakn/fwsim/pkg/set"
+	"github.com/mazdakn/firecore/conntrack"
+	"github.com/mazdakn/firecore/port"
+	"github.com/mazdakn/firecore/proto"
+	"github.com/mazdakn/firecore/rule"
+	"github.com/mazdakn/firecore/set"
 	"github.com/mazdakn/fwsim/pkg/validator"
 )
 

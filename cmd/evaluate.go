@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/mazdakn/firecore/port"
+	"github.com/mazdakn/firecore/proto"
 	"github.com/mazdakn/fwsim/pkg/config"
 	"github.com/mazdakn/fwsim/pkg/engine"
-	"github.com/mazdakn/fwsim/pkg/port"
-	"github.com/mazdakn/fwsim/pkg/proto"
 	"github.com/mazdakn/fwsim/pkg/validator"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"

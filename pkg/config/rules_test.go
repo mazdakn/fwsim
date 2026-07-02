@@ -5,10 +5,10 @@ import (
 
 	. "github.com/onsi/gomega"
 
-	"github.com/mazdakn/fwsim/pkg/conntrack"
-	"github.com/mazdakn/fwsim/pkg/port"
-	"github.com/mazdakn/fwsim/pkg/rule"
-	"github.com/mazdakn/fwsim/pkg/set"
+	"github.com/mazdakn/firecore/conntrack"
+	"github.com/mazdakn/firecore/port"
+	"github.com/mazdakn/firecore/rule"
+	"github.com/mazdakn/firecore/set"
 )
 
 func TestToRuleWithoutSets(t *testing.T) {

@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/goccy/go-yaml"
-	"github.com/mazdakn/fwsim/pkg/match"
-	"github.com/mazdakn/fwsim/pkg/rule"
+	"github.com/mazdakn/firecore/match"
+	"github.com/mazdakn/firecore/rule"
 )
 
 // Intent expresses a user's expectation about how a specific packet should be

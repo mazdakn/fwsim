@@ -4,9 +4,9 @@ import (
 	"os"
 
 	"github.com/goccy/go-yaml"
-	"github.com/mazdakn/fwsim/pkg/packet"
-	"github.com/mazdakn/fwsim/pkg/port"
-	"github.com/mazdakn/fwsim/pkg/proto"
+	"github.com/mazdakn/firecore/packet"
+	"github.com/mazdakn/firecore/port"
+	"github.com/mazdakn/firecore/proto"
 	"github.com/mazdakn/fwsim/pkg/validator"
 )
 

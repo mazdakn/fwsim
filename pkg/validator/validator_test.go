@@ -3,9 +3,9 @@ package validator_test
 import (
 	"testing"
 
+	"github.com/mazdakn/firecore/port"
+	"github.com/mazdakn/firecore/proto"
 	"github.com/mazdakn/fwsim/pkg/config"
-	"github.com/mazdakn/fwsim/pkg/port"
-	"github.com/mazdakn/fwsim/pkg/proto"
 	"github.com/mazdakn/fwsim/pkg/validator"
 	. "github.com/onsi/gomega"
 )

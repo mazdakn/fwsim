@@ -5,8 +5,8 @@ import (
 
 	. "github.com/onsi/gomega"
 
-	"github.com/mazdakn/fwsim/pkg/port"
-	"github.com/mazdakn/fwsim/pkg/proto"
+	"github.com/mazdakn/firecore/port"
+	"github.com/mazdakn/firecore/proto"
 )
 
 const testPacketsYAML = `

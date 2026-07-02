@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/goccy/go-yaml"
-	"github.com/mazdakn/fwsim/pkg/set"
+	"github.com/mazdakn/firecore/set"
 	"github.com/mazdakn/fwsim/pkg/validator"
 )
 

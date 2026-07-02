@@ -1,8 +1,8 @@
 package config
 
 import (
-	"github.com/mazdakn/fwsim/pkg/set"
-	"github.com/mazdakn/fwsim/pkg/table"
+	"github.com/mazdakn/firecore/set"
+	"github.com/mazdakn/firecore/table"
 )
 
 // Resource holds all parsed firewall resources (tables, sets, and intents).

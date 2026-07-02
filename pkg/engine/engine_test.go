@@ -3,12 +3,12 @@ package engine_test
 import (
 	"testing"
 
+	"github.com/mazdakn/firecore/conntrack"
+	"github.com/mazdakn/firecore/proto"
+	"github.com/mazdakn/firecore/rule"
+	"github.com/mazdakn/firecore/table"
 	"github.com/mazdakn/fwsim/pkg/config"
-	"github.com/mazdakn/fwsim/pkg/conntrack"
 	enginepkg "github.com/mazdakn/fwsim/pkg/engine"
-	"github.com/mazdakn/fwsim/pkg/proto"
-	"github.com/mazdakn/fwsim/pkg/rule"
-	"github.com/mazdakn/fwsim/pkg/table"
 	. "github.com/onsi/gomega"
 )
 

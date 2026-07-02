@@ -9,10 +9,10 @@ package tests
 import (
 	"testing"
 
+	"github.com/mazdakn/firecore/rule"
+	"github.com/mazdakn/firecore/table"
 	"github.com/mazdakn/fwsim/pkg/config"
 	enginepkg "github.com/mazdakn/fwsim/pkg/engine"
-	"github.com/mazdakn/fwsim/pkg/rule"
-	"github.com/mazdakn/fwsim/pkg/table"
 	. "github.com/onsi/gomega"
 )
 

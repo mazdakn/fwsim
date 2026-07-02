@@ -10,12 +10,12 @@ import (
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcapgo"
+	"github.com/mazdakn/firecore/conntrack"
+	"github.com/mazdakn/firecore/proto"
+	"github.com/mazdakn/firecore/rule"
+	"github.com/mazdakn/firecore/table"
 	"github.com/mazdakn/fwsim/pkg/config"
-	"github.com/mazdakn/fwsim/pkg/conntrack"
 	enginepkg "github.com/mazdakn/fwsim/pkg/engine"
-	"github.com/mazdakn/fwsim/pkg/proto"
-	"github.com/mazdakn/fwsim/pkg/rule"
-	"github.com/mazdakn/fwsim/pkg/table"
 	. "github.com/onsi/gomega"
 )
 
@@ -137,7 +137,10 @@ func writePCAP(t *testing.T, file string, packets []pcapPacketSpec) {
 
 	f, err := os.Create(file)
 	Expect(err).To(BeNil())
-	defer f.Close()
+	defer func() {
+		err := f.Close()
+		Expect(err).To(BeNil())
+	}()
 
 	writer := pcapgo.NewWriter(f)
 	Expect(writer.WriteFileHeader(65536, layers.LinkTypeEthernet)).To(Succeed())
@@ -203,7 +206,10 @@ func writeARPPcap(t *testing.T, file string) {
 
 	f, err := os.Create(file)
 	Expect(err).To(BeNil())
-	defer f.Close()
+	defer func() {
+		err := f.Close()
+		Expect(err).To(BeNil())
+	}()
 
 	writer := pcapgo.NewWriter(f)
 	Expect(writer.WriteFileHeader(65536, layers.LinkTypeEthernet)).To(Succeed())

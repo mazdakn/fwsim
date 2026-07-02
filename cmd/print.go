@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/mazdakn/fwsim/pkg/match"
+	"github.com/mazdakn/firecore/match"
 	"github.com/olekukonko/tablewriter"
 )
 

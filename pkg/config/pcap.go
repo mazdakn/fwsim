@@ -10,8 +10,8 @@ import (
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcapgo"
-	"github.com/mazdakn/fwsim/pkg/port"
-	"github.com/mazdakn/fwsim/pkg/proto"
+	"github.com/mazdakn/firecore/port"
+	"github.com/mazdakn/firecore/proto"
 )
 
 func ConfigIntentsFromPCAPFile(file string) ([]*Intent, error) {
@@ -19,7 +19,9 @@ func ConfigIntentsFromPCAPFile(file string) ([]*Intent, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open pcap file %s: %w", file, err)
 	}
-	defer f.Close()
+	defer func() {
+		_ = f.Close()
+	}()
 
 	reader, err := pcapgo.NewReader(f)
 	if err != nil {

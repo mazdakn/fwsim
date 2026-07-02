@@ -7,10 +7,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/mazdakn/fwsim/pkg/packet"
-	"github.com/mazdakn/fwsim/pkg/rule"
-	"github.com/mazdakn/fwsim/pkg/set"
-	"github.com/mazdakn/fwsim/pkg/table"
+	"github.com/mazdakn/firecore/packet"
+	"github.com/mazdakn/firecore/rule"
+	"github.com/mazdakn/firecore/set"
+	"github.com/mazdakn/firecore/table"
 )
 
 type Config struct {

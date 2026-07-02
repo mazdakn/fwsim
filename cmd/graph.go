@@ -6,8 +6,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/mazdakn/firecore/rule"
 	"github.com/mazdakn/fwsim/pkg/config"
-	"github.com/mazdakn/fwsim/pkg/rule"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )

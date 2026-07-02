@@ -6,9 +6,9 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/mazdakn/fwsim/pkg/conntrack"
-	"github.com/mazdakn/fwsim/pkg/port"
-	"github.com/mazdakn/fwsim/pkg/rule"
+	"github.com/mazdakn/firecore/conntrack"
+	"github.com/mazdakn/firecore/port"
+	"github.com/mazdakn/firecore/rule"
 )
 
 // ValidateCIDR returns true if cidr is valid CIDR notation.

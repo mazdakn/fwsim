@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/mazdakn/fwsim/pkg/set"
+	"github.com/mazdakn/firecore/set"
 	. "github.com/onsi/gomega"
 )
 

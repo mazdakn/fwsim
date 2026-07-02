@@ -7,6 +7,11 @@ fwsim is a small firewall simulator written in Go.
 It loads firewall rules, named sets, and intents from YAML files, evaluates
 traffic, and prints verdicts with rule hit traces.
 
+The packet-matching runtime has been split into the external
+[`firecore`](https://github.com/mazdakn/firecore) Go module. In this
+repository, `fwsim` remains the application layer: CLI commands, YAML loading,
+validation, and tests that exercise the runtime through the app.
+
 Features
 --------
 - Evaluate one packet from CLI flags (`evaluate`)
@@ -24,7 +29,7 @@ Requirements
 Project Layout
 --------------
   cmd/                    CLI commands and output helpers
-  pkg/                    Engine, parser, matcher, sets, validator, conntrack
+  pkg/                    fwsim adapter, config parsing, validation
   hack/sample/            Example input data
     tables/
     sets/
