@@ -31,6 +31,7 @@ func TestPacketsFromBytes(t *testing.T) {
 	Expect(pkts[0].Proto).To(Equal(proto.Proto(7)))
 	Expect(pkts[0].SrcPort).To(Equal(uint16(30000)))
 	Expect(pkts[0].DstPort).To(Equal(uint16(80)))
+	Expect(pkts[0].Metadata.Name).To(Equal("access backend"))
 }
 
 func TestPacketsFromBytesInvalid(t *testing.T) {
@@ -61,6 +62,30 @@ func TestPacketsFromBytesWithNamedPorts(t *testing.T) {
 	// src_port "ssh" → 22, dst_port "http" → 80
 	Expect(pkts[0].SrcPort).To(Equal(uint16(22)))
 	Expect(pkts[0].DstPort).To(Equal(uint16(80)))
+}
+
+const testPacketsIfaceMetadataYAML = `
+metadata:
+  name: interface-qualified packet
+  ingressIface: eth0
+  egressIface: eth1
+src_addr: 192.168.1.10
+dst_addr: 1.1.1.1
+proto: 6
+src_port: 12345
+dst_port: 80
+`
+
+func TestPacketsFromBytesWithIfaceMetadata(t *testing.T) {
+	RegisterTestingT(t)
+
+	pkts, err := PacketsFromBytes([]byte(testPacketsIfaceMetadataYAML))
+	Expect(err).To(BeNil())
+	Expect(pkts).To(HaveLen(1))
+
+	Expect(pkts[0].Metadata.Name).To(Equal("interface-qualified packet"))
+	Expect(pkts[0].Metadata.IngressIface).To(Equal("eth0"))
+	Expect(pkts[0].Metadata.EgressIface).To(Equal("eth1"))
 }
 
 func TestToPacketWithNameOnlyPort(t *testing.T) {

@@ -10,6 +10,12 @@ import (
 	"github.com/mazdakn/fwsim/pkg/validator"
 )
 
+type PacketMetadata struct {
+	Name         string `yaml:"name,omitempty"`
+	IngressIface string `yaml:"ingressIface,omitempty"`
+	EgressIface  string `yaml:"egressIface,omitempty"`
+}
+
 type Packet struct {
 	SrcAddr string      `yaml:"src_addr,omitempty" validate:"isValidIP"`
 	DstAddr string      `yaml:"dst_addr,omitempty" validate:"isValidIP"`
@@ -17,7 +23,7 @@ type Packet struct {
 	SrcPort port.Port   `yaml:"src_port,omitempty" validate:"isPortValid"`
 	DstPort port.Port   `yaml:"dst_port,omitempty" validate:"isPortValid"`
 
-	Metadata packet.Metadata `yaml:"metadata,omitempty"`
+	Metadata PacketMetadata `yaml:"metadata,omitempty"`
 }
 
 func (p *Packet) Validate() error {
