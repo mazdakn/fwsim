@@ -3,7 +3,7 @@ package engine
 import (
 	"fmt"
 
-	firecore "github.com/mazdakn/firecore/engine"
+	"github.com/mazdakn/firecore"
 	"github.com/mazdakn/firecore/match"
 	"github.com/mazdakn/fwsim/pkg/config"
 )

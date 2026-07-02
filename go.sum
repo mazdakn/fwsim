@@ -20,8 +20,8 @@ github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
 github.com/mattn/go-runewidth v0.0.9 h1:Lm995f3rfxdpd6TSmuVCHVb/QhupuXlYr8sCI/QdE+0=
 github.com/mattn/go-runewidth v0.0.9/go.mod h1:H031xJmbD/WCDINGzjvQ9THkh0rPKHF+m2gUSrubnMI=
-github.com/mazdakn/firecore v0.0.0-20260702013117-cccb5669734a h1:ataq5BOhd1ayqaqczhAz1NRE01Ug7aczgHvH8iwECLQ=
-github.com/mazdakn/firecore v0.0.0-20260702013117-cccb5669734a/go.mod h1:cwlp7UHR2EnMRldcxi4zjtysknRvn9uXf+TUxGXwuoI=
+github.com/mazdakn/firecore v0.0.0-20260702024042-9c7fd1264863 h1:kE3bvBCIp+pI70MPUpH79ZW/F3xtSjJ7go6ReTt+wXw=
+github.com/mazdakn/firecore v0.0.0-20260702024042-9c7fd1264863/go.mod h1:cwlp7UHR2EnMRldcxi4zjtysknRvn9uXf+TUxGXwuoI=
 github.com/olekukonko/tablewriter v0.0.5 h1:P2Ga83D34wi1o9J6Wh1mRuqd4mF/x/lgBS7N7AbDhec=
 github.com/olekukonko/tablewriter v0.0.5/go.mod h1:hPp6KlRPjbx+hW8ykQs1w3UBbZlj6HuIJcUGPhkA7kY=
 github.com/onsi/ginkgo/v2 v2.25.1 h1:Fwp6crTREKM+oA6Cz4MsO8RhKQzs2/gOIVOUscMAfZY=
